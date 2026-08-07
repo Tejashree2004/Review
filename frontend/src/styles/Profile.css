@@ -1,0 +1,707 @@
+/* ==========================
+   Profile Page
+========================== */
+
+.profile-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+
+/* ==========================
+   Back Button
+========================== */
+
+.profile-back-icon {
+
+  width: 48px;
+  height: 48px;
+
+  border-radius: 50%;
+
+  border: 1px solid #2d2d2d;
+
+  background: #171717;
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:18px;
+
+  transition:0.3s;
+
+  margin-bottom:25px;
+}
+
+
+.profile-back-icon:hover {
+
+  background:#ffffff;
+
+  color:#000000;
+
+}
+
+
+
+/* ==========================
+   Profile Header
+========================== */
+
+.profile-header {
+
+  background:#171717;
+
+  border:1px solid #2d2d2d;
+
+  border-radius:22px;
+
+  padding:35px;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:25px;
+
+  margin-bottom:25px;
+
+}
+
+
+
+/* ==========================
+   Avatar
+========================== */
+
+.profile-avatar {
+
+  width:100px;
+
+  height:100px;
+
+  border-radius:50%;
+
+  background:#222222;
+
+  border:1px solid #3a3a3a;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  flex-shrink:0;
+
+}
+
+
+.profile-avatar svg {
+
+  font-size:70px;
+
+  color:#ffffff;
+
+}
+
+
+
+/* ==========================
+   Header Info
+========================== */
+
+.profile-header-info h1 {
+
+  color:#ffffff;
+
+  font-size:34px;
+
+  margin:0 0 8px;
+
+  font-weight:700;
+
+}
+
+
+.profile-header-info p {
+
+  color:#bdbdbd;
+
+  font-size:16px;
+
+  margin:0 0 12px;
+
+}
+
+
+
+/* ==========================
+   Verified Badge
+========================== */
+
+.verified-badge {
+
+  display:inline-flex;
+
+  align-items:center;
+
+  gap:7px;
+
+  padding:7px 13px;
+
+  border-radius:20px;
+
+  background:#1b1b1b;
+
+  border:1px solid #3a3a3a;
+
+  color:#ffffff;
+
+  font-size:13px;
+
+}
+
+
+.verified-badge svg {
+
+  color:#ffffff;
+
+}
+
+
+
+/* ==========================
+   Profile Cards
+========================== */
+
+.profile-card {
+
+  background:#171717;
+
+  border:1px solid #2d2d2d;
+
+  border-radius:22px;
+
+  padding:30px;
+
+  margin-bottom:25px;
+
+}
+
+
+.profile-card h2 {
+
+  color:#ffffff;
+
+  font-size:24px;
+
+  margin:0 0 25px;
+
+}
+
+
+
+/* ==========================
+   Information Grid
+========================== */
+
+.profile-info-grid {
+
+  display:grid;
+
+  grid-template-columns:repeat(2,1fr);
+
+  gap:20px;
+
+}
+
+
+
+/* ==========================
+   Information Item
+========================== */
+
+.profile-info-item {
+
+  display:flex;
+
+  align-items:center;
+
+  gap:15px;
+
+  background:#222222;
+
+  border:1px solid #2f2f2f;
+
+  border-radius:15px;
+
+  padding:18px;
+
+}
+
+
+.profile-info-item div:last-child {
+
+  min-width:0;
+
+}
+
+
+
+/* ==========================
+   Info Icon
+========================== */
+
+.profile-info-icon {
+
+  width:45px;
+
+  height:45px;
+
+  border-radius:50%;
+
+  background:#171717;
+
+  border:1px solid #3a3a3a;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  flex-shrink:0;
+
+}
+
+
+.profile-info-icon svg {
+
+  color:#ffffff;
+
+  font-size:18px;
+
+}
+
+
+
+/* ==========================
+   Info Text
+========================== */
+
+.profile-info-item span {
+
+  display:block;
+
+  color:#999999;
+
+  font-size:13px;
+
+  margin-bottom:5px;
+
+}
+
+
+.profile-info-item strong {
+
+  display:block;
+
+  color:#ffffff;
+
+  font-size:16px;
+
+  font-weight:600;
+
+  word-break:break-word;
+
+}
+
+
+
+/* ==========================
+   Account Status
+========================== */
+
+.account-status {
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:20px;
+
+}
+
+
+.account-status > div {
+
+  flex:1;
+
+  background:#222222;
+
+  border:1px solid #2f2f2f;
+
+  border-radius:15px;
+
+  padding:20px;
+
+}
+
+
+.account-status span {
+
+  display:block;
+
+  color:#999999;
+
+  font-size:14px;
+
+  margin-bottom:8px;
+
+}
+
+
+.account-status strong {
+
+  color:#ffffff;
+
+  font-size:18px;
+
+}
+
+
+
+/* ==========================
+   Verification Status
+========================== */
+
+.status-verified {
+
+  color:#ffffff !important;
+
+}
+
+
+.status-pending {
+
+  color:#bdbdbd !important;
+
+}
+
+
+
+/* ==========================
+   Actions
+========================== */
+
+.profile-actions {
+
+  display:flex;
+
+  gap:15px;
+
+  margin-top:10px;
+
+}
+
+
+.profile-action-btn {
+
+  flex:1;
+
+  padding:15px 20px;
+
+  border-radius:12px;
+
+  border:1px solid #3a3a3a;
+
+  background:#171717;
+
+  color:#ffffff;
+
+  font-size:15px;
+
+  font-weight:600;
+
+  cursor:pointer;
+
+  transition:0.3s;
+
+}
+
+
+.profile-action-btn:hover {
+
+  background:#ffffff;
+
+  color:#000000;
+
+}
+
+
+
+/* ==========================
+   Logout
+========================== */
+
+.logout-btn:hover {
+
+  background:#ffffff;
+
+  color:#000000;
+
+  border-color:#ffffff;
+
+}
+
+
+
+/* ==========================
+   Loading
+========================== */
+
+.profile-loading {
+
+  min-height:70vh;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  color:#ffffff;
+
+  font-size:20px;
+
+}
+
+
+
+/* ==========================
+   Not Found
+========================== */
+
+.profile-not-found {
+
+  min-height:70vh;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  color:#ffffff;
+
+}
+
+
+.profile-not-found h2 {
+
+  margin-bottom:20px;
+
+}
+
+
+.profile-back-btn {
+
+  padding:12px 25px;
+
+  border-radius:10px;
+
+  border:1px solid #3a3a3a;
+
+  background:#171717;
+
+  color:#ffffff;
+
+  cursor:pointer;
+
+}
+
+
+
+/* ==========================
+   Tablet
+========================== */
+
+@media(max-width:992px){
+
+.profile-container{
+
+max-width:100%;
+
+}
+
+
+.profile-header{
+
+padding:28px;
+
+}
+
+
+.profile-header-info h1{
+
+font-size:30px;
+
+}
+
+}
+
+
+
+/* ==========================
+   Mobile
+========================== */
+
+@media(max-width:768px){
+
+
+.profile-back-icon{
+
+width:42px;
+
+height:42px;
+
+font-size:16px;
+
+}
+
+
+.profile-header{
+
+padding:22px;
+
+flex-direction:column;
+
+text-align:center;
+
+}
+
+
+.profile-avatar{
+
+width:85px;
+
+height:85px;
+
+}
+
+
+.profile-avatar svg{
+
+font-size:60px;
+
+}
+
+
+.profile-header-info h1{
+
+font-size:26px;
+
+}
+
+
+.profile-header-info p{
+
+font-size:14px;
+
+word-break:break-word;
+
+}
+
+
+.profile-card{
+
+padding:22px;
+
+}
+
+
+.profile-card h2{
+
+font-size:21px;
+
+}
+
+
+.profile-info-grid{
+
+grid-template-columns:1fr;
+
+gap:14px;
+
+}
+
+
+.account-status{
+
+flex-direction:column;
+
+}
+
+
+.profile-actions{
+
+flex-direction:column;
+
+}
+
+}
+
+
+
+/* ==========================
+   Small Mobile
+========================== */
+
+@media(max-width:480px){
+
+
+.profile-header{
+
+border-radius:18px;
+
+}
+
+
+.profile-card{
+
+border-radius:18px;
+
+}
+
+
+.profile-info-item{
+
+padding:15px;
+
+}
+
+
+.profile-info-item strong{
+
+font-size:14px;
+
+}
+
+
+.account-status > div{
+
+padding:16px;
+
+}
+
+}

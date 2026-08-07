@@ -93,10 +93,11 @@ public class AuthController : ControllerBase
         var token = _jwtService.GenerateToken(user);
 
         return Ok(new AuthResponseDto
-        {
-            Success = true,
-            Message = "Login Successful.",
-            Token = token
-        });
+{
+    Success = true,
+    Message = "Login Successful.",
+    Token = token,
+    UserId = user.Id
+});
     }
 }

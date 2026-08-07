@@ -1,0 +1,170 @@
+/* Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* =========================
+   Global Reset
+========================= */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+
+  font-family:'Inter',sans-serif;
+
+  background:#0d0d0d;
+
+  color:#ffffff;
+
+  overflow-x:hidden;
+
+}
+
+/* =========================
+   Theme Colors
+========================= */
+
+:root{
+
+  --background:#0d0d0d;
+
+  --card:#171717;
+
+  --card-light:#1f1f1f;
+
+  --border:#2d2d2d;
+
+  --text:#ffffff;
+
+  --text-light:#bdbdbd;
+
+  --placeholder:#7d7d7d;
+
+  --hover:#242424;
+
+  --shadow:0 8px 20px rgba(0,0,0,.35);
+
+  --radius:18px;
+
+}
+
+/* =========================
+   Common Elements
+========================= */
+
+a{
+
+  text-decoration:none;
+
+  color:inherit;
+
+}
+
+img{
+
+  width:100%;
+
+  display:block;
+
+}
+
+button{
+
+  font-family:inherit;
+
+  cursor:pointer;
+
+  border:none;
+
+  outline:none;
+
+}
+
+input{
+
+  font-family:inherit;
+
+  outline:none;
+
+}
+
+ul{
+
+  list-style:none;
+
+}
+
+/* =========================
+   Scrollbar
+========================= */
+
+::-webkit-scrollbar{
+
+  width:8px;
+
+}
+
+::-webkit-scrollbar-track{
+
+  background:#111;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+  background:#3a3a3a;
+
+  border-radius:20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+  background:#666;
+
+}
+
+/* =========================
+   Responsive Container
+========================= */
+
+.container{
+
+  width:100%;
+
+  max-width:430px;
+
+  margin:auto;
+
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media(max-width:480px){
+
+  body{
+
+    font-size:14px;
+
+  }
+
+}
+
+@media(min-width:768px){
+
+  body{
+
+    font-size:16px;
+
+  }
+
+}

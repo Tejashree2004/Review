@@ -1,0 +1,378 @@
+/* ==========================
+   Place Details
+========================== */
+
+
+.place-details {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 35px;
+  margin-top: 25px;
+  margin-bottom: 30px;
+}
+
+
+/* ==========================
+   Back Button
+========================== */
+
+
+.back-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid #2d2d2d;
+  background: #171717;
+  color: #ffffff;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+
+  transition: 0.3s;
+  margin-bottom: 20px;
+}
+
+
+.back-btn:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+
+/* ==========================
+   Image Section
+========================== */
+
+
+.image-section {
+  position: relative;
+}
+
+
+.image-section img {
+  width: 100%;
+  height: 430px;
+
+  object-fit: cover;
+
+  border-radius: 22px;
+
+  border: 1px solid #2d2d2d;
+}
+
+
+/* ==========================
+   Favorite Button
+========================== */
+
+
+.heart-btn {
+  position: absolute;
+
+  top: 18px;
+  right: 18px;
+
+  width: 55px;
+  height: 55px;
+
+  border-radius: 50%;
+
+  border: none;
+
+  background: #ffffff;
+
+  color: #000000;
+
+  font-size: 22px;
+
+  cursor: pointer;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transition: .3s;
+}
+
+
+/* ==========================
+   SAVED FAVORITE
+========================== */
+
+.heart-btn.favorite-active {
+  color: red;
+}
+
+
+.heart-btn:hover {
+  transform: scale(1.08);
+  color: red;
+}
+
+
+/* ==========================
+   Right Card
+========================== */
+
+
+.details-card {
+
+  background: #171717;
+  border: 1px solid #2d2d2d;
+  border-radius: 22px;
+  padding: 35px;
+}
+
+
+.details-card h1 {
+
+  color: #ffffff;
+  font-size: 42px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+
+/* ==========================
+   Rating
+========================== */
+
+
+.rating-row {
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+  color: white;
+  font-size: 20px;
+}
+
+
+.gold-star {
+  color: #FFD700;
+}
+
+
+.review-text {
+  color: #bdbdbd;
+  font-size: 17px;
+}
+
+
+/* ==========================
+   Info Rows
+========================== */
+
+
+.info-row {
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid #2d2d2d;
+  color: #e8e8e8;
+}
+
+
+.info-row svg {
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+
+.info-row span {
+  flex: 1;
+}
+
+
+.info-row strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+
+/* ==========================
+   Status
+========================== */
+
+
+.status-badge {
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px 18px;
+
+  border-radius: 30px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  background: #1b1b1b;
+  color: #ffffff;
+
+  border: 1px solid #3a3a3a;
+}
+
+
+.open {
+  background: #1b1b1b;
+  color: #ffffff;
+}
+
+
+.closed {
+  background: #2a2a2a;
+  color: #b5b5b5;
+}
+
+
+/* ==========================
+   Cards
+========================== */
+
+
+.info-card {
+
+  background: #171717;
+  border: 1px solid #2d2d2d;
+  border-radius: 20px;
+
+  padding: 28px;
+
+  margin-top: 25px;
+}
+
+
+.info-card h2 {
+
+  color: #ffffff;
+  margin-bottom: 20px;
+  font-size: 26px;
+}
+
+
+.info-card p {
+
+  color: #d4d4d4;
+  line-height: 1.8;
+  font-size: 17px;
+}
+
+
+/* ==========================
+   Summary
+========================== */
+
+
+.summary-grid {
+
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 18px;
+}
+
+
+.summary-grid div {
+
+  background: #222222;
+  border: 1px solid #2f2f2f;
+
+  color: white;
+
+  border-radius: 14px;
+
+  padding: 18px;
+
+  text-align: center;
+
+  transition: .3s;
+}
+
+
+.summary-grid div:hover {
+  background: #2d2d2d;
+}
+
+
+/* ==========================
+   Tablet
+========================== */
+
+
+@media(max-width:992px){
+
+.place-details{
+grid-template-columns:1fr;
+}
+
+.image-section img{
+height:350px;
+}
+
+.details-card h1{
+font-size:34px;
+}
+
+}
+
+
+/* ==========================
+   Mobile
+========================== */
+
+
+@media(max-width:768px){
+
+.place-details{
+gap:20px;
+}
+
+.image-section img{
+height:260px;
+}
+
+.details-card{
+padding:22px;
+}
+
+.details-card h1{
+font-size:30px;
+}
+
+.rating-row{
+font-size:18px;
+}
+
+.review-text{
+font-size:14px;
+}
+
+.info-row{
+font-size:15px;
+padding:15px 0;
+}
+
+.summary-grid{
+grid-template-columns:1fr;
+}
+
+.heart-btn{
+width:48px;
+height:48px;
+font-size:18px;
+}
+
+.back-btn{
+width:42px;
+height:42px;
+}
+
+}

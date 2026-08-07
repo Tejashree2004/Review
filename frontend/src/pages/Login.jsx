@@ -6,7 +6,7 @@ import Input from "../components/Input";
 import PasswordInput from "../components/PasswordInput";
 import Button from "../components/Button";
 
-// 👉 ADDED: API import (backend connect)
+// API import
 import { loginUser } from "../api/auth";
 
 function Login() {
@@ -30,7 +30,10 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ===========================
     // Temporary Signup Check
+    // ===========================
+
     const isRegistered = localStorage.getItem("registered");
 
     if (!isRegistered) {
@@ -39,30 +42,81 @@ function Login() {
       return;
     }
 
-    console.log(formData);
+    console.log("Login Data:", formData);
 
     // ===========================
-    // 👉 REAL BACKEND CALL ADDED
+    // REAL BACKEND CALL
     // ===========================
+
     try {
       const response = await loginUser(formData);
 
-      // PostgreSQL se aaya data (backend response)
       console.log("Backend Response:", response.data);
 
-      // store token if backend sends it
-      localStorage.setItem("token", response.data.token || "dummy-token");
-      localStorage.setItem("user", JSON.stringify(response.data.user || formData));
-      localStorage.setItem("isLoggedIn", "true");
+      // ===========================
+      // Store Token
+      // ===========================
+
+      localStorage.setItem(
+        "token",
+        response.data.token || ""
+      );
+
+      // ===========================
+      // Store User
+      // ===========================
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(response.data)
+      );
+
+      // ===========================
+      // Store User ID
+      // Backend sends:
+      // UserId = user.Id
+      // ===========================
+
+      const userId =
+        response.data.userId ||
+        response.data.UserId;
+
+      console.log("Logged In User ID:", userId);
+
+      if (userId) {
+        localStorage.setItem(
+          "userId",
+          userId.toString()
+        );
+      }
+
+      // ===========================
+      // Login Status
+      // ===========================
+
+      localStorage.setItem(
+        "isLoggedIn",
+        "true"
+      );
 
       alert("Login successful!");
 
-      // redirect to home
+      // ===========================
+      // Redirect Home
+      // ===========================
+
       navigate("/home");
 
     } catch (error) {
-      console.log(error);
-      alert("Login failed (backend issue)");
+      console.error(
+        "Login Error:",
+        error.response?.data || error
+      );
+
+      alert(
+        error.response?.data?.message ||
+        "Login failed. Please check your email/mobile and password."
+      );
     }
   };
 
@@ -95,58 +149,103 @@ function Login() {
           name="password"
         />
 
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-          gap: "10px",
-        }}>
-
-          <label style={{
+        <div
+          style={{
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: "8px",
-            fontSize: "14px",
-          }}>
+            marginBottom: "20px",
+            flexWrap: "wrap",
+            gap: "10px",
+          }}
+        >
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "14px",
+            }}
+          >
+
             <input
               type="checkbox"
               name="remember"
               checked={formData.remember}
               onChange={handleChange}
             />
+
             Remember Me
+
           </label>
 
-          <span style={{
-            fontSize: "14px",
-            color: "#ddd",
-            cursor: "pointer",
-          }}>
+          <span
+            style={{
+              fontSize: "14px",
+              color: "#ddd",
+              cursor: "pointer",
+            }}
+          >
             Forgot Password?
           </span>
 
         </div>
 
-        <Button text="Login" type="submit" />
+        <Button
+          text="Login"
+          type="submit"
+        />
 
       </form>
 
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        margin: "24px 0",
-      }}>
-        <div style={{ flex: 1, height: "1px", background: "#444" }} />
-        <span style={{ color: "#aaa", fontSize: "14px" }}>OR</span>
-        <div style={{ flex: 1, height: "1px", background: "#444" }} />
+      {/* ===========================
+          OR Divider
+      =========================== */}
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          margin: "24px 0",
+        }}
+      >
+
+        <div
+          style={{
+            flex: 1,
+            height: "1px",
+            background: "#444",
+          }}
+        />
+
+        <span
+          style={{
+            color: "#aaa",
+            fontSize: "14px",
+          }}
+        >
+          OR
+        </span>
+
+        <div
+          style={{
+            flex: 1,
+            height: "1px",
+            background: "#444",
+          }}
+        />
+
       </div>
+
+      {/* Google Login */}
 
       <button className="google-btn">
         Continue with Google
       </button>
+
+      {/* Guest Login */}
 
       <button
         className="google-btn"
@@ -160,11 +259,18 @@ function Login() {
         Continue as Guest
       </button>
 
+      {/* Signup */}
+
       <p className="bottom-link">
+
         Don't have an account?{" "}
+
         <Link to="/signup">
-          <span>Sign Up</span>
+          <span>
+            Sign Up
+          </span>
         </Link>
+
       </p>
 
     </AuthLayout>

@@ -1,0 +1,199 @@
+.navbar{
+    width:100%;
+    height:72px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 24px;
+
+    background:#111;
+
+    border-bottom:1px solid #222;
+
+    position:sticky;
+    top:0;
+    z-index:1000;
+}
+
+
+/* Left & Right Section */
+
+.nav-left,
+.nav-right{
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+
+/* Menu Button */
+
+.menu-btn{
+    background:transparent;
+    border:none;
+
+    color:#fff;
+
+    font-size:24px;
+
+    cursor:pointer;
+
+    transition:0.3s;
+}
+
+.menu-btn:hover{
+    color:#00d4ff;
+}
+
+
+/* Logo */
+
+.logo{
+    color:white;
+
+    font-size:28px;
+
+    font-weight:700;
+
+    letter-spacing:1px;
+
+    cursor:pointer;
+}
+
+
+/* Notification */
+
+.notification{
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+}
+
+
+.icon{
+
+    color:white;
+
+    font-size:22px;
+
+}
+
+
+/* Notification Badge */
+
+.badge{
+
+    position:absolute;
+
+    top:-7px;
+
+    right:-8px;
+
+
+    width:18px;
+
+    height:18px;
+
+
+    border-radius:50%;
+
+
+    background:#ff2d2d;
+
+
+    color:white;
+
+
+    font-size:10px;
+
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+
+/* Profile Icon */
+
+.profile-icon{
+
+    font-size:32px;
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:0.3s;
+
+}
+
+
+.profile-icon:hover{
+
+    color:#00d4ff;
+
+}
+
+
+/* Mobile Responsive */
+
+@media(max-width:480px){
+
+    .navbar{
+
+        height:64px;
+
+        padding:0 15px;
+
+    }
+
+
+    .logo{
+
+        font-size:23px;
+
+    }
+
+
+    .menu-btn{
+
+        font-size:20px;
+
+    }
+
+
+    .icon{
+
+        font-size:19px;
+
+    }
+
+
+    .profile-icon{
+
+        font-size:27px;
+
+    }
+
+
+    .nav-left,
+    .nav-right{
+
+        gap:14px;
+
+    }
+
+}

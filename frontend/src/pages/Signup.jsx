@@ -6,7 +6,7 @@ import Input from "../components/Input";
 import PasswordInput from "../components/PasswordInput";
 import Button from "../components/Button";
 
-// 👉 ADDED: backend API
+// 👉 backend API
 import { signupUser } from "../api/auth";
 
 function Signup() {
@@ -43,25 +43,48 @@ function Signup() {
       return;
     }
 
-    console.log(formData);
+    console.log("Signup Data:", formData);
 
     try {
-      // 👉 ADDED: send to backend (PostgreSQL)
+      // 👉 Send data to backend
       const response = await signupUser(formData);
 
       console.log("Backend Response:", response.data);
 
-      // 👉 ADDED: mark user registered (for login check)
+      // 👉 Mark user registered
       localStorage.setItem("registered", "true");
 
       alert("Signup successful!");
 
-      // 👉 redirect to login page
+      // 👉 Redirect to login
       navigate("/login");
 
     } catch (error) {
-      console.log(error);
-      alert("Signup failed (backend issue)");
+      console.log("Signup Error:", error);
+
+      // ===============================
+      // Show actual backend error
+      // ===============================
+
+      if (error.response) {
+        console.log(
+          "Backend Error Response:",
+          error.response.data
+        );
+
+        const message =
+          error.response.data?.message ||
+          error.response.data?.Message ||
+          "Signup failed.";
+
+        alert(message);
+      } else if (error.request) {
+        alert(
+          "Backend server is not responding. Please make sure the backend is running."
+        );
+      } else {
+        alert("Signup failed. Please try again.");
+      }
     }
   };
 
@@ -126,15 +149,22 @@ function Signup() {
             checked={formData.terms}
             onChange={handleChange}
           />
+
           I agree to Terms & Conditions
         </label>
 
-        <Button text="Create Account" type="submit" />
+        <Button
+          text="Create Account"
+          type="submit"
+        />
 
       </form>
 
       <p className="bottom-link">
-        Already have an account? <Link to="/login">Login</Link>
+        Already have an account?{" "}
+        <Link to="/login">
+          Login
+        </Link>
       </p>
 
     </AuthLayout>
