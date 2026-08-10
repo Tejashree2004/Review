@@ -3,36 +3,68 @@ import {
   FaSearch,
   FaPlusCircle,
   FaBell,
-  FaUser,
 } from "react-icons/fa";
 
-function BottomNavigation() {
-  return (
-    <div className="bottom-nav">
+import { useLocation, useNavigate } from "react-router-dom";
 
-      <div className="nav-item active">
+import "../styles/BottomNavigation.css";
+
+function BottomNavigation() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleNavigation = (path) => {
+    navigate(path);
+  };
+
+  return (
+    <nav className="bottom-nav">
+
+      {/* Home */}
+      <div
+        className={`nav-item ${
+          location.pathname === "/home" ? "active" : ""
+        }`}
+        onClick={() => handleNavigation("/home")}
+      >
         <FaHome />
         <span>Home</span>
       </div>
 
-      <div className="nav-item">
+      {/* Search */}
+      <div
+        className={`nav-item ${
+          location.pathname === "/search" ? "active" : ""
+        }`}
+        onClick={() => handleNavigation("/search")}
+      >
         <FaSearch />
         <span>Search</span>
       </div>
 
-      <div className="nav-item">
+      {/* Review */}
+      <div
+        className={`nav-item ${
+          location.pathname === "/reviews" ? "active" : ""
+        }`}
+        onClick={() => handleNavigation("/reviews")}
+      >
         <FaPlusCircle />
         <span>Review</span>
       </div>
 
-      <div className="nav-item">
+      {/* Alerts */}
+      <div
+        className={`nav-item ${
+          location.pathname === "/notifications" ? "active" : ""
+        }`}
+        onClick={() => handleNavigation("/notifications")}
+      >
         <FaBell />
         <span>Alerts</span>
       </div>
 
-   
-
-    </div>
+    </nav>
   );
 }
 

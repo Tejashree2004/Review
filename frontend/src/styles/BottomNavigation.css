@@ -1,85 +1,173 @@
-.bottom-nav {
-  position: sticky;
-  bottom: 16px;
+/* =====================================================
+   BOTTOM NAVIGATION
+===================================================== */
 
+.bottom-nav {
   width: 100%;
   height: 72px;
 
   display: flex;
-  justify-content: space-around;
   align-items: center;
+  justify-content: space-around;
 
   background: #171717;
+
   border: 1px solid #2c2c2c;
   border-radius: 18px;
 
-  padding: 10px 8px;
-  margin-top: 30px;
+  padding: 8px;
+
+  margin: 30px auto 0;
+
+  box-sizing: border-box;
 
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 
-  z-index: 100;
+  position: sticky;
+  bottom: 16px;
+
+  z-index: 1000;
 }
 
-.nav-item {
+
+/* =====================================================
+   NAV ITEM
+===================================================== */
+
+.bottom-nav .nav-item {
+  width: 25%;
+  height: 100%;
+
   display: flex;
   flex-direction: column;
+
   align-items: center;
   justify-content: center;
 
-  gap: 4px;
+  gap: 5px;
 
   flex: 1;
 
-  cursor: pointer;
+  background: transparent !important;
+
+  border: none !important;
+
+  border-radius: 12px;
 
   color: #9f9f9f;
 
-  transition: all 0.3s ease;
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+
+  box-sizing: border-box;
+
+  user-select: none;
 }
 
-.nav-item svg {
+
+/* =====================================================
+   ICON
+===================================================== */
+
+.bottom-nav .nav-item svg {
   font-size: 20px;
-  transition: all 0.3s ease;
+
+  color: inherit;
+
+  transition: transform 0.25s ease;
 }
 
-.nav-item span {
+
+/* =====================================================
+   TEXT
+===================================================== */
+
+.bottom-nav .nav-item span {
   font-size: 11px;
+
   font-weight: 500;
+
+  color: inherit;
+
+  line-height: 1;
 }
 
-.nav-item:hover {
+
+/* =====================================================
+   HOVER
+===================================================== */
+
+.bottom-nav .nav-item:hover {
+  background: #222222 !important;
+
   color: #ffffff;
+
   transform: translateY(-2px);
 }
 
-.nav-item.active {
+
+/* =====================================================
+   ACTIVE
+===================================================== */
+
+.bottom-nav .nav-item.active {
+  background: #222222 !important;
+
   color: #ffffff;
 }
 
-.nav-item.active svg {
+
+.bottom-nav .nav-item.active svg {
   transform: scale(1.1);
 }
 
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
 @media (max-width: 480px) {
+
   .bottom-nav {
     height: 68px;
+
+    padding: 6px 4px;
+
     border-radius: 16px;
-    padding: 8px 4px;
+
+    bottom: 10px;
   }
 
-  .nav-item svg {
+
+  .bottom-nav .nav-item {
+    border-radius: 12px;
+
+    gap: 4px;
+  }
+
+
+  .bottom-nav .nav-item svg {
     font-size: 18px;
   }
 
-  .nav-item span {
+
+  .bottom-nav .nav-item span {
     font-size: 10px;
   }
 }
 
+
+/* =====================================================
+   TABLET / LAPTOP
+===================================================== */
+
 @media (min-width: 768px) {
+
   .bottom-nav {
     max-width: 420px;
-    margin: 30px auto 0;
+
+    margin-left: auto;
+    margin-right: auto;
   }
 }

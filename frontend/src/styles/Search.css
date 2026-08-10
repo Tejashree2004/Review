@@ -1,0 +1,455 @@
+/* =========================================
+   SEARCH PAGE
+========================================= */
+
+.search-back-btn {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 18px;
+
+  background: #171717;
+  color: #ffffff;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 50%;
+
+  font-size: 17px;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.search-back-btn:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+
+/* =========================================
+   SEARCH DISPLAY
+========================================= */
+
+.search-page-search {
+  width: 100%;
+  height: 54px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 0 18px;
+
+  box-sizing: border-box;
+
+  background: #171717;
+
+  border: 1px solid #2d2d2d;
+
+  border-radius: 16px;
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  margin-bottom: 14px;
+}
+
+.search-page-search svg {
+  color: #999999;
+  font-size: 17px;
+}
+
+
+/* =========================================
+   HORIZONTAL FILTERS
+========================================= */
+
+.search-filters {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  overflow-x: auto;
+
+  padding-bottom: 4px;
+
+  margin-bottom: 28px;
+
+  scrollbar-width: none;
+}
+
+.search-filters::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =========================================
+   FILTER BUTTON
+========================================= */
+
+.search-filter {
+  height: 42px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 16px;
+
+  background: #171717;
+
+  border: 1px solid #2d2d2d;
+
+  border-radius: 22px;
+
+  color: #cfcfcf;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition: 0.25s ease;
+}
+
+.search-filter svg {
+  font-size: 13px;
+}
+
+.search-filter:hover {
+  background: #242424;
+  color: #ffffff;
+}
+
+
+/* =========================================
+   ACTIVE FILTER
+========================================= */
+
+.search-filter.active {
+  background: #ffffff;
+
+  color: #000000;
+
+  border-color: #ffffff;
+
+  font-weight: 600;
+}
+
+.search-filter.active:hover {
+  background: #eeeeee;
+
+  color: #000000;
+}
+
+
+/* =========================================
+   RESULTS HEADER
+========================================= */
+
+.results-header {
+  width: 100%;
+
+  margin-bottom: 18px;
+}
+
+.results-header h2 {
+  margin: 0 0 5px;
+
+  color: #ffffff;
+
+  font-size: 25px;
+
+  font-weight: 700;
+}
+
+.results-header p {
+  margin: 0;
+
+  color: #999999;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   RESULTS LIST
+========================================= */
+
+.search-results-list {
+  width: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+
+/* =========================================
+   PLACE CARD WRAPPER
+========================================= */
+
+.search-place-card {
+  width: 100%;
+
+  background: #171717;
+
+  border: 1px solid #2d2d2d;
+
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  transition: 0.25s ease;
+}
+
+.search-place-card:hover {
+  border-color: #444444;
+
+  transform: translateY(-2px);
+}
+
+
+/* =========================================
+   LOADING
+========================================= */
+
+.search-loading {
+  min-height: 220px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
+
+  color: #aaaaaa;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+
+  border: 3px solid #333333;
+
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: searchSpin 0.8s linear infinite;
+}
+
+@keyframes searchSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.search-loading p {
+  margin: 0;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   NO RESULTS
+========================================= */
+
+.no-results {
+  min-height: 220px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 30px;
+
+  box-sizing: border-box;
+
+  background: #171717;
+
+  border: 1px solid #2d2d2d;
+
+  border-radius: 20px;
+}
+
+.no-results svg {
+  color: #777777;
+
+  font-size: 35px;
+
+  margin-bottom: 15px;
+}
+
+.no-results h3 {
+  margin: 0 0 8px;
+
+  color: #ffffff;
+
+  font-size: 20px;
+}
+
+.no-results p {
+  max-width: 380px;
+
+  margin: 0;
+
+  color: #999999;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 768px) {
+
+  .search-back-btn {
+    width: 42px;
+    height: 42px;
+
+    font-size: 15px;
+
+    margin-bottom: 15px;
+  }
+
+  .search-page-search {
+    height: 50px;
+
+    border-radius: 14px;
+
+    padding: 0 15px;
+
+    font-size: 14px;
+  }
+
+  .search-filters {
+    margin-bottom: 22px;
+  }
+
+  .search-filter {
+    height: 40px;
+
+    padding: 0 14px;
+
+    font-size: 12px;
+  }
+
+  .results-header h2 {
+    font-size: 22px;
+  }
+
+  .results-header p {
+    font-size: 13px;
+  }
+
+}
+
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 480px) {
+
+  .search-back-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .search-page-search {
+    height: 48px;
+
+    padding: 0 13px;
+
+    gap: 10px;
+
+    font-size: 14px;
+  }
+
+  .search-page-search svg {
+    font-size: 16px;
+  }
+
+  .search-filters {
+    gap: 8px;
+
+    margin-bottom: 20px;
+  }
+
+  .search-filter {
+    height: 38px;
+
+    padding: 0 13px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+  }
+
+  .search-filter svg {
+    font-size: 12px;
+  }
+
+  .results-header h2 {
+    font-size: 20px;
+  }
+
+  .results-header p {
+    font-size: 12px;
+  }
+
+  .search-results-list {
+    gap: 12px;
+  }
+
+  .search-place-card {
+    border-radius: 16px;
+  }
+
+  .no-results {
+    min-height: 200px;
+
+    padding: 25px 18px;
+  }
+
+}
+.search-page-bar {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.search-page-bar .search-wrapper {
+  width: 100%;
+  margin-bottom: 0;
+}

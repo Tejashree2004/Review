@@ -17,6 +17,8 @@ import {
   FaHeart,
   FaThLarge,
   FaCommentAlt,
+  FaMapMarkedAlt,
+  FaPen,
 } from "react-icons/fa";
 
 import "../styles/PlaceDetails.css";
@@ -65,7 +67,7 @@ function PlaceDetails() {
 
       setPlace(response.data);
 
-      // Check whether this place is already favorite
+      // Check favorite
       await checkFavorite(response.data.placeId);
     } catch (error) {
       console.error(
@@ -101,12 +103,6 @@ function PlaceDetails() {
           Number(favorite.placeId) === currentPlaceId
       );
 
-      console.log(
-        "Favorite Check:",
-        currentPlaceId,
-        alreadyFavorite
-      );
-
       setIsFavorite(alreadyFavorite);
     } catch (error) {
       console.error(
@@ -139,24 +135,18 @@ function PlaceDetails() {
 
       setFavoriteLoading(true);
 
-      // =============================
-      // Remove Favorite
-      // =============================
-
       if (isFavorite) {
+        // Remove Favorite
+
         await removeFavorite(
           userId,
           place.placeId
         );
 
         setIsFavorite(false);
-      }
+      } else {
+        // Add Favorite
 
-      // =============================
-      // Add Favorite
-      // =============================
-
-      else {
         await addFavorite({
           userId: userId,
           placeId: place.placeId,
@@ -180,6 +170,43 @@ function PlaceDetails() {
     } finally {
       setFavoriteLoading(false);
     }
+  };
+
+  // =============================
+  // Open Google Maps
+  // =============================
+
+  const handleMapClick = () => {
+    if (!place) {
+      return;
+    }
+
+    const address = `${place.name}, ${place.address}, ${place.city}`;
+
+    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      address
+    )}`;
+
+    window.open(
+      mapUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  // =============================
+  // Write Review
+  // =============================
+
+  const handleWriteReview = () => {
+    const userId = getUserId();
+
+    if (!userId) {
+      alert("Please login first to write a review.");
+      return;
+    }
+
+    navigate(`/write-review/${place.placeId}`);
   };
 
   // =============================
@@ -224,6 +251,7 @@ function PlaceDetails() {
       <button
         className="back-btn"
         onClick={() => navigate(-1)}
+        title="Go Back"
       >
         <FaArrowLeft />
       </button>
@@ -245,9 +273,7 @@ function PlaceDetails() {
             alt={place.name}
           />
 
-          {/* =========================
-              Favorite Button
-          ========================= */}
+          {/* Favorite Button */}
 
           <button
             className={`heart-btn ${
@@ -359,6 +385,34 @@ function PlaceDetails() {
                 ? "Open Now"
                 : "Closed"}
             </strong>
+
+          </div>
+
+          {/* =========================
+              Action Buttons
+          ========================= */}
+
+          <div className="place-actions">
+
+            {/* Map */}
+
+            <button
+              className="place-action-btn map-btn"
+              onClick={handleMapClick}
+            >
+              <FaMapMarkedAlt />
+              <span>View on Map</span>
+            </button>
+
+            {/* Write Review */}
+
+            <button
+              className="place-action-btn review-btn"
+              onClick={handleWriteReview}
+            >
+              <FaPen />
+              <span>Write a Review</span>
+            </button>
 
           </div>
 

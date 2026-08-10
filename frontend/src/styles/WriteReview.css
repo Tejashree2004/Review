@@ -1,0 +1,277 @@
+/* ==========================
+   Write Review Page
+========================== */
+
+.write-review-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 40px;
+}
+
+/* ==========================
+   Review Card
+========================== */
+
+.write-review-card {
+  width: 100%;
+  max-width: 750px;
+
+  background: #171717;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 22px;
+
+  padding: 40px;
+
+  box-sizing: border-box;
+}
+
+.write-review-card h1 {
+  margin: 0 0 10px;
+
+  color: #ffffff;
+
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.review-subtitle {
+  margin: 0 0 35px;
+
+  color: #a8a8a8;
+
+  font-size: 16px;
+}
+
+/* ==========================
+   Rating
+========================== */
+
+.rating-section {
+  margin-bottom: 35px;
+}
+
+.rating-section h3 {
+  margin-bottom: 15px;
+
+  color: #ffffff;
+
+  font-size: 19px;
+}
+
+.star-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.star-button {
+  background: transparent;
+  border: none;
+
+  padding: 0;
+
+  cursor: pointer;
+
+  font-size: 34px;
+
+  transition: 0.2s;
+}
+
+.star-button:hover {
+  transform: scale(1.1);
+}
+
+.star-active {
+  color: #ffd700;
+}
+
+.star-inactive {
+  color: #444444;
+}
+
+.rating-text {
+  display: block;
+
+  margin-top: 10px;
+
+  color: #a8a8a8;
+
+  font-size: 14px;
+}
+
+/* ==========================
+   Comment
+========================== */
+
+.comment-section {
+  position: relative;
+
+  margin-bottom: 25px;
+}
+
+.comment-section label {
+  display: block;
+
+  margin-bottom: 12px;
+
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.comment-section textarea {
+  width: 100%;
+
+  min-height: 170px;
+
+  padding: 16px;
+
+  box-sizing: border-box;
+
+  resize: vertical;
+
+  background: #111111;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 15px;
+
+  outline: none;
+
+  color: #ffffff;
+
+  font-size: 15px;
+  line-height: 1.6;
+
+  font-family: inherit;
+
+  transition: 0.3s;
+}
+
+.comment-section textarea:focus {
+  border-color: #ffffff;
+
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.comment-section textarea::placeholder {
+  color: #777777;
+}
+
+.character-count {
+  text-align: right;
+
+  margin-top: 7px;
+
+  color: #777777;
+
+  font-size: 12px;
+}
+
+/* ==========================
+   Submit Button
+========================== */
+
+.submit-review-btn {
+  width: 100%;
+
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  background: #ffffff;
+
+  border: none;
+  border-radius: 14px;
+
+  color: #000000;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.submit-review-btn:hover {
+  background: #e8e8e8;
+
+  transform: translateY(-1px);
+}
+
+.submit-review-btn:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+/* ==========================
+   Mobile
+========================== */
+
+@media (max-width: 768px) {
+
+  .write-review-page {
+    padding-bottom: 30px;
+  }
+
+  .write-review-card {
+    padding: 25px;
+
+    border-radius: 18px;
+  }
+
+  .write-review-card h1 {
+    font-size: 28px;
+  }
+
+  .review-subtitle {
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  .star-container {
+    gap: 7px;
+  }
+
+  .star-button {
+    font-size: 29px;
+  }
+
+  .comment-section textarea {
+    min-height: 150px;
+  }
+}
+
+/* ==========================
+   Small Mobile
+========================== */
+
+@media (max-width: 480px) {
+
+  .write-review-card {
+    padding: 20px;
+  }
+
+  .write-review-card h1 {
+    font-size: 25px;
+  }
+
+  .star-button {
+    font-size: 27px;
+  }
+
+  .submit-review-btn {
+    height: 50px;
+  }
+}

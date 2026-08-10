@@ -1,27 +1,67 @@
-import { useState } from "react";
-import { FaSearch, FaSlidersH } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  FaSearch,
+  FaSlidersH,
+} from "react-icons/fa";
+
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+
 import "../styles/SearchBar.css";
 
 function SearchBar() {
-  const [keyword, setKeyword] = useState("");
-
   const navigate = useNavigate();
 
-  const handleSearch = (e) => {
-    if (e.key === "Enter") {
-      const value = keyword.trim();
+  const [searchParams] = useSearchParams();
 
-      if (value !== "") {
-        navigate(`/search?keyword=${value}`);
-      }
+  const currentKeyword =
+    searchParams.get("keyword") || "";
+
+  const [keyword, setKeyword] = useState(
+    currentKeyword
+  );
+
+  // Update input when URL keyword changes
+  useEffect(() => {
+    setKeyword(currentKeyword);
+  }, [currentKeyword]);
+
+
+  // =====================================
+  // Search
+  // =====================================
+
+  const handleSearch = () => {
+    const value = keyword.trim();
+
+    if (value !== "") {
+      navigate(
+        `/search?keyword=${encodeURIComponent(value)}`
+      );
     }
   };
 
+
+  // =====================================
+  // Enter Key
+  // =====================================
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+
   return (
     <div className="search-wrapper">
+
       {/* Search Box */}
+
       <div className="search-container">
+
         <FaSearch className="search-icon" />
 
         <input
@@ -29,15 +69,18 @@ function SearchBar() {
           className="search-input"
           placeholder="Search restaurants, cafes, hotels..."
           value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          onKeyDown={handleSearch}
+          onChange={(e) =>
+            setKeyword(e.target.value)
+          }
+          onKeyDown={handleKeyDown}
         />
+
       </div>
 
-      {/* Filter Button */}
-      <button className="filter-btn">
-        <FaSlidersH className="filter-icon" />
-      </button>
+
+
+    
+
     </div>
   );
 }
