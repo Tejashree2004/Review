@@ -1,0 +1,648 @@
+/* =====================================================
+   OWNER BUSINESS PROFILE
+===================================================== */
+
+.owner-business-page {
+  min-height: 100vh;
+
+  width: 100%;
+
+  background: #0b0b0b;
+
+  color: #ffffff;
+
+  box-sizing: border-box;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.business-form-header {
+  height: 68px;
+
+  width: 100%;
+
+  max-width: 1100px;
+
+  margin: auto;
+
+  padding: 0 28px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  border-bottom: 1px solid #222222;
+}
+
+
+.business-back-btn {
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  border: 1px solid #303030;
+
+  background: #151515;
+
+  color: #ffffff;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+
+.business-back-btn:hover {
+  background: #ffffff;
+
+  color: #000000;
+}
+
+
+.business-header-logo {
+  font-size: 18px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+
+.business-header-space {
+  width: 38px;
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.business-form-main {
+  width: 100%;
+
+  max-width: 760px;
+
+  margin: 0 auto;
+
+  padding: 50px 25px 70px;
+
+  box-sizing: border-box;
+}
+
+
+/* =====================================================
+   INTRO
+===================================================== */
+
+.business-form-intro {
+  margin-bottom: 35px;
+}
+
+
+.business-form-label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #777777;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.7px;
+}
+
+
+.business-form-intro h1 {
+  margin: 0;
+
+  font-size: 32px;
+
+  font-weight: 750;
+
+  letter-spacing: -0.7px;
+}
+
+
+.business-form-intro p {
+  max-width: 620px;
+
+  margin: 10px 0 0;
+
+  color: #898989;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.business-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+
+/* =====================================================
+   FORM SECTION
+===================================================== */
+
+.form-section {
+  padding: 24px;
+
+  background: #141414;
+
+  border: 1px solid #282828;
+
+  border-radius: 14px;
+}
+
+
+.form-section-heading {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  margin-bottom: 23px;
+}
+
+
+.form-section-icon {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #000000;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 14px;
+}
+
+
+.form-section-heading h2 {
+  margin: 0 0 3px;
+
+  font-size: 15px;
+
+  font-weight: 700;
+}
+
+
+.form-section-heading p {
+  margin: 0;
+
+  color: #707070;
+
+  font-size: 11px;
+}
+
+
+/* =====================================================
+   FORM GROUP
+===================================================== */
+
+.form-group {
+  margin-bottom: 17px;
+}
+
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+
+.form-group label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #dddddd;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+
+.form-group label span {
+  margin-left: 3px;
+
+  color: #ffffff;
+}
+
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 12px 13px;
+
+  border: 1px solid #303030;
+
+  border-radius: 9px;
+
+  outline: none;
+
+  background: #0d0d0d;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  transition: 0.2s ease;
+}
+
+
+.form-group input,
+.form-group select {
+  height: 44px;
+}
+
+
+.form-group textarea {
+  min-height: 95px;
+
+  resize: vertical;
+
+  line-height: 1.5;
+}
+
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #555555;
+}
+
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #777777;
+
+  background: #101010;
+}
+
+
+.form-group select {
+  cursor: pointer;
+}
+
+
+.form-group small {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #5e5e5e;
+
+  font-size: 10px;
+}
+
+
+/* =====================================================
+   GRID
+===================================================== */
+
+.form-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 14px;
+}
+
+
+.form-grid .form-group:last-child {
+  margin-bottom: 17px;
+}
+
+
+/* =====================================================
+   INPUT WITH ICON
+===================================================== */
+
+.input-with-icon {
+  position: relative;
+}
+
+
+.input-with-icon svg {
+  position: absolute;
+
+  left: 13px;
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #666666;
+
+  font-size: 12px;
+
+  pointer-events: none;
+}
+
+
+.input-with-icon input {
+  padding-left: 36px;
+}
+
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.business-form-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 8px;
+}
+
+
+.cancel-business-btn,
+.save-business-btn {
+  height: 44px;
+
+  padding: 0 20px;
+
+  border-radius: 9px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  transition: 0.2s ease;
+}
+
+
+.cancel-business-btn {
+  border: 1px solid #303030;
+
+  background: transparent;
+
+  color: #aaaaaa;
+}
+
+
+.cancel-business-btn:hover {
+  color: #ffffff;
+
+  border-color: #555555;
+}
+
+
+.save-business-btn {
+  min-width: 145px;
+
+  border: 1px solid #ffffff;
+
+  background: #ffffff;
+
+  color: #000000;
+}
+
+
+.save-business-btn:hover {
+  background: #000000;
+
+  color: #ffffff;
+}
+
+
+.save-business-btn:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .business-form-header {
+    height: 60px;
+
+    padding: 0 15px;
+  }
+
+
+  .business-back-btn {
+    width: 35px;
+    height: 35px;
+
+    font-size: 12px;
+  }
+
+
+  .business-header-logo {
+    font-size: 16px;
+  }
+
+
+  .business-header-space {
+    width: 35px;
+  }
+
+
+  .business-form-main {
+    padding: 32px 14px 45px;
+  }
+
+
+  .business-form-intro {
+    margin-bottom: 25px;
+  }
+
+
+  .business-form-label {
+    font-size: 9px;
+  }
+
+
+  .business-form-intro h1 {
+    font-size: 26px;
+  }
+
+
+  .business-form-intro p {
+    margin-top: 8px;
+
+    font-size: 11px;
+
+    line-height: 1.55;
+  }
+
+
+  .form-section {
+    padding: 17px;
+
+    border-radius: 12px;
+  }
+
+
+  .form-section-heading {
+    gap: 10px;
+
+    margin-bottom: 20px;
+  }
+
+
+  .form-section-icon {
+    width: 36px;
+    height: 36px;
+
+    border-radius: 9px;
+
+    font-size: 12px;
+  }
+
+
+  .form-section-heading h2 {
+    font-size: 14px;
+  }
+
+
+  .form-section-heading p {
+    font-size: 10px;
+  }
+
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+
+  .form-group label {
+    font-size: 11px;
+
+    margin-bottom: 6px;
+  }
+
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 11px;
+
+    border-radius: 8px;
+  }
+
+
+  .form-group input,
+  .form-group select {
+    height: 42px;
+  }
+
+
+  .form-group textarea {
+    min-height: 85px;
+  }
+
+
+  .form-grid {
+    grid-template-columns: 1fr;
+
+    gap: 0;
+  }
+
+
+  .form-grid .form-group:last-child {
+    margin-bottom: 15px;
+  }
+
+
+  .business-form-actions {
+    flex-direction: column-reverse;
+
+    margin-top: 5px;
+  }
+
+
+  .cancel-business-btn,
+  .save-business-btn {
+    width: 100%;
+
+    height: 43px;
+  }
+
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 380px) {
+
+  .business-form-main {
+    padding-left: 11px;
+    padding-right: 11px;
+  }
+
+
+  .form-section {
+    padding: 15px;
+  }
+
+
+  .business-form-intro h1 {
+    font-size: 24px;
+  }
+
+}

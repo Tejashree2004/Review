@@ -1,0 +1,694 @@
+/* =====================================================
+   ROLE SELECTION PAGE
+===================================================== */
+
+.role-container {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+
+  background: #0d0d0d;
+  color: #ffffff;
+
+  padding: 50px 30px 35px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  position: relative;
+  overflow-x: hidden;
+}
+
+
+/* =====================================================
+   BACK BUTTON
+===================================================== */
+
+.role-back-btn {
+  position: absolute;
+
+  top: 28px;
+  left: 30px;
+
+  width: 44px;
+  height: 44px;
+
+  border-radius: 50%;
+
+  border: 1px solid #333333;
+
+  background: #171717;
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 16px;
+
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+
+  z-index: 10;
+}
+
+.role-back-btn:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+
+  transform: translateX(-2px);
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.role-header {
+  width: 100%;
+  max-width: 900px;
+
+  text-align: center;
+
+  margin-bottom: 45px;
+}
+
+
+/* Logo */
+
+.role-logo {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 100px;
+  height: 42px;
+
+  padding: 0 18px;
+
+  background: #ffffff;
+  color: #000000;
+
+  border-radius: 10px;
+
+  font-size: 18px;
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+
+  margin-bottom: 22px;
+}
+
+
+/* Heading */
+
+.role-header h1 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 38px;
+  font-weight: 700;
+
+  letter-spacing: -0.5px;
+}
+
+
+/* Subtitle */
+
+.role-header p {
+  margin: 12px auto 0;
+
+  max-width: 600px;
+
+  color: #a8a8a8;
+
+  font-size: 15px;
+
+  line-height: 1.6;
+}
+
+
+/* =====================================================
+   ROLE CARDS CONTAINER
+===================================================== */
+
+.role-cards {
+  width: 100%;
+  max-width: 1100px;
+
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 24px;
+
+  align-items: stretch;
+}
+
+
+/* =====================================================
+   ROLE CARD
+===================================================== */
+
+.role-card {
+  min-height: 360px;
+
+  box-sizing: border-box;
+
+  padding: 30px 26px;
+
+  background: #171717;
+
+  border: 1px solid #2d2d2d;
+
+  border-radius: 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  text-align: center;
+
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+
+/* Hover */
+
+.role-card:hover {
+  transform: translateY(-7px);
+
+  background: #1c1c1c;
+
+  border-color: #555555;
+
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.45);
+}
+
+
+/* =====================================================
+   ROLE ICON
+===================================================== */
+
+.role-icon {
+  width: 76px;
+  height: 76px;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+  color: #000000;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+
+  margin-bottom: 24px;
+
+  transition: all 0.3s ease;
+}
+
+.role-card:hover .role-icon {
+  transform: scale(1.06);
+
+  background: #f1f1f1;
+}
+
+
+/* =====================================================
+   ROLE CARD CONTENT
+===================================================== */
+
+.role-card-content {
+  flex: 1;
+
+  width: 100%;
+}
+
+.role-card-content h2 {
+  margin: 0 0 12px;
+
+  color: #ffffff;
+
+  font-size: 21px;
+
+  font-weight: 700;
+}
+
+.role-card-content p {
+  margin: 0;
+
+  color: #a5a5a5;
+
+  font-size: 14px;
+
+  line-height: 1.65;
+}
+
+
+/* =====================================================
+   CONTINUE BUTTON
+===================================================== */
+
+.role-continue-btn {
+  width: 100%;
+
+  min-height: 48px;
+
+  margin-top: 25px;
+
+  padding: 12px 18px;
+
+  border-radius: 10px;
+
+  border: 1px solid #ffffff;
+
+  background: #ffffff;
+
+  color: #000000;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  transition: all 0.25s ease;
+}
+
+.role-continue-btn:hover {
+  background: #000000;
+
+  color: #ffffff;
+
+  border-color: #ffffff;
+}
+
+.role-continue-btn svg {
+  font-size: 12px;
+
+  transition: transform 0.25s ease;
+}
+
+.role-continue-btn:hover svg {
+  transform: translateX(4px);
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.role-footer {
+  text-align: center;
+
+  margin-top: 45px;
+}
+
+.role-footer span {
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+.role-footer p {
+  margin: 6px 0 0;
+
+  color: #777777;
+
+  font-size: 12px;
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 900px) {
+
+  .role-container {
+    padding: 45px 20px 30px;
+  }
+
+  .role-cards {
+    grid-template-columns: repeat(2, 1fr);
+
+    max-width: 700px;
+  }
+
+  .role-card:last-child {
+    grid-column: 1 / -1;
+
+    max-width: 340px;
+
+    width: 100%;
+
+    justify-self: center;
+  }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .role-container {
+    min-height: 100vh;
+
+    padding: 70px 14px 20px;
+  }
+
+
+  /* =========================
+     Back Button
+  ========================= */
+
+  .role-back-btn {
+    top: 16px;
+    left: 14px;
+
+    width: 36px;
+    height: 36px;
+
+    font-size: 14px;
+  }
+
+
+  /* =========================
+     Header
+  ========================= */
+
+  .role-header {
+    margin-bottom: 22px;
+  }
+
+
+  .role-logo {
+    min-width: 70px;
+
+    height: 32px;
+
+    padding: 0 13px;
+
+    border-radius: 8px;
+
+    font-size: 13px;
+
+    letter-spacing: 1.2px;
+
+    margin-bottom: 12px;
+  }
+
+
+  .role-header h1 {
+    font-size: 25px;
+
+    line-height: 1.2;
+
+    letter-spacing: -0.3px;
+  }
+
+
+  .role-header p {
+    margin-top: 7px;
+
+    padding: 0 15px;
+
+    font-size: 12px;
+
+    line-height: 1.45;
+  }
+
+
+  /* =========================
+     Cards Container
+  ========================= */
+
+  .role-cards {
+    grid-template-columns: 1fr;
+
+    gap: 11px;
+
+    max-width: 100%;
+  }
+
+
+  /* =========================
+     Compact Mobile Card
+  ========================= */
+
+  .role-card,
+  .role-card:last-child {
+
+    width: 100%;
+
+    max-width: none;
+
+    min-height: 0;
+
+    padding: 16px 14px;
+
+    border-radius: 14px;
+
+    display: grid;
+
+    grid-template-columns: 48px 1fr;
+
+    column-gap: 13px;
+
+    row-gap: 8px;
+
+    align-items: center;
+
+    text-align: left;
+  }
+
+
+  /* Remove large desktop hover movement on mobile */
+
+  .role-card:hover {
+    transform: none;
+
+    box-shadow: none;
+  }
+
+
+  /* =========================
+     Compact Icon
+  ========================= */
+
+  .role-icon {
+
+    width: 48px;
+    height: 48px;
+
+    font-size: 20px;
+
+    margin: 0;
+
+    grid-row: 1 / span 2;
+
+    align-self: start;
+  }
+
+
+  .role-card:hover .role-icon {
+    transform: none;
+  }
+
+
+  /* =========================
+     Card Content
+  ========================= */
+
+  .role-card-content {
+    width: auto;
+
+    flex: none;
+
+    min-width: 0;
+  }
+
+
+  .role-card-content h2 {
+
+    margin: 0 0 3px;
+
+    font-size: 16px;
+
+    line-height: 1.25;
+  }
+
+
+  .role-card-content p {
+
+    margin: 0;
+
+    font-size: 11.5px;
+
+    line-height: 1.4;
+
+    color: #999999;
+  }
+
+
+  /* =========================
+     Compact Button
+  ========================= */
+
+  .role-continue-btn {
+
+    grid-column: 2;
+
+    width: 100%;
+
+    min-height: 38px;
+
+    margin-top: 2px;
+
+    padding: 8px 12px;
+
+    border-radius: 8px;
+
+    font-size: 11.5px;
+
+    gap: 7px;
+  }
+
+
+  .role-continue-btn svg {
+    font-size: 10px;
+  }
+
+
+  /* =========================
+     Footer
+  ========================= */
+
+  .role-footer {
+    margin-top: 20px;
+  }
+
+
+  .role-footer span {
+    font-size: 11px;
+  }
+
+
+  .role-footer p {
+    margin-top: 3px;
+
+    font-size: 9px;
+  }
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 380px) {
+
+  .role-container {
+    padding: 65px 10px 15px;
+  }
+
+
+  .role-header {
+    margin-bottom: 18px;
+  }
+
+
+  .role-header h1 {
+    font-size: 23px;
+  }
+
+
+  .role-header p {
+    font-size: 11px;
+
+    padding: 0 10px;
+  }
+
+
+  .role-cards {
+    gap: 9px;
+  }
+
+
+  .role-card,
+  .role-card:last-child {
+
+    padding: 13px 11px;
+
+    grid-template-columns: 44px 1fr;
+
+    column-gap: 10px;
+
+    row-gap: 6px;
+
+    border-radius: 12px;
+  }
+
+
+  .role-icon {
+    width: 44px;
+    height: 44px;
+
+    font-size: 18px;
+  }
+
+
+  .role-card-content h2 {
+    font-size: 14px;
+  }
+
+
+  .role-card-content p {
+    font-size: 10.5px;
+
+    line-height: 1.35;
+  }
+
+
+  .role-continue-btn {
+
+    min-height: 35px;
+
+    padding: 7px 10px;
+
+    font-size: 10.5px;
+
+    border-radius: 7px;
+  }
+
+
+  .role-footer {
+    margin-top: 16px;
+  }
+}

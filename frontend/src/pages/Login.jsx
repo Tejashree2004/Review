@@ -6,7 +6,6 @@ import Input from "../components/Input";
 import PasswordInput from "../components/PasswordInput";
 import Button from "../components/Button";
 
-// API import
 import { loginUser } from "../api/auth";
 
 function Login() {
@@ -18,21 +17,45 @@ function Login() {
     remember: false,
   });
 
+  const [loading, setLoading] = useState(false);
+
+  // =========================
+  // Handle Input Change
+  // =========================
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
-    });
+    }));
   };
+
+  // =========================
+  // Login
+  // =========================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ===========================
+    // =========================
+    // Validation
+    // =========================
+
+    if (!formData.emailOrMobile.trim()) {
+      alert("Please enter your email or mobile number.");
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      alert("Please enter your password.");
+      return;
+    }
+
+    // =========================
     // Temporary Signup Check
-    // ===========================
+    // =========================
 
     const isRegistered = localStorage.getItem("registered");
 
@@ -42,46 +65,57 @@ function Login() {
       return;
     }
 
-    console.log("Login Data:", formData);
-
-    // ===========================
-    // REAL BACKEND CALL
-    // ===========================
-
     try {
+      setLoading(true);
+
+      console.log("Login Data:", formData);
+
+      // =========================
+      // Backend Login
+      // =========================
+
       const response = await loginUser(formData);
 
       console.log("Backend Response:", response.data);
 
-      // ===========================
+      const data = response.data;
+
+      // =========================
       // Store Token
-      // ===========================
+      // =========================
 
-      localStorage.setItem(
-        "token",
-        response.data.token || ""
-      );
+      const token =
+        data.token ||
+        data.Token ||
+        "";
 
-      // ===========================
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+
+      // =========================
       // Store User
-      // ===========================
+      // =========================
 
       localStorage.setItem(
         "user",
-        JSON.stringify(response.data)
+        JSON.stringify(data)
       );
 
-      // ===========================
+      // =========================
       // Store User ID
-      // Backend sends:
-      // UserId = user.Id
-      // ===========================
+      // =========================
 
       const userId =
-        response.data.userId ||
-        response.data.UserId;
+        data.userId ||
+        data.UserId ||
+        data.id ||
+        data.Id;
 
-      console.log("Logged In User ID:", userId);
+      console.log(
+        "Logged In User ID:",
+        userId
+      );
 
       if (userId) {
         localStorage.setItem(
@@ -90,22 +124,38 @@ function Login() {
         );
       }
 
-      // ===========================
+      // =========================
       // Login Status
-      // ===========================
+      // =========================
 
       localStorage.setItem(
         "isLoggedIn",
         "true"
       );
 
+      // =========================
+      // Remember Me
+      // =========================
+
+      if (formData.remember) {
+        localStorage.setItem(
+          "rememberMe",
+          "true"
+        );
+      } else {
+        localStorage.removeItem(
+          "rememberMe"
+        );
+      }
+
+      // =========================
+      // IMPORTANT
+      // LOGIN → ROLE SELECTION
+      // =========================
+
       alert("Login successful!");
 
-      // ===========================
-      // Redirect Home
-      // ===========================
-
-      navigate("/home");
+      navigate("/role-selection");
 
     } catch (error) {
       console.error(
@@ -113,23 +163,54 @@ function Login() {
         error.response?.data || error
       );
 
-      alert(
+      const message =
         error.response?.data?.message ||
-        "Login failed. Please check your email/mobile and password."
-      );
+        error.response?.data?.Message ||
+        "Login failed. Please check your email/mobile and password.";
+
+      alert(message);
+
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // =========================
+  // Guest Login
+  // =========================
+
+  const handleGuestLogin = () => {
+    localStorage.setItem(
+      "userRole",
+      "guest"
+    );
+
+    localStorage.setItem(
+      "isGuest",
+      "true"
+    );
+
+    navigate("/home");
   };
 
   return (
     <AuthLayout>
+
+      {/* =========================
+          Heading
+      ========================= */}
 
       <h1 className="auth-title">
         Welcome Back 👋
       </h1>
 
       <p className="auth-subtitle">
-        Login to continue using Review.
+        Login to continue using REVIO.
       </p>
+
+      {/* =========================
+          Login Form
+      ========================= */}
 
       <form onSubmit={handleSubmit}>
 
@@ -149,6 +230,10 @@ function Login() {
           name="password"
         />
 
+        {/* =========================
+            Remember / Forgot
+        ========================= */}
+
         <div
           style={{
             display: "flex",
@@ -166,6 +251,8 @@ function Login() {
               alignItems: "center",
               gap: "8px",
               fontSize: "14px",
+              color: "#ffffff",
+              cursor: "pointer",
             }}
           >
 
@@ -183,25 +270,39 @@ function Login() {
           <span
             style={{
               fontSize: "14px",
-              color: "#ddd",
+              color: "#cccccc",
               cursor: "pointer",
             }}
+            onClick={() =>
+              alert(
+                "Forgot Password functionality will be added soon."
+              )
+            }
           >
             Forgot Password?
           </span>
 
         </div>
 
+        {/* =========================
+            Login Button
+        ========================= */}
+
         <Button
-          text="Login"
+          text={
+            loading
+              ? "Logging in..."
+              : "Login"
+          }
           type="submit"
+          disabled={loading}
         />
 
       </form>
 
-      {/* ===========================
+      {/* =========================
           OR Divider
-      =========================== */}
+      ========================= */}
 
       <div
         style={{
@@ -239,27 +340,43 @@ function Login() {
 
       </div>
 
-      {/* Google Login */}
+      {/* =========================
+          Google Login
+      ========================= */}
 
-      <button className="google-btn">
+      <button
+        type="button"
+        className="google-btn"
+        onClick={() =>
+          alert(
+            "Google Login will be added soon."
+          )
+        }
+      >
         Continue with Google
       </button>
 
-      {/* Guest Login */}
+      {/* =========================
+          Guest Login
+      ========================= */}
 
       <button
+        type="button"
         className="google-btn"
         style={{
           marginTop: "12px",
           background: "#222",
           color: "#fff",
+          border: "1px solid #333",
         }}
-        onClick={() => navigate("/home")}
+        onClick={handleGuestLogin}
       >
         Continue as Guest
       </button>
 
-      {/* Signup */}
+      {/* =========================
+          Signup
+      ========================= */}
 
       <p className="bottom-link">
 

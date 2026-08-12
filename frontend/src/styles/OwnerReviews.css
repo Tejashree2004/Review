@@ -1,0 +1,881 @@
+/* =====================================================
+   OWNER REVIEWS PAGE
+===================================================== */
+
+.owner-reviews-page {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+
+  background: #000000;
+  color: #ffffff;
+
+  padding: 35px 25px 80px;
+}
+
+
+/* =====================================================
+   MAIN HEADER
+===================================================== */
+
+.owner-reviews-header {
+  max-width: 1100px;
+  margin: 0 auto 30px;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.owner-reviews-header h1 {
+  margin: 0;
+
+  font-size: 30px;
+  font-weight: 700;
+
+  color: #ffffff;
+}
+
+.owner-reviews-header p {
+  margin: 7px 0 0;
+
+  color: #888888;
+  font-size: 14px;
+}
+
+
+/* =====================================================
+   BACK BUTTON
+===================================================== */
+
+.owner-reviews-back {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  border: 1px solid #303030;
+  border-radius: 50%;
+
+  background: #151515;
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+}
+
+.owner-reviews-back:hover {
+  background: #ffffff;
+  color: #000000;
+
+  border-color: #ffffff;
+}
+
+
+/* =====================================================
+   RATING SUMMARY
+===================================================== */
+
+.owner-rating-summary {
+  max-width: 1100px;
+  margin: 0 auto 25px;
+
+  background: #111111;
+
+  border: 1px solid #292929;
+  border-radius: 16px;
+
+  padding: 25px;
+
+  display: grid;
+  grid-template-columns: 240px 1fr;
+
+  gap: 45px;
+
+  box-sizing: border-box;
+}
+
+
+/* =====================================================
+   MAIN RATING
+===================================================== */
+
+.rating-main {
+  display: flex;
+
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  border-right: 1px solid #292929;
+  padding-right: 35px;
+}
+
+.rating-number {
+  font-size: 48px;
+  font-weight: 700;
+
+  line-height: 1;
+
+  margin-bottom: 10px;
+}
+
+.rating-main p {
+  margin: 8px 0 0;
+
+  color: #777777;
+
+  font-size: 13px;
+}
+
+
+/* =====================================================
+   STARS
+===================================================== */
+
+.owner-review-stars {
+  display: flex;
+  gap: 4px;
+
+  align-items: center;
+}
+
+.star-filled {
+  color: #ffffff;
+}
+
+.star-empty {
+  color: #3b3b3b;
+}
+
+
+/* =====================================================
+   RATING DISTRIBUTION
+===================================================== */
+
+.rating-distribution {
+  display: flex;
+
+  flex-direction: column;
+  justify-content: center;
+
+  gap: 10px;
+}
+
+.rating-row {
+  display: grid;
+
+  grid-template-columns: 35px 1fr 25px;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.rating-label {
+  color: #cccccc;
+
+  font-size: 13px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 3px;
+}
+
+.rating-label svg {
+  font-size: 10px;
+}
+
+.rating-bar {
+  height: 7px;
+
+  background: #292929;
+
+  border-radius: 10px;
+
+  overflow: hidden;
+}
+
+.rating-bar-fill {
+  height: 100%;
+
+  background: #ffffff;
+
+  border-radius: inherit;
+
+  transition: width 0.3s ease;
+}
+
+.rating-count {
+  color: #777777;
+
+  font-size: 12px;
+
+  text-align: right;
+}
+
+
+/* =====================================================
+   FILTERS
+===================================================== */
+
+.review-filters {
+  max-width: 1100px;
+
+  margin: 0 auto 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  flex-wrap: wrap;
+}
+
+.filter-title {
+  color: #777777;
+
+  font-size: 13px;
+
+  margin-right: 5px;
+}
+
+.review-filter {
+  min-height: 34px;
+
+  padding: 7px 13px;
+
+  border-radius: 8px;
+
+  border: 1px solid #303030;
+
+  background: #111111;
+
+  color: #bcbcbc;
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 4px;
+
+  transition: 0.2s ease;
+}
+
+.review-filter:hover {
+  border-color: #666666;
+  color: #ffffff;
+}
+
+.review-filter.active {
+  background: #ffffff;
+  color: #000000;
+
+  border-color: #ffffff;
+}
+
+.review-filter svg {
+  font-size: 9px;
+}
+
+
+/* =====================================================
+   REVIEW LIST
+===================================================== */
+
+.owner-review-list {
+  max-width: 1100px;
+
+  margin: 0 auto;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 15px;
+}
+
+
+/* =====================================================
+   REVIEW CARD
+===================================================== */
+
+.owner-review-card {
+  background: #111111;
+
+  border: 1px solid #292929;
+
+  border-radius: 14px;
+
+  padding: 22px;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.owner-review-card:hover {
+  border-color: #444444;
+  background: #141414;
+}
+
+
+/* =====================================================
+   CUSTOMER HEADER
+===================================================== */
+
+.review-customer-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.customer-info {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+.customer-avatar {
+  font-size: 39px;
+
+  color: #777777;
+}
+
+.customer-info h3 {
+  margin: 0;
+
+  font-size: 15px;
+
+  font-weight: 600;
+
+  color: #ffffff;
+}
+
+.customer-info span {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 11px;
+
+  color: #666666;
+}
+
+.customer-rating {
+  flex-shrink: 0;
+}
+
+
+/* =====================================================
+   COMMENT
+===================================================== */
+
+.customer-comment {
+  margin: 18px 0;
+
+  color: #cccccc;
+
+  font-size: 14px;
+
+  line-height: 1.65;
+}
+
+
+/* =====================================================
+   OWNER REPLY
+===================================================== */
+
+.owner-reply {
+  margin-top: 15px;
+
+  padding: 14px 16px;
+
+  background: #181818;
+
+  border-left: 3px solid #ffffff;
+
+  border-radius: 0 8px 8px 0;
+}
+
+.owner-reply-header {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 7px;
+
+  color: #ffffff;
+
+  font-size: 12px;
+}
+
+.owner-reply-header svg {
+  font-size: 11px;
+}
+
+.owner-reply p {
+  margin: 0;
+
+  color: #aaaaaa;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* =====================================================
+   REPLY FORM
+===================================================== */
+
+.reply-form {
+  margin-top: 16px;
+
+  padding: 15px;
+
+  background: #0b0b0b;
+
+  border: 1px solid #292929;
+
+  border-radius: 10px;
+}
+
+.reply-form textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  resize: vertical;
+
+  min-height: 90px;
+
+  padding: 12px;
+
+  border: 1px solid #333333;
+
+  border-radius: 8px;
+
+  outline: none;
+
+  background: #151515;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+.reply-form textarea::placeholder {
+  color: #666666;
+}
+
+.reply-form textarea:focus {
+  border-color: #ffffff;
+}
+
+
+/* =====================================================
+   REPLY ACTIONS
+===================================================== */
+
+.reply-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  margin-top: 10px;
+}
+
+.cancel-reply-btn,
+.submit-reply-btn {
+  min-height: 36px;
+
+  padding: 8px 13px;
+
+  border-radius: 7px;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 6px;
+}
+
+.cancel-reply-btn {
+  background: transparent;
+
+  color: #999999;
+
+  border: 1px solid #333333;
+}
+
+.cancel-reply-btn:hover {
+  color: #ffffff;
+
+  border-color: #666666;
+}
+
+.submit-reply-btn {
+  background: #ffffff;
+
+  color: #000000;
+
+  border: 1px solid #ffffff;
+}
+
+.submit-reply-btn:hover {
+  background: #dddddd;
+}
+
+
+/* =====================================================
+   REVIEW ACTIONS
+===================================================== */
+
+.review-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding-top: 14px;
+
+  border-top: 1px solid #222222;
+}
+
+.reply-btn,
+.report-btn {
+  min-height: 34px;
+
+  padding: 7px 12px;
+
+  border-radius: 7px;
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  transition: 0.2s ease;
+}
+
+.reply-btn {
+  background: #ffffff;
+
+  color: #000000;
+
+  border: 1px solid #ffffff;
+}
+
+.reply-btn:hover {
+  background: #dddddd;
+}
+
+.report-btn {
+  background: transparent;
+
+  color: #777777;
+
+  border: 1px solid #303030;
+}
+
+.report-btn:hover {
+  color: #ffffff;
+
+  border-color: #666666;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+.owner-review-empty {
+  padding: 60px 20px;
+
+  text-align: center;
+
+  background: #111111;
+
+  border: 1px solid #292929;
+
+  border-radius: 14px;
+}
+
+.owner-review-empty > svg {
+  font-size: 35px;
+
+  color: #555555;
+
+  margin-bottom: 12px;
+}
+
+.owner-review-empty h2 {
+  margin: 0 0 7px;
+
+  font-size: 18px;
+}
+
+.owner-review-empty p {
+  margin: 0;
+
+  color: #666666;
+
+  font-size: 13px;
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 750px) {
+
+  .owner-reviews-page {
+    padding: 25px 16px 70px;
+  }
+
+  .owner-rating-summary {
+    grid-template-columns: 1fr;
+
+    gap: 25px;
+  }
+
+  .rating-main {
+    border-right: none;
+
+    border-bottom: 1px solid #292929;
+
+    padding-right: 0;
+
+    padding-bottom: 20px;
+  }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .owner-reviews-page {
+    padding: 20px 12px 65px;
+  }
+
+  .owner-reviews-header {
+    gap: 11px;
+
+    margin-bottom: 20px;
+  }
+
+  .owner-reviews-back {
+    width: 36px;
+    height: 36px;
+
+    font-size: 13px;
+  }
+
+  .owner-reviews-header h1 {
+    font-size: 22px;
+  }
+
+  .owner-reviews-header p {
+    font-size: 11px;
+
+    margin-top: 4px;
+  }
+
+  .owner-rating-summary {
+    padding: 18px;
+
+    border-radius: 12px;
+
+    gap: 18px;
+  }
+
+  .rating-number {
+    font-size: 38px;
+  }
+
+  .rating-distribution {
+    gap: 8px;
+  }
+
+  .review-filters {
+    gap: 6px;
+
+    margin-bottom: 16px;
+  }
+
+  .filter-title {
+    width: 100%;
+
+    margin-bottom: 2px;
+  }
+
+  .review-filter {
+    min-height: 31px;
+
+    padding: 6px 10px;
+
+    font-size: 11px;
+  }
+
+  .owner-review-list {
+    gap: 10px;
+  }
+
+  .owner-review-card {
+    padding: 16px;
+
+    border-radius: 11px;
+  }
+
+  .review-customer-header {
+    align-items: flex-start;
+  }
+
+  .customer-avatar {
+    font-size: 34px;
+  }
+
+  .customer-info h3 {
+    font-size: 14px;
+  }
+
+  .customer-info span {
+    font-size: 10px;
+  }
+
+  .customer-rating .owner-review-stars {
+    gap: 2px;
+  }
+
+  .customer-rating .owner-review-stars svg {
+    font-size: 11px;
+  }
+
+  .customer-comment {
+    margin: 14px 0;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+  }
+
+  .owner-reply {
+    padding: 11px 12px;
+  }
+
+  .owner-reply p {
+    font-size: 11px;
+  }
+
+  .review-actions {
+    padding-top: 11px;
+  }
+
+  .reply-btn,
+  .report-btn {
+    min-height: 31px;
+
+    padding: 6px 9px;
+
+    font-size: 10px;
+  }
+
+  .reply-form {
+    padding: 11px;
+  }
+
+  .reply-form textarea {
+    min-height: 80px;
+
+    font-size: 11px;
+  }
+
+  .cancel-reply-btn,
+  .submit-reply-btn {
+    min-height: 32px;
+
+    padding: 7px 10px;
+
+    font-size: 10px;
+  }
+
+}
+
+
+/* =====================================================
+   VERY SMALL MOBILE
+===================================================== */
+
+@media (max-width: 380px) {
+
+  .owner-reviews-page {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .owner-review-card {
+    padding: 13px;
+  }
+
+  .review-customer-header {
+    gap: 8px;
+  }
+
+  .customer-avatar {
+    font-size: 30px;
+  }
+
+  .customer-rating .owner-review-stars svg {
+    font-size: 9px;
+  }
+
+}
