@@ -1,7 +1,10 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5213/api/Home";
-const FAVORITE_API = "http://localhost:5213/api/Favorite";
+const API_BASE = "http://localhost:5213/api";
+
+const API_URL = `${API_BASE}/Home`;
+const FAVORITE_API = `${API_BASE}/Favorite`;
+const PROFILE_API = `${API_BASE}/Profile`;
 
 // =============================
 // Categories
@@ -48,7 +51,9 @@ export const addFavorite = (data) => {
 // =============================
 
 export const removeFavorite = (userId, placeId) => {
-  return axios.delete(`${FAVORITE_API}/${userId}/${placeId}`);
+  return axios.delete(
+    `${FAVORITE_API}/${userId}/${placeId}`
+  );
 };
 
 // =============================
@@ -56,5 +61,18 @@ export const removeFavorite = (userId, placeId) => {
 // =============================
 
 export const getFavorites = (userId) => {
-  return axios.get(`${FAVORITE_API}/user/${userId}`);
+  return axios.get(
+    `${FAVORITE_API}/user/${userId}`
+  );
+};
+
+// =============================
+// MY REVIEWS
+// GET: /api/Profile/{id}/reviews
+// =============================
+
+export const getMyReviews = (userId) => {
+  return axios.get(
+    `${PROFILE_API}/${userId}/reviews`
+  );
 };
