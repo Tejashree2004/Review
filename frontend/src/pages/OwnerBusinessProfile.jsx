@@ -1,4 +1,6 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -15,6 +17,8 @@ import "../styles/OwnerBusinessProfile.css";
 
 function OwnerBusinessProfile() {
   const navigate = useNavigate();
+
+  const API_BASE = "http://localhost:5213/api";
 
   const [formData, setFormData] = useState({
     businessName: "",
@@ -33,10 +37,210 @@ function OwnerBusinessProfile() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const [businessId, setBusinessId] = useState(null);
 
-  // =========================================
-  // HANDLE INPUT
-  // =========================================
+  // =====================================================
+  // GET TOKEN
+  // =====================================================
+
+  const getToken = () => {
+    return (
+      localStorage.getItem("token") ||
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("jwtToken") ||
+      localStorage.getItem("accessToken")
+    );
+  };
+
+  // =====================================================
+  // GET API DATA
+  // =====================================================
+
+  const getResponseData = (response) => {
+    return (
+      response?.data?.data ??
+      response?.data?.Data ??
+      response?.data
+    );
+  };
+
+  // =====================================================
+  // LOAD CATEGORIES + EXISTING BUSINESS
+  // =====================================================
+
+  useEffect(() => {
+    const loadData = async () => {
+      const token = getToken();
+
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      try {
+        // =================================================
+        // LOAD CATEGORIES
+        // =================================================
+
+        const categoryResponse = await axios.get(
+          `${API_BASE}/Home/categories`
+        );
+
+        const categoryData = getResponseData(categoryResponse);
+
+        setCategories(
+          Array.isArray(categoryData)
+            ? categoryData
+            : []
+        );
+
+        // =================================================
+        // LOAD OWNER BUSINESS
+        // GET: /api/owner/business
+        // =================================================
+
+        const businessResponse = await axios.get(
+          `${API_BASE}/owner/business`,
+          config
+        );
+
+        const businessData =
+          getResponseData(businessResponse);
+
+        const business = Array.isArray(businessData)
+          ? businessData[0]
+          : businessData;
+
+        if (business) {
+          const category =
+            business.category ??
+            business.Category;
+
+          const id =
+            business.businessId ??
+            business.BusinessId ??
+            null;
+
+          const categoryName =
+            category?.categoryName ??
+            category?.CategoryName ??
+            "";
+
+          setBusinessId(id);
+
+          setFormData({
+            businessName:
+              business.businessName ??
+              business.BusinessName ??
+              "",
+
+            businessType:
+              categoryName,
+
+            description:
+              business.description ??
+              business.Description ??
+              "",
+
+            address:
+              business.address ??
+              business.Address ??
+              "",
+
+            city:
+              business.city ??
+              business.City ??
+              "",
+
+            state:
+              business.state ??
+              business.State ??
+              "",
+
+            pincode:
+              business.pincode ??
+              business.Pincode ??
+              "",
+
+            phone:
+              business.phoneNumber ??
+              business.PhoneNumber ??
+              "",
+
+            email:
+              business.email ??
+              business.Email ??
+              "",
+
+            website:
+              business.website ??
+              business.Website ??
+              "",
+
+            openingTime:
+              business.openingTime ??
+              business.OpeningTime ??
+              "",
+
+            closingTime:
+              business.closingTime ??
+              business.ClosingTime ??
+              "",
+
+            workingDays:
+              business.workingDays ??
+              business.WorkingDays ??
+              "Monday - Sunday",
+          });
+
+          // Keep a local copy for the existing
+          // OwnerPublicProfile page.
+          localStorage.setItem(
+            "businessProfile",
+            JSON.stringify(business)
+          );
+
+          localStorage.setItem(
+            "businessCreated",
+            "true"
+          );
+        }
+      } catch (error) {
+        if (error.response?.status === 401) {
+          console.error("Unauthorized.");
+
+          alert(
+            "Your login session has expired. Please login again."
+          );
+
+          navigate("/login");
+        } else if (
+          error.response?.status !== 404
+        ) {
+          console.error(
+            "Business data loading error:",
+            error
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [navigate]);
+
+  // =====================================================
+  // HANDLE INPUT CHANGE
+  // =====================================================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,12 +251,42 @@ function OwnerBusinessProfile() {
     }));
   };
 
-  // =========================================
-  // SAVE BUSINESS
-  // =========================================
+  // =====================================================
+  // FIND CATEGORY ID
+  // =====================================================
 
-  const handleSubmit = (e) => {
+  const getSelectedCategoryId = () => {
+    const selectedCategory = categories.find(
+      (category) => {
+        const categoryName =
+          category?.categoryName ??
+          category?.CategoryName ??
+          "";
+
+        return (
+          categoryName.toLowerCase().trim() ===
+          formData.businessType.toLowerCase().trim()
+        );
+      }
+    );
+
+    return (
+      selectedCategory?.categoryId ??
+      selectedCategory?.CategoryId ??
+      null
+    );
+  };
+
+  // =====================================================
+  // SAVE BUSINESS
+  // =====================================================
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ---------------------------------------------------
+    // VALIDATION
+    // ---------------------------------------------------
 
     if (!formData.businessName.trim()) {
       alert("Please enter your business name.");
@@ -79,17 +313,217 @@ function OwnerBusinessProfile() {
       return;
     }
 
+    const token = getToken();
+
+    if (!token) {
+      alert(
+        "Please login again before saving your business."
+      );
+
+      navigate("/login");
+      return;
+    }
+
+    // ---------------------------------------------------
+    // CATEGORY ID
+    // ---------------------------------------------------
+
+    const categoryId = getSelectedCategoryId();
+
+    if (!categoryId) {
+      alert(
+        "Selected business category was not found. Please refresh the page and try again."
+      );
+
+      return;
+    }
+
+    // ---------------------------------------------------
+    // BACKEND DATA
+    // ---------------------------------------------------
+
+    const businessData = {
+      categoryId: Number(categoryId),
+
+      businessName:
+        formData.businessName.trim(),
+
+      description:
+        formData.description.trim(),
+
+      phoneNumber:
+        formData.phone.trim(),
+
+      email:
+        formData.email.trim(),
+
+      address:
+        formData.address.trim(),
+
+      city:
+        formData.city.trim(),
+
+      pincode:
+        formData.pincode.trim(),
+
+      website:
+        formData.website.trim(),
+
+      openingTime:
+        formData.openingTime,
+
+      closingTime:
+        formData.closingTime,
+    };
+
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    };
+
     try {
       setSaving(true);
 
-      // =========================================
-      // TEMPORARY FRONTEND STORAGE
-      // Later replace with backend API
-      // =========================================
+      let response;
+
+      // =================================================
+      // UPDATE EXISTING BUSINESS
+      // PUT: /api/owner/business/{id}
+      // =================================================
+
+      if (businessId) {
+        response = await axios.put(
+          `${API_BASE}/owner/business/${businessId}`,
+          {
+            ...businessData,
+            isOpen: true,
+          },
+          config
+        );
+      }
+
+      // =================================================
+      // CREATE NEW BUSINESS
+      // POST: /api/owner/business
+      // =================================================
+
+      else {
+        response = await axios.post(
+          `${API_BASE}/owner/business`,
+          businessData,
+          config
+        );
+      }
+
+      // =================================================
+      // GET SAVED BUSINESS FROM RESPONSE
+      // =================================================
+
+      const savedBusiness =
+        getResponseData(response);
+
+      const savedBusinessId =
+        savedBusiness?.businessId ??
+        savedBusiness?.BusinessId ??
+        businessId;
+
+      // =================================================
+      // CREATE FRONTEND BUSINESS OBJECT
+      // =================================================
+
+      const categoryObject =
+        savedBusiness?.category ??
+        savedBusiness?.Category ?? {
+          categoryId: Number(categoryId),
+          categoryName:
+            formData.businessType,
+        };
+
+      const businessForFrontend = {
+        ...(savedBusiness || {}),
+
+        businessId:
+          savedBusinessId,
+
+        categoryId:
+          Number(categoryId),
+
+        category:
+          categoryObject,
+
+        businessName:
+          savedBusiness?.businessName ??
+          savedBusiness?.BusinessName ??
+          formData.businessName,
+
+        description:
+          savedBusiness?.description ??
+          savedBusiness?.Description ??
+          formData.description,
+
+        phoneNumber:
+          savedBusiness?.phoneNumber ??
+          savedBusiness?.PhoneNumber ??
+          formData.phone,
+
+        email:
+          savedBusiness?.email ??
+          savedBusiness?.Email ??
+          formData.email,
+
+        address:
+          savedBusiness?.address ??
+          savedBusiness?.Address ??
+          formData.address,
+
+        city:
+          savedBusiness?.city ??
+          savedBusiness?.City ??
+          formData.city,
+
+        pincode:
+          savedBusiness?.pincode ??
+          savedBusiness?.Pincode ??
+          formData.pincode,
+
+        website:
+          savedBusiness?.website ??
+          savedBusiness?.Website ??
+          formData.website,
+
+        openingTime:
+          savedBusiness?.openingTime ??
+          savedBusiness?.OpeningTime ??
+          formData.openingTime,
+
+        closingTime:
+          savedBusiness?.closingTime ??
+          savedBusiness?.ClosingTime ??
+          formData.closingTime,
+
+        isOpen:
+          savedBusiness?.isOpen ??
+          savedBusiness?.IsOpen ??
+          true,
+      };
+
+      // =================================================
+      // SAVE ID
+      // =================================================
+
+      setBusinessId(savedBusinessId);
+
+      // =================================================
+      // SAVE FOR PUBLIC PROFILE
+      // =================================================
 
       localStorage.setItem(
-        "ownerBusiness",
-        JSON.stringify(formData)
+        "businessProfile",
+        JSON.stringify(
+          businessForFrontend
+        )
       );
 
       localStorage.setItem(
@@ -97,33 +531,128 @@ function OwnerBusinessProfile() {
         "true"
       );
 
-      alert("Business information saved successfully!");
+      // =================================================
+      // SUCCESS
+      // =================================================
+
+      alert(
+        businessId
+          ? "Business information updated successfully!"
+          : "Business information saved successfully!"
+      );
+
+      // =================================================
+      // GO TO OWNER DASHBOARD
+      // =================================================
 
       navigate("/owner-dashboard");
 
     } catch (error) {
-      console.error("Business save error:", error);
+      console.error(
+        "Business save error:",
+        error
+      );
 
-      alert("Something went wrong. Please try again.");
+      // -------------------------------------------------
+      // 401
+      // -------------------------------------------------
+
+      if (
+        error.response?.status === 401
+      ) {
+        alert(
+          "Your login session has expired. Please login again."
+        );
+
+        navigate("/login");
+
+        return;
+      }
+
+      // -------------------------------------------------
+      // 400
+      // -------------------------------------------------
+
+      if (
+        error.response?.status === 400
+      ) {
+        const message =
+          error.response?.data?.message ??
+          error.response?.data?.Message ??
+          "Please check the business information and try again.";
+
+        alert(message);
+
+        return;
+      }
+
+      // -------------------------------------------------
+      // 404
+      // -------------------------------------------------
+
+      if (
+        error.response?.status === 404
+      ) {
+        alert(
+          "Business endpoint was not found. Please check the backend route."
+        );
+
+        return;
+      }
+
+      // -------------------------------------------------
+      // OTHER ERROR
+      // -------------------------------------------------
+
+      alert(
+        "Something went wrong while saving the business. Please try again."
+      );
 
     } finally {
       setSaving(false);
     }
   };
 
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  if (loading) {
+    return (
+      <div className="owner-business-page">
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          Loading business information...
+        </div>
+      </div>
+    );
+  }
+
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
     <div className="owner-business-page">
 
-      {/* =========================================
+      {/* =================================================
           HEADER
-      ========================================= */}
+      ================================================= */}
 
       <header className="business-form-header">
 
         <button
           type="button"
           className="business-back-btn"
-          onClick={() => navigate("/owner-dashboard")}
+          onClick={() =>
+            navigate("/owner-dashboard")
+          }
         >
           <FaArrowLeft />
         </button>
@@ -136,14 +665,15 @@ function OwnerBusinessProfile() {
 
       </header>
 
-
-      {/* =========================================
+      {/* =================================================
           MAIN
-      ========================================= */}
+      ================================================= */}
 
       <main className="business-form-main">
 
-        {/* Heading */}
+        {/* =================================================
+            INTRO
+        ================================================= */}
 
         <section className="business-form-intro">
 
@@ -152,7 +682,9 @@ function OwnerBusinessProfile() {
           </span>
 
           <h1>
-            Add your business
+            {businessId
+              ? "Edit your business"
+              : "Add your business"}
           </h1>
 
           <p>
@@ -163,19 +695,18 @@ function OwnerBusinessProfile() {
 
         </section>
 
-
-        {/* =========================================
+        {/* =================================================
             FORM
-        ========================================= */}
+        ================================================= */}
 
         <form
           className="business-form"
           onSubmit={handleSubmit}
         >
 
-          {/* =====================================
+          {/* =================================================
               BASIC INFORMATION
-          ===================================== */}
+          ================================================= */}
 
           <section className="form-section">
 
@@ -197,7 +728,6 @@ function OwnerBusinessProfile() {
 
             </div>
 
-
             {/* Business Name */}
 
             <div className="form-group">
@@ -216,7 +746,6 @@ function OwnerBusinessProfile() {
               />
 
             </div>
-
 
             {/* Business Type */}
 
@@ -237,38 +766,56 @@ function OwnerBusinessProfile() {
                   Select business type
                 </option>
 
-                <option value="Hotel">
-                  Hotel
-                </option>
+                {categories.length > 0 ? (
+                  categories.map((category) => {
+                    const id =
+                      category?.categoryId ??
+                      category?.CategoryId;
 
-                <option value="Restaurant">
-                  Restaurant
-                </option>
+                    const name =
+                      category?.categoryName ??
+                      category?.CategoryName;
 
-                <option value="Cafe">
-                  Cafe
-                </option>
+                    return (
+                      <option
+                        key={id}
+                        value={name}
+                      >
+                        {name}
+                      </option>
+                    );
+                  })
+                ) : (
+                  <>
+                    <option value="Hotel">
+                      Hotel
+                    </option>
 
-                <option value="Salon">
-                  Salon
-                </option>
+                    <option value="Restaurant">
+                      Restaurant
+                    </option>
 
-                <option value="Hospital">
-                  Hospital
-                </option>
+                    <option value="Cafe">
+                      Cafe
+                    </option>
 
-                <option value="Shop">
-                  Shop
-                </option>
+                    <option value="Salon">
+                      Salon
+                    </option>
 
-                <option value="Other">
-                  Other
-                </option>
+                    <option value="Hospital">
+                      Hospital
+                    </option>
+
+                    <option value="Shop">
+                      Shop
+                    </option>
+                  </>
+                )}
 
               </select>
 
             </div>
-
 
             {/* Description */}
 
@@ -294,10 +841,9 @@ function OwnerBusinessProfile() {
 
           </section>
 
-
-          {/* =====================================
+          {/* =================================================
               LOCATION
-          ===================================== */}
+          ================================================= */}
 
           <section className="form-section">
 
@@ -319,7 +865,6 @@ function OwnerBusinessProfile() {
 
             </div>
 
-
             {/* Address */}
 
             <div className="form-group">
@@ -338,7 +883,6 @@ function OwnerBusinessProfile() {
               />
 
             </div>
-
 
             <div className="form-grid">
 
@@ -361,7 +905,6 @@ function OwnerBusinessProfile() {
 
               </div>
 
-
               {/* State */}
 
               <div className="form-group">
@@ -379,7 +922,6 @@ function OwnerBusinessProfile() {
                 />
 
               </div>
-
 
               {/* Pincode */}
 
@@ -403,10 +945,9 @@ function OwnerBusinessProfile() {
 
           </section>
 
-
-          {/* =====================================
+          {/* =================================================
               CONTACT
-          ===================================== */}
+          ================================================= */}
 
           <section className="form-section">
 
@@ -427,7 +968,6 @@ function OwnerBusinessProfile() {
               </div>
 
             </div>
-
 
             <div className="form-grid">
 
@@ -450,7 +990,6 @@ function OwnerBusinessProfile() {
 
               </div>
 
-
               {/* Email */}
 
               <div className="form-group">
@@ -470,7 +1009,6 @@ function OwnerBusinessProfile() {
               </div>
 
             </div>
-
 
             {/* Website */}
 
@@ -498,10 +1036,9 @@ function OwnerBusinessProfile() {
 
           </section>
 
-
-          {/* =====================================
+          {/* =================================================
               OPENING HOURS
-          ===================================== */}
+          ================================================= */}
 
           <section className="form-section">
 
@@ -522,7 +1059,6 @@ function OwnerBusinessProfile() {
               </div>
 
             </div>
-
 
             {/* Working Days */}
 
@@ -554,10 +1090,9 @@ function OwnerBusinessProfile() {
 
             </div>
 
-
             <div className="form-grid">
 
-              {/* Opening */}
+              {/* Opening Time */}
 
               <div className="form-group">
 
@@ -574,8 +1109,7 @@ function OwnerBusinessProfile() {
 
               </div>
 
-
-              {/* Closing */}
+              {/* Closing Time */}
 
               <div className="form-group">
 
@@ -596,10 +1130,9 @@ function OwnerBusinessProfile() {
 
           </section>
 
-
-          {/* =====================================
-              SAVE
-          ===================================== */}
+          {/* =================================================
+              ACTIONS
+          ================================================= */}
 
           <div className="business-form-actions">
 
@@ -609,6 +1142,7 @@ function OwnerBusinessProfile() {
               onClick={() =>
                 navigate("/owner-dashboard")
               }
+              disabled={saving}
             >
               Cancel
             </button>
@@ -623,8 +1157,9 @@ function OwnerBusinessProfile() {
 
               {saving
                 ? "Saving..."
-                : "Save Business"
-              }
+                : businessId
+                  ? "Update Business"
+                  : "Save Business"}
 
             </button>
 
@@ -639,3 +1174,4 @@ function OwnerBusinessProfile() {
 }
 
 export default OwnerBusinessProfile;
+

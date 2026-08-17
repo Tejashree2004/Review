@@ -22,7 +22,23 @@ public class User
     [Required]
     public string PasswordHash { get; set; } = string.Empty;
 
+    // ==========================================
+    // USER ROLE
+    // ==========================================
+
+    [Required]
+    [MaxLength(20)]
+    public string Role { get; set; } = "Reviewer";
+
+    // ==========================================
+    // EMAIL VERIFICATION
+    // ==========================================
+
     public bool IsEmailVerified { get; set; } = false;
+
+    // ==========================================
+    // TIMESTAMPS
+    // ==========================================
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

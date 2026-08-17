@@ -1,30 +1,28 @@
-import axios from "axios";
-
-const API = "http://localhost:5213/api/Review";
+import API from "./api";
 
 // ==========================================
 // Get Reviews for a Place
-// GET: api/review/place/{placeId}
+// GET: /api/Review/place/{placeId}
 // ==========================================
 
 export const getReviews = (placeId) => {
-  return axios.get(`${API}/place/${placeId}`);
+  return API.get(`/Review/place/${placeId}`);
 };
 
 // ==========================================
 // Add Review
-// POST: api/review
+// POST: /api/Review
 // ==========================================
 
 export const addReview = (data) => {
-  return axios.post(API, data);
+  return API.post("/Review", data);
 };
 
 // ==========================================
 // Delete Review
-// DELETE: api/review/{reviewId}
+// DELETE: /api/Review/{reviewId}
 // ==========================================
 
 export const deleteReview = (reviewId) => {
-  return axios.delete(`${API}/${reviewId}`);
+  return API.delete(`/Review/${reviewId}`);
 };

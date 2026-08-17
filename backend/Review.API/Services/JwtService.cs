@@ -19,13 +19,47 @@ public class JwtService
     {
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("FullName", user.FullName)
+            // ==========================================
+            // USER ID
+            // ==========================================
+
+            new Claim(
+                JwtRegisteredClaimNames.Sub,
+                user.Id.ToString()
+            ),
+
+            // ==========================================
+            // EMAIL
+            // ==========================================
+
+            new Claim(
+                JwtRegisteredClaimNames.Email,
+                user.Email
+            ),
+
+            // ==========================================
+            // FULL NAME
+            // ==========================================
+
+            new Claim(
+                "FullName",
+                user.FullName
+            ),
+
+            // ==========================================
+            // ROLE
+            // ==========================================
+
+            new Claim(
+                ClaimTypes.Role,
+                user.Role
+            )
         };
 
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)
+            Encoding.UTF8.GetBytes(
+                _configuration["Jwt:Key"]!
+            )
         );
 
         var credentials = new SigningCredentials(
@@ -38,11 +72,14 @@ public class JwtService
             audience: _configuration["Jwt:Audience"],
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(
-                Convert.ToDouble(_configuration["Jwt:DurationInMinutes"])
+                Convert.ToDouble(
+                    _configuration["Jwt:DurationInMinutes"]
+                )
             ),
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return new JwtSecurityTokenHandler()
+            .WriteToken(token);
     }
 }

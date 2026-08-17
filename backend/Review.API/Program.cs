@@ -30,12 +30,22 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // =====================================
-// Services
+// Application Services
 // =====================================
 
 builder.Services.AddScoped<JwtService>();
+
 builder.Services.AddScoped<HomeService>();
+
 builder.Services.AddScoped<ReviewService>();
+
+// =====================================
+// Business / Owner Services
+// =====================================
+
+builder.Services.AddScoped<BusinessService>();
+
+builder.Services.AddScoped<OwnerService>();
 
 // =====================================
 // JWT Authentication
@@ -45,20 +55,29 @@ builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
 
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+                ValidIssuer =
+                    builder.Configuration["Jwt:Issuer"],
 
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-            )
-        };
+                ValidAudience =
+                    builder.Configuration["Jwt:Audience"],
+
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            builder.Configuration["Jwt:Key"]!
+                        )
+                    ),
+
+                ClockSkew = TimeSpan.Zero
+            };
     });
 
 // =====================================
@@ -75,9 +94,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
@@ -93,7 +113,8 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        var context = services.GetRequiredService<AppDbContext>();
+        var context =
+            services.GetRequiredService<AppDbContext>();
 
         await context.Database.MigrateAsync();
 
@@ -109,7 +130,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // =====================================
-// Middleware
+// Swagger
 // =====================================
 
 if (app.Environment.IsDevelopment())
@@ -118,13 +139,33 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// =====================================
+// HTTPS
+// =====================================
+
 app.UseHttpsRedirection();
+
+// =====================================
+// CORS
+// =====================================
 
 app.UseCors("AllowReact");
 
+// =====================================
+// Authentication
+// =====================================
+
 app.UseAuthentication();
 
+// =====================================
+// Authorization
+// =====================================
+
 app.UseAuthorization();
+
+// =====================================
+// Controllers
+// =====================================
 
 app.MapControllers();
 

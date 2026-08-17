@@ -16,14 +16,40 @@ namespace Review.API.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // ==========================================
+        // REVIEWER
+        // ==========================================
+
+        [Required]
         public int UserId { get; set; }
 
         [ForeignKey(nameof(UserId))]
         public User? User { get; set; }
 
-        public int PlaceId { get; set; }
+        // ==========================================
+        // EXISTING PLACE REVIEW
+        // ==========================================
+
+        public int? PlaceId { get; set; }
 
         [ForeignKey(nameof(PlaceId))]
         public Place? Place { get; set; }
+
+        // ==========================================
+        // BUSINESS REVIEW
+        // ==========================================
+
+        public int? BusinessId { get; set; }
+
+        [ForeignKey(nameof(BusinessId))]
+        public Business? Business { get; set; }
+
+        // ==========================================
+        // OWNER REPLY
+        // ==========================================
+
+        public string? OwnerReply { get; set; }
+
+        public DateTime? OwnerReplyAt { get; set; }
     }
 }
