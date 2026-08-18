@@ -27,23 +27,51 @@ public class BusinessService
             OwnerId = ownerId,
             CategoryId = dto.CategoryId,
 
-            BusinessName = dto.BusinessName,
-            Description = dto.Description,
+            BusinessName =
+                dto.BusinessName?.Trim() ?? string.Empty,
 
-            PhoneNumber = dto.PhoneNumber,
-            Email = dto.Email,
+            Description =
+                dto.Description?.Trim() ?? string.Empty,
 
-            Address = dto.Address,
-            City = dto.City,
-            Pincode = dto.Pincode,
+            PhoneNumber =
+                dto.PhoneNumber?.Trim() ?? string.Empty,
 
-            Website = dto.Website,
+            Email =
+                dto.Email?.Trim() ?? string.Empty,
 
-            OpeningTime = dto.OpeningTime,
-            ClosingTime = dto.ClosingTime,
+            Address =
+                dto.Address?.Trim() ?? string.Empty,
+
+            City =
+                dto.City?.Trim() ?? string.Empty,
+
+            Pincode =
+                dto.Pincode?.Trim() ?? string.Empty,
+
+            Website =
+                dto.Website?.Trim() ?? string.Empty,
+
+            OpeningTime =
+                dto.OpeningTime?.Trim() ?? string.Empty,
+
+            ClosingTime =
+                dto.ClosingTime?.Trim() ?? string.Empty,
 
             IsOpen = true,
-            IsApproved = false,
+
+            // =================================================
+            // IMPORTANT
+            //
+            // Business should immediately appear in:
+            // - Home
+            // - Search
+            // - Category
+            //
+            // Admin approval system is not currently being
+            // used for this flow.
+            // =================================================
+
+            IsApproved = true,
             IsActive = true,
 
             Rating = 0,
@@ -56,7 +84,15 @@ public class BusinessService
 
         await _context.SaveChangesAsync();
 
-        return business;
+        // =====================================================
+        // RETURN COMPLETE BUSINESS
+        // =====================================================
+
+        return await _context.Businesses
+            .Include(x => x.Category)
+            .Include(x => x.Photos)
+            .FirstAsync(x =>
+                x.BusinessId == business.BusinessId);
     }
 
     // =====================================================
@@ -69,9 +105,10 @@ public class BusinessService
         return await _context.Businesses
             .Include(x => x.Category)
             .Include(x => x.Photos)
-            .FirstOrDefaultAsync(
-                x => x.BusinessId == businessId &&
-                     x.IsActive);
+            .FirstOrDefaultAsync(x =>
+                x.BusinessId == businessId &&
+                x.IsActive &&
+                x.IsApproved);
     }
 
     // =====================================================
@@ -81,12 +118,14 @@ public class BusinessService
     public async Task<List<Business>> GetPublicBusinessesAsync()
     {
         return await _context.Businesses
+            .AsNoTracking()
             .Include(x => x.Category)
             .Include(x => x.Photos)
             .Where(x =>
                 x.IsActive &&
                 x.IsApproved)
             .OrderByDescending(x => x.Rating)
+            .ThenByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
 
@@ -94,10 +133,12 @@ public class BusinessService
     // GET BUSINESSES BY CATEGORY
     // =====================================================
 
-    public async Task<List<Business>> GetBusinessesByCategoryAsync(
-        int categoryId)
+    public async Task<List<Business>>
+        GetBusinessesByCategoryAsync(
+            int categoryId)
     {
         return await _context.Businesses
+            .AsNoTracking()
             .Include(x => x.Category)
             .Include(x => x.Photos)
             .Where(x =>
@@ -105,6 +146,7 @@ public class BusinessService
                 x.IsActive &&
                 x.IsApproved)
             .OrderByDescending(x => x.Rating)
+            .ThenByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
 
@@ -115,6 +157,10 @@ public class BusinessService
     public async Task<List<Business>> SearchBusinessesAsync(
         string search)
     {
+        // =================================================
+        // EMPTY SEARCH
+        // =================================================
+
         if (string.IsNullOrWhiteSpace(search))
         {
             return await GetPublicBusinessesAsync();
@@ -122,20 +168,50 @@ public class BusinessService
 
         search = search.Trim();
 
+        // =================================================
+        // CASE-INSENSITIVE SEARCH
+        // PostgreSQL / Npgsql
+        // =================================================
+
         return await _context.Businesses
+            .AsNoTracking()
             .Include(x => x.Category)
             .Include(x => x.Photos)
             .Where(x =>
                 x.IsActive &&
                 x.IsApproved &&
                 (
-                    x.BusinessName.Contains(search) ||
-                    x.City.Contains(search) ||
-                    x.Address.Contains(search) ||
-                    (x.Category != null &&
-                     x.Category.CategoryName.Contains(search))
+                    EF.Functions.ILike(
+                        x.BusinessName,
+                        $"%{search}%"
+                    )
+
+                    ||
+
+                    EF.Functions.ILike(
+                        x.City,
+                        $"%{search}%"
+                    )
+
+                    ||
+
+                    EF.Functions.ILike(
+                        x.Address,
+                        $"%{search}%"
+                    )
+
+                    ||
+
+                    (
+                        x.Category != null &&
+                        EF.Functions.ILike(
+                            x.Category.CategoryName,
+                            $"%{search}%"
+                        )
+                    )
                 ))
             .OrderByDescending(x => x.Rating)
+            .ThenByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
 
@@ -151,35 +227,64 @@ public class BusinessService
         var business = await _context.Businesses
             .FirstOrDefaultAsync(x =>
                 x.BusinessId == businessId &&
-                x.OwnerId == ownerId);
+                x.OwnerId == ownerId &&
+                x.IsActive);
 
         if (business == null)
             return null;
 
-        business.BusinessName = dto.BusinessName;
-        business.Description = dto.Description;
+        business.BusinessName =
+            dto.BusinessName?.Trim() ?? string.Empty;
 
-        business.CategoryId = dto.CategoryId;
+        business.Description =
+            dto.Description?.Trim() ?? string.Empty;
 
-        business.PhoneNumber = dto.PhoneNumber;
-        business.Email = dto.Email;
+        business.CategoryId =
+            dto.CategoryId;
 
-        business.Address = dto.Address;
-        business.City = dto.City;
-        business.Pincode = dto.Pincode;
+        business.PhoneNumber =
+            dto.PhoneNumber?.Trim() ?? string.Empty;
 
-        business.Website = dto.Website;
+        business.Email =
+            dto.Email?.Trim() ?? string.Empty;
 
-        business.OpeningTime = dto.OpeningTime;
-        business.ClosingTime = dto.ClosingTime;
+        business.Address =
+            dto.Address?.Trim() ?? string.Empty;
 
-        business.IsOpen = dto.IsOpen;
+        business.City =
+            dto.City?.Trim() ?? string.Empty;
 
-        business.UpdatedAt = DateTime.UtcNow;
+        business.Pincode =
+            dto.Pincode?.Trim() ?? string.Empty;
+
+        business.Website =
+            dto.Website?.Trim() ?? string.Empty;
+
+        business.OpeningTime =
+            dto.OpeningTime?.Trim() ?? string.Empty;
+
+        business.ClosingTime =
+            dto.ClosingTime?.Trim() ?? string.Empty;
+
+        business.IsOpen =
+            dto.IsOpen;
+
+        business.UpdatedAt =
+            DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
-        return business;
+        // =================================================
+        // RETURN UPDATED BUSINESS
+        // =================================================
+
+        return await _context.Businesses
+            .AsNoTracking()
+            .Include(x => x.Category)
+            .Include(x => x.Photos)
+            .FirstOrDefaultAsync(x =>
+                x.BusinessId == businessId &&
+                x.IsActive);
     }
 
     // =====================================================
@@ -193,7 +298,8 @@ public class BusinessService
         var business = await _context.Businesses
             .FirstOrDefaultAsync(x =>
                 x.BusinessId == businessId &&
-                x.OwnerId == ownerId);
+                x.OwnerId == ownerId &&
+                x.IsActive);
 
         if (business == null)
             return false;
@@ -210,11 +316,14 @@ public class BusinessService
     // GET BUSINESS PHOTOS
     // =====================================================
 
-    public async Task<List<BusinessPhoto>> GetBusinessPhotosAsync(
-        int businessId)
+    public async Task<List<BusinessPhoto>>
+        GetBusinessPhotosAsync(
+            int businessId)
     {
         return await _context.BusinessPhotos
-            .Where(x => x.BusinessId == businessId)
+            .AsNoTracking()
+            .Where(x =>
+                x.BusinessId == businessId)
             .OrderByDescending(x => x.IsPrimary)
             .ThenByDescending(x => x.CreatedAt)
             .ToListAsync();
@@ -238,6 +347,10 @@ public class BusinessService
         if (business == null)
             return null;
 
+        // =================================================
+        // REMOVE OLD PRIMARY PHOTO
+        // =================================================
+
         if (dto.IsPrimary)
         {
             var existingPrimaryPhotos =
@@ -253,18 +366,37 @@ public class BusinessService
             }
         }
 
+        // =================================================
+        // CREATE PHOTO
+        // =================================================
+
         var businessPhoto = new BusinessPhoto
         {
             BusinessId = businessId,
-            PhotoUrl = dto.PhotoUrl,
-            Caption = dto.Caption,
-            IsPrimary = dto.IsPrimary,
-            CreatedAt = DateTime.UtcNow
+
+            PhotoUrl =
+                dto.PhotoUrl?.Trim() ?? string.Empty,
+
+            Caption =
+                dto.Caption?.Trim() ?? string.Empty,
+
+            IsPrimary =
+                dto.IsPrimary,
+
+            CreatedAt =
+                DateTime.UtcNow
         };
 
         _context.BusinessPhotos.Add(businessPhoto);
 
         await _context.SaveChangesAsync();
+
+        // =================================================
+        // RETURN ONLY PHOTO
+        //
+        // Do NOT include Business navigation property here.
+        // This prevents JSON object-cycle errors.
+        // =================================================
 
         return businessPhoto;
     }
@@ -290,9 +422,33 @@ public class BusinessService
         if (photo == null)
             return false;
 
+        var wasPrimary = photo.IsPrimary;
+
         _context.BusinessPhotos.Remove(photo);
 
         await _context.SaveChangesAsync();
+
+        // =================================================
+        // IF PRIMARY PHOTO WAS DELETED
+        // MAKE LATEST PHOTO PRIMARY
+        // =================================================
+
+        if (wasPrimary)
+        {
+            var nextPhoto =
+                await _context.BusinessPhotos
+                    .Where(x =>
+                        x.BusinessId == businessId)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+            if (nextPhoto != null)
+            {
+                nextPhoto.IsPrimary = true;
+
+                await _context.SaveChangesAsync();
+            }
+        }
 
         return true;
     }

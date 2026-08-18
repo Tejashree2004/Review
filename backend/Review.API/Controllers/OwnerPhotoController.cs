@@ -19,12 +19,11 @@ public class OwnerPhotoController : ControllerBase
     }
 
     // =====================================================
-    // GET: api/owner/photos/business/1
+    // GET: /api/owner/photos/business/{businessId}
     // =====================================================
 
     [HttpGet("business/{businessId:int}")]
-    public async Task<IActionResult> GetPhotos(
-        int businessId)
+    public async Task<IActionResult> GetPhotos(int businessId)
     {
         var userIdClaim =
             User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -42,18 +41,19 @@ public class OwnerPhotoController : ControllerBase
         var photos =
             await _ownerService.GetOwnerPhotosAsync(
                 businessId,
-                ownerId);
+                ownerId
+            );
 
         return Ok(new
         {
             Success = true,
-            Message = "Photos fetched successfully.",
+            Message = "Business photos fetched successfully.",
             Data = photos
         });
     }
 
     // =====================================================
-    // POST: api/owner/photos/business/1
+    // POST: /api/owner/photos/business/{businessId}
     // =====================================================
 
     [HttpPost("business/{businessId:int}")]
@@ -62,7 +62,14 @@ public class OwnerPhotoController : ControllerBase
         [FromBody] OwnerPhotoDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        {
+            return BadRequest(new
+            {
+                Success = false,
+                Message = "Invalid photo data.",
+                Errors = ModelState
+            });
+        }
 
         var userIdClaim =
             User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -81,27 +88,29 @@ public class OwnerPhotoController : ControllerBase
             await _ownerService.AddOwnerPhotoAsync(
                 businessId,
                 ownerId,
-                dto);
+                dto
+            );
 
         if (photo == null)
         {
             return NotFound(new
             {
                 Success = false,
-                Message = "Business not found or you are not the owner."
+                Message =
+                    "Business not found or you are not the owner."
             });
         }
 
         return Ok(new
         {
             Success = true,
-            Message = "Photo added successfully.",
+            Message = "Business photo added successfully.",
             Data = photo
         });
     }
 
     // =====================================================
-    // DELETE: api/owner/photos/5
+    // DELETE: /api/owner/photos/{photoId}
     // =====================================================
 
     [HttpDelete("{photoId:int}")]
@@ -124,21 +133,23 @@ public class OwnerPhotoController : ControllerBase
         var deleted =
             await _ownerService.DeleteOwnerPhotoAsync(
                 photoId,
-                ownerId);
+                ownerId
+            );
 
         if (!deleted)
         {
             return NotFound(new
             {
                 Success = false,
-                Message = "Photo not found."
+                Message =
+                    "Photo not found or you are not the owner."
             });
         }
 
         return Ok(new
         {
             Success = true,
-            Message = "Photo deleted successfully."
+            Message = "Business photo deleted successfully."
         });
     }
 }

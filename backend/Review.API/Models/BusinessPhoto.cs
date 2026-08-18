@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Review.API.Models;
 
@@ -16,6 +17,7 @@ public class BusinessPhoto
     public int BusinessId { get; set; }
 
     [ForeignKey(nameof(BusinessId))]
+    [JsonIgnore]
     public Business? Business { get; set; }
 
     // ==========================================
@@ -23,7 +25,6 @@ public class BusinessPhoto
     // ==========================================
 
     [Required]
-    [MaxLength(1000)]
     public string PhotoUrl { get; set; } = string.Empty;
 
     [MaxLength(200)]

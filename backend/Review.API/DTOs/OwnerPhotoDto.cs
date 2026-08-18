@@ -5,7 +5,6 @@ namespace Review.API.DTOs;
 public class OwnerPhotoDto
 {
     [Required]
-    [MaxLength(1000)]
     public string PhotoUrl { get; set; } = string.Empty;
 
     [MaxLength(200)]

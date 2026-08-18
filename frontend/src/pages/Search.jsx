@@ -32,65 +32,212 @@ function Search() {
   const [activeFilter, setActiveFilter] = useState("relevance");
 
   // =====================================
-  // Search Places
+  // SEARCH PLACES + BUSINESSES
   // =====================================
 
   useEffect(() => {
-    if (!keyword.trim()) {
+    const searchKeyword = keyword.trim();
+
+    if (!searchKeyword) {
       setPlaces([]);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    const searchPlaces = async () => {
+      try {
+        setLoading(true);
 
-    fetch(
-      `http://localhost:5213/api/Search/place/${encodeURIComponent(
-        keyword.trim()
-      )}`
-    )
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Search request failed");
+        console.log(
+          "Searching for keyword:",
+          searchKeyword
+        );
+
+        const url =
+          `http://localhost:5213/api/Search/place/` +
+          encodeURIComponent(searchKeyword);
+
+        console.log("Search URL:", url);
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(
+            `Search request failed: ${response.status}`
+          );
         }
 
-        return res.json();
-      })
-      .then((data) => {
-        setPlaces(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Search Error:", error);
+        const data = await response.json();
+
+        console.log("Search Response:", data);
+
+        // =====================================
+        // PLACES
+        // =====================================
+
+        const backendPlaces = Array.isArray(data?.places)
+          ? data.places
+          : [];
+
+        // =====================================
+        // BUSINESSES
+        // =====================================
+
+        const backendBusinesses = Array.isArray(
+          data?.businesses
+        )
+          ? data.businesses
+          : [];
+
+        // =====================================
+        // NORMALIZE PLACES
+        // =====================================
+
+        const formattedPlaces = backendPlaces.map(
+          (place) => ({
+            ...place,
+
+            isBusiness: false,
+          })
+        );
+
+        // =====================================
+        // NORMALIZE BUSINESSES
+        // =====================================
+
+        const formattedBusinesses =
+          backendBusinesses.map((business) => {
+            const primaryPhoto =
+              business.photos?.find(
+                (photo) => photo.isPrimary
+              );
+
+            const firstPhoto =
+              business.photos?.[0];
+
+            return {
+              ...business,
+
+              placeId: `business-${business.businessId}`,
+
+              name: business.businessName,
+
+              city: business.city,
+
+              imageUrl:
+                primaryPhoto?.photoUrl ||
+                firstPhoto?.photoUrl ||
+                "",
+
+              rating: business.rating,
+
+              reviewCount:
+                business.reviewCount,
+
+              openStatus:
+                business.isOpen,
+
+              isBusiness: true,
+            };
+          });
+
+        // =====================================
+        // COMBINE
+        // =====================================
+
+        const combinedResults = [
+          ...formattedPlaces,
+          ...formattedBusinesses,
+        ];
+
+        console.log(
+          "Combined Search Results:",
+          combinedResults
+        );
+
+        setPlaces(combinedResults);
+      } catch (error) {
+        console.error(
+          "Search Error:",
+          error
+        );
+
         setPlaces([]);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    searchPlaces();
   }, [keyword]);
 
   // =====================================
-  // Place Click
+  // PLACE / BUSINESS CLICK
   // =====================================
 
   const handlePlaceClick = (place) => {
-    console.log("Selected Place :", place);
+    console.log(
+      "Selected Search Result:",
+      place
+    );
 
-    navigate(`/place/${place.placeId}`);
+    // =====================================
+    // OWNER BUSINESS
+    // =====================================
+
+    if (place.isBusiness) {
+      navigate(
+        `/business/${place.businessId}`
+      );
+
+      return;
+    }
+
+    // =====================================
+    // EXISTING PLACE
+    // =====================================
+
+    navigate(
+      `/place/${place.placeId}`
+    );
   };
 
   // =====================================
-  // Filter Results
+  // FILTER RESULTS
   // =====================================
 
   const getFilteredPlaces = () => {
     const result = [...places];
 
     switch (activeFilter) {
+      // ===================================
+      // RELEVANCE
+      // ===================================
+
+      case "relevance":
+        return result;
+
+      // ===================================
+      // NEAR ME
+      // ===================================
+
+      case "near":
+        return result;
+
+      // ===================================
+      // RATING
+      // ===================================
+
       case "rating":
         return result.sort(
           (a, b) =>
             Number(b.rating || 0) -
             Number(a.rating || 0)
         );
+
+      // ===================================
+      // REVIEWS
+      // ===================================
 
       case "reviews":
         return result.sort(
@@ -99,9 +246,14 @@ function Search() {
             Number(a.reviewCount || 0)
         );
 
+      // ===================================
+      // OPEN NOW
+      // ===================================
+
       case "open":
         return result.filter(
-          (place) => place.openStatus === true
+          (place) =>
+            place.openStatus === true
         );
 
       default:
@@ -109,7 +261,8 @@ function Search() {
     }
   };
 
-  const filteredPlaces = getFilteredPlaces();
+  const filteredPlaces =
+    getFilteredPlaces();
 
   // =====================================
   // UI
@@ -118,7 +271,9 @@ function Search() {
   return (
     <MainLayout>
 
-      {/* Back Button */}
+      {/* =================================
+          BACK BUTTON
+      ================================= */}
 
       <button
         className="search-back-btn"
@@ -128,20 +283,16 @@ function Search() {
         <FaArrowLeft />
       </button>
 
-
       {/* =================================
-          WORKING SEARCH BAR
+          SEARCH BAR
       ================================= */}
 
       <div className="search-page-bar">
-
         <SearchBar />
-
       </div>
 
-
       {/* =================================
-          Horizontal Filters
+          FILTERS
       ================================= */}
 
       <div className="search-filters">
@@ -160,7 +311,6 @@ function Search() {
           <span>Relevance</span>
         </button>
 
-
         <button
           className={`search-filter ${
             activeFilter === "near"
@@ -174,7 +324,6 @@ function Search() {
           <FaLocationArrow />
           <span>Near Me</span>
         </button>
-
 
         <button
           className={`search-filter ${
@@ -190,7 +339,6 @@ function Search() {
           <span>Rating</span>
         </button>
 
-
         <button
           className={`search-filter ${
             activeFilter === "reviews"
@@ -204,7 +352,6 @@ function Search() {
           <FaCommentAlt />
           <span>Reviews</span>
         </button>
-
 
         <button
           className={`search-filter ${
@@ -222,9 +369,8 @@ function Search() {
 
       </div>
 
-
       {/* =================================
-          Results Header
+          RESULTS HEADER
       ================================= */}
 
       <div className="results-header">
@@ -245,9 +391,8 @@ function Search() {
 
       </div>
 
-
       {/* =================================
-          Loading
+          LOADING
       ================================= */}
 
       {loading && (
@@ -262,9 +407,8 @@ function Search() {
         </div>
       )}
 
-
       {/* =================================
-          No Results
+          NO RESULTS
       ================================= */}
 
       {!loading &&
@@ -285,9 +429,8 @@ function Search() {
           </div>
         )}
 
-
       {/* =================================
-          Results
+          RESULTS
       ================================= */}
 
       {!loading &&

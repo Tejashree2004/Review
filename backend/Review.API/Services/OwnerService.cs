@@ -24,7 +24,9 @@ public class OwnerService
         return await _context.Businesses
             .Include(x => x.Category)
             .Include(x => x.Photos)
-            .Where(x => x.OwnerId == ownerId)
+            .Where(x =>
+                x.OwnerId == ownerId &&
+                x.IsActive)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
@@ -42,7 +44,8 @@ public class OwnerService
             .Include(x => x.Photos)
             .FirstOrDefaultAsync(x =>
                 x.BusinessId == businessId &&
-                x.OwnerId == ownerId);
+                x.OwnerId == ownerId &&
+                x.IsActive);
     }
 
     // =====================================================
@@ -58,23 +61,23 @@ public class OwnerService
             OwnerId = ownerId,
             CategoryId = dto.CategoryId,
 
-            BusinessName = dto.BusinessName,
-            Description = dto.Description,
+            BusinessName = dto.BusinessName.Trim(),
+            Description = dto.Description?.Trim() ?? string.Empty,
 
-            PhoneNumber = dto.PhoneNumber,
-            Email = dto.Email,
+            PhoneNumber = dto.PhoneNumber?.Trim() ?? string.Empty,
+            Email = dto.Email?.Trim() ?? string.Empty,
 
-            Address = dto.Address,
-            City = dto.City,
-            Pincode = dto.Pincode,
+            Address = dto.Address?.Trim() ?? string.Empty,
+            City = dto.City?.Trim() ?? string.Empty,
+            Pincode = dto.Pincode?.Trim() ?? string.Empty,
 
-            Website = dto.Website,
+            Website = dto.Website?.Trim() ?? string.Empty,
 
             OpeningTime = dto.OpeningTime,
             ClosingTime = dto.ClosingTime,
 
             IsOpen = true,
-            IsApproved = false,
+            IsApproved = true,
             IsActive = true,
 
             Rating = 0,
@@ -87,7 +90,11 @@ public class OwnerService
 
         await _context.SaveChangesAsync();
 
-        return business;
+        return await _context.Businesses
+            .Include(x => x.Category)
+            .Include(x => x.Photos)
+            .FirstAsync(x =>
+                x.BusinessId == business.BusinessId);
     }
 
     // =====================================================
@@ -102,35 +109,58 @@ public class OwnerService
         var business = await _context.Businesses
             .FirstOrDefaultAsync(x =>
                 x.BusinessId == businessId &&
-                x.OwnerId == ownerId);
+                x.OwnerId == ownerId &&
+                x.IsActive);
 
         if (business == null)
             return null;
 
-        business.BusinessName = dto.BusinessName;
-        business.Description = dto.Description;
+        business.BusinessName =
+            dto.BusinessName?.Trim() ?? string.Empty;
 
-        business.CategoryId = dto.CategoryId;
+        business.Description =
+            dto.Description?.Trim() ?? string.Empty;
 
-        business.PhoneNumber = dto.PhoneNumber;
-        business.Email = dto.Email;
+        business.CategoryId =
+            dto.CategoryId;
 
-        business.Address = dto.Address;
-        business.City = dto.City;
-        business.Pincode = dto.Pincode;
+        business.PhoneNumber =
+            dto.PhoneNumber?.Trim() ?? string.Empty;
 
-        business.Website = dto.Website;
+        business.Email =
+            dto.Email?.Trim() ?? string.Empty;
 
-        business.OpeningTime = dto.OpeningTime;
-        business.ClosingTime = dto.ClosingTime;
+        business.Address =
+            dto.Address?.Trim() ?? string.Empty;
 
-        business.IsOpen = dto.IsOpen;
+        business.City =
+            dto.City?.Trim() ?? string.Empty;
 
-        business.UpdatedAt = DateTime.UtcNow;
+        business.Pincode =
+            dto.Pincode?.Trim() ?? string.Empty;
+
+        business.Website =
+            dto.Website?.Trim() ?? string.Empty;
+
+        business.OpeningTime =
+            dto.OpeningTime;
+
+        business.ClosingTime =
+            dto.ClosingTime;
+
+        business.IsOpen =
+            dto.IsOpen;
+
+        business.UpdatedAt =
+            DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
-        return business;
+        return await _context.Businesses
+            .Include(x => x.Category)
+            .Include(x => x.Photos)
+            .FirstOrDefaultAsync(x =>
+                x.BusinessId == businessId);
     }
 
     // =====================================================
@@ -144,7 +174,8 @@ public class OwnerService
         var business = await _context.Businesses
             .FirstOrDefaultAsync(x =>
                 x.BusinessId == businessId &&
-                x.OwnerId == ownerId);
+                x.OwnerId == ownerId &&
+                x.IsActive);
 
         if (business == null)
             return false;
@@ -170,7 +201,8 @@ public class OwnerService
             .Where(x =>
                 x.BusinessId == businessId &&
                 x.Business != null &&
-                x.Business.OwnerId == ownerId)
+                x.Business.OwnerId == ownerId &&
+                x.Business.IsActive)
             .OrderByDescending(x => x.IsPrimary)
             .ThenByDescending(x => x.CreatedAt)
             .ToListAsync();
@@ -194,6 +226,11 @@ public class OwnerService
         if (business == null)
             return null;
 
+        // -------------------------------------------------
+        // IF NEW PHOTO IS PRIMARY/COVER
+        // REMOVE PRIMARY FROM OLD PHOTO
+        // -------------------------------------------------
+
         if (dto.IsPrimary)
         {
             var existingPrimaryPhotos =
@@ -209,13 +246,25 @@ public class OwnerService
             }
         }
 
+        // -------------------------------------------------
+        // CREATE PHOTO
+        // -------------------------------------------------
+
         var businessPhoto = new BusinessPhoto
         {
             BusinessId = businessId,
-            PhotoUrl = dto.PhotoUrl,
-            Caption = dto.Caption,
-            IsPrimary = dto.IsPrimary,
-            CreatedAt = DateTime.UtcNow
+
+            PhotoUrl =
+                dto.PhotoUrl?.Trim() ?? string.Empty,
+
+            Caption =
+                dto.Caption?.Trim() ?? string.Empty,
+
+            IsPrimary =
+                dto.IsPrimary,
+
+            CreatedAt =
+                DateTime.UtcNow
         };
 
         _context.BusinessPhotos.Add(businessPhoto);
@@ -238,16 +287,82 @@ public class OwnerService
             .FirstOrDefaultAsync(x =>
                 x.BusinessPhotoId == businessPhotoId &&
                 x.Business != null &&
-                x.Business.OwnerId == ownerId);
+                x.Business.OwnerId == ownerId &&
+                x.Business.IsActive);
 
         if (photo == null)
             return false;
+
+        var wasPrimary = photo.IsPrimary;
+
+        var businessId = photo.BusinessId;
 
         _context.BusinessPhotos.Remove(photo);
 
         await _context.SaveChangesAsync();
 
+        // -------------------------------------------------
+        // IF PRIMARY PHOTO WAS DELETED
+        // MAKE ANOTHER PHOTO PRIMARY
+        // -------------------------------------------------
+
+        if (wasPrimary)
+        {
+            var nextPhoto =
+                await _context.BusinessPhotos
+                    .Where(x =>
+                        x.BusinessId == businessId)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+            if (nextPhoto != null)
+            {
+                nextPhoto.IsPrimary = true;
+
+                await _context.SaveChangesAsync();
+            }
+        }
+
         return true;
+    }
+
+    // =====================================================
+    // SET PRIMARY / COVER PHOTO
+    // =====================================================
+
+    public async Task<BusinessPhoto?> SetPrimaryPhotoAsync(
+        int businessPhotoId,
+        int ownerId)
+    {
+        var photo = await _context.BusinessPhotos
+            .Include(x => x.Business)
+            .FirstOrDefaultAsync(x =>
+                x.BusinessPhotoId == businessPhotoId &&
+                x.Business != null &&
+                x.Business.OwnerId == ownerId &&
+                x.Business.IsActive);
+
+        if (photo == null)
+            return null;
+
+        var businessId = photo.BusinessId;
+
+        var businessPhotos =
+            await _context.BusinessPhotos
+                .Where(x =>
+                    x.BusinessId == businessId)
+                .ToListAsync();
+
+        foreach (var businessPhoto in businessPhotos)
+        {
+            businessPhoto.IsPrimary =
+                businessPhoto.BusinessPhotoId ==
+                businessPhotoId;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return photo;
     }
 
     // =====================================================
@@ -261,7 +376,8 @@ public class OwnerService
         var business = await _context.Businesses
             .FirstOrDefaultAsync(x =>
                 x.BusinessId == businessId &&
-                x.OwnerId == ownerId);
+                x.OwnerId == ownerId &&
+                x.IsActive);
 
         if (business == null)
         {
@@ -299,13 +415,24 @@ public class OwnerService
         var business = await _context.Businesses
             .FirstOrDefaultAsync(x =>
                 x.OwnerId == ownerId &&
-                x.BusinessName == review.Place!.Name);
+                x.BusinessName == review.Place!.Name &&
+                x.IsActive);
 
         if (business == null)
             return null;
 
-        // Owner reply storage will be implemented
-        // after adding the reply field to ReviewItem.
+        // -------------------------------------------------
+        // OWNER REPLY
+        // -------------------------------------------------
+        //
+        // NOTE:
+        // Your current ReviewItem model/service does not
+        // show an OwnerReply field.
+        //
+        // So actual reply storage should be added only
+        // after the Review model contains a reply property.
+        //
+        // -------------------------------------------------
 
         return null;
     }
