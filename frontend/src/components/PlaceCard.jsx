@@ -1,37 +1,46 @@
 import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
 
 function PlaceCard({ place, onClick }) {
+  // =====================================
   // Safety Check
+  // =====================================
+
   if (!place) {
     return null;
   }
+
+  // =====================================
+  // Fallback Image
+  // =====================================
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
 
   // =====================================
-  // Check whether result is a Business
+  // Check Result Type
   // =====================================
 
   const isBusiness =
+    place.type === "Business" ||
     place.resultType === "business" ||
     Boolean(place.businessId);
 
   // =====================================
-  // Name
+  // Display Name
   // =====================================
 
-  const displayName = isBusiness
-    ? place.businessName || "Business"
-    : place.name || "Place";
+  const displayName =
+    place.name ||
+    place.businessName ||
+    (isBusiness ? "Business" : "Place");
 
   // =====================================
-  // Image
+  // Display Image
   // =====================================
 
   let displayImage = place.imageUrl;
 
-  // Business photos
+  // Business photos support
   if (
     isBusiness &&
     Array.isArray(place.photos) &&
@@ -47,8 +56,7 @@ function PlaceCard({ place, onClick }) {
       displayImage;
   }
 
-  displayImage =
-    displayImage || fallbackImage;
+  displayImage = displayImage || fallbackImage;
 
   // =====================================
   // Click Handler
@@ -59,6 +67,10 @@ function PlaceCard({ place, onClick }) {
       onClick(place);
     }
   };
+
+  // =====================================
+  // UI
+  // =====================================
 
   return (
     <div
@@ -74,7 +86,7 @@ function PlaceCard({ place, onClick }) {
         src={displayImage}
         alt={displayName}
         onError={(e) => {
-          e.target.src = fallbackImage;
+          e.currentTarget.src = fallbackImage;
         }}
       />
 

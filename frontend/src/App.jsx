@@ -7,7 +7,7 @@ import Splash from "./pages/Splash";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RoleSelection from "./pages/RoleSelection";
-
+import BusinessDetails from "./pages/BusinessDetails";
 // =========================
 // Reviewer / Normal User
 // =========================
@@ -89,9 +89,14 @@ function App() {
       />
 
       <Route
-        path="/place/:id"
-        element={<PlaceDetails />}
-      />
+  path="/place/:id"
+  element={<PlaceDetails />}
+/>
+
+<Route
+  path="/business/:id"
+  element={<BusinessDetails />}
+/>
 
       <Route
         path="/favorites"
@@ -103,10 +108,16 @@ function App() {
         element={<Reviews />}
       />
 
+      
       <Route
-        path="/write-review/:placeId"
-        element={<WriteReview />}
-      />
+  path="/write-review/:placeId"
+  element={<WriteReview />}
+/>
+
+<Route
+  path="/write-review/business/:businessId"
+  element={<WriteReview />}
+/>
 
       <Route
         path="/notifications"

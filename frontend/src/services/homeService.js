@@ -5,60 +5,86 @@ const API_BASE = "http://localhost:5213/api";
 const API_URL = `${API_BASE}/Home`;
 const FAVORITE_API = `${API_BASE}/Favorite`;
 const PROFILE_API = `${API_BASE}/Profile`;
+const BUSINESS_API = `${API_BASE}/Business`;
 
-// =============================
-// Categories
-// =============================
+// =====================================================
+// CATEGORIES
+// =====================================================
 
 export const getCategories = () => {
-  return axios.get(`${API_URL}/categories`);
+  return axios.get(
+    `${API_URL}/categories`
+  );
 };
 
-// =============================
-// Top Rated Places
-// =============================
+// =====================================================
+// TOP RATED PLACES + BUSINESSES
+// =====================================================
 
 export const getTopRatedPlaces = () => {
-  return axios.get(`${API_URL}/toprated`);
+  return axios.get(
+    `${API_URL}/toprated`
+  );
 };
 
-// =============================
-// AI Summary
-// =============================
+// =====================================================
+// AI REVIEW SUMMARY
+// =====================================================
 
 export const getAIReviewSummary = () => {
-  return axios.get(`${API_URL}/summary`);
+  return axios.get(
+    `${API_URL}/summary`
+  );
 };
 
-// =============================
-// Place Details
-// =============================
+// =====================================================
+// PLACE DETAILS
+// =====================================================
 
 export const getPlaceDetails = (id) => {
-  return axios.get(`${API_URL}/place/${id}`);
+  return axios.get(
+    `${API_URL}/place/${id}`
+  );
 };
 
-// =============================
-// Add Favorite
-// =============================
+// =====================================================
+// BUSINESS DETAILS
+// GET: /api/Business/{id}
+// =====================================================
+
+export const getBusinessDetails = (businessId) => {
+  return axios.get(
+    `${BUSINESS_API}/${businessId}`
+  );
+};
+
+// =====================================================
+// ADD FAVORITE
+// =====================================================
 
 export const addFavorite = (data) => {
-  return axios.post(FAVORITE_API, data);
+  return axios.post(
+    FAVORITE_API,
+    data
+  );
 };
 
-// =============================
-// Remove Favorite
-// =============================
+// =====================================================
+// REMOVE FAVORITE
+// =====================================================
 
-export const removeFavorite = (userId, placeId) => {
+export const removeFavorite = (
+  userId,
+  placeId
+) => {
   return axios.delete(
     `${FAVORITE_API}/${userId}/${placeId}`
   );
 };
 
-// =============================
-// Get User Favorites
-// =============================
+// =====================================================
+// GET USER FAVORITES
+// =====================================================
 
 export const getFavorites = (userId) => {
   return axios.get(
@@ -66,10 +92,10 @@ export const getFavorites = (userId) => {
   );
 };
 
-// =============================
+// =====================================================
 // MY REVIEWS
 // GET: /api/Profile/{id}/reviews
-// =============================
+// =====================================================
 
 export const getMyReviews = (userId) => {
   return axios.get(

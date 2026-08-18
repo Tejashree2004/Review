@@ -4,6 +4,8 @@ import Splash from "../pages/Splash";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Home from "../pages/Home";
+import PlaceDetails from "../pages/PlaceDetails";
+import BusinessDetails from "../pages/BusinessDetails";
 
 function AppRoutes() {
   return (
@@ -11,13 +13,55 @@ function AppRoutes() {
 
       <Routes>
 
-        <Route path="/" element={<Splash />} />
+        {/* ======================================
+            SPLASH
+        ====================================== */}
 
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={<Splash />}
+        />
 
-        <Route path="/signup" element={<Signup />} />
+        {/* ======================================
+            AUTH
+        ====================================== */}
 
-        <Route path="/home" element={<Home />} />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/signup"
+          element={<Signup />}
+        />
+
+        {/* ======================================
+            HOME
+        ====================================== */}
+
+        <Route
+          path="/home"
+          element={<Home />}
+        />
+
+        {/* ======================================
+            EXISTING PLACE DETAILS
+        ====================================== */}
+
+        <Route
+          path="/place/:id"
+          element={<PlaceDetails />}
+        />
+
+        {/* ======================================
+            OWNER BUSINESS DETAILS
+        ====================================== */}
+
+        <Route
+          path="/business/:id"
+          element={<BusinessDetails />}
+        />
 
       </Routes>
 

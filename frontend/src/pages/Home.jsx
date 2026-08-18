@@ -28,115 +28,257 @@ function Home() {
   const [categories, setCategories] = useState([]);
   const [places, setPlaces] = useState([]);
 
+  // ==========================================
+  // Load Home Data
+  // ==========================================
+
   useEffect(() => {
     loadCategories();
     loadTopPlaces();
   }, []);
 
+  // ==========================================
+  // Load Categories
+  // ==========================================
+
   const loadCategories = async () => {
     try {
       const response = await getCategories();
+
+      console.log("Categories:", response.data);
+
       setCategories(response.data || []);
     } catch (error) {
-      console.error("Failed to load categories", error);
+      console.error(
+        "Failed to load categories:",
+        error
+      );
+
+      setCategories([]);
     }
   };
+
+  // ==========================================
+  // Load Top Places + Businesses
+  // ==========================================
 
   const loadTopPlaces = async () => {
     try {
       const response = await getTopRatedPlaces();
 
-      console.log("Top Places :", response.data);
+      console.log(
+        "Top Places + Businesses:",
+        response.data
+      );
 
       setPlaces(response.data || []);
     } catch (error) {
-      console.error("Failed to load top places", error);
+      console.error(
+        "Failed to load top places:",
+        error
+      );
+
+      setPlaces([]);
     }
   };
 
-  const handleCategoryClick = (category) => {
-    console.log("Selected Category :", category);
+  // ==========================================
+  // Category Click
+  // ==========================================
 
-    // Future
-    // navigate(`/search/category/${category.categoryName}`);
+  const handleCategoryClick = (category) => {
+    console.log(
+      "Selected Category:",
+      category
+    );
+
+    // Future category navigation
+    // navigate(`/search/category/${category.categoryId}`);
   };
+
+  // ==========================================
+  // Place / Business Click
+  // ==========================================
 
   const handlePlaceClick = (place) => {
-    console.log("Selected Place :", place);
+    console.log(
+      "Selected Place / Business:",
+      place
+    );
 
-    // Open Place Details Page
-    navigate(`/place/${place.placeId}`);
+    // ========================================
+    // OWNER BUSINESS
+    // ========================================
+
+    if (place.businessId) {
+      navigate(
+        `/business/${place.businessId}`
+      );
+
+      return;
+    }
+
+    // ========================================
+    // EXISTING PLACE
+    // ========================================
+
+    if (place.placeId) {
+      navigate(
+        `/place/${place.placeId}`
+      );
+
+      return;
+    }
+
+    // ========================================
+    // Safety
+    // ========================================
+
+    console.warn(
+      "No PlaceId or BusinessId found:",
+      place
+    );
   };
+
+  // ==========================================
+  // UI
+  // ==========================================
 
   return (
     <MainLayout>
+
+      {/* ======================================
+          Navbar
+      ====================================== */}
+
       <Navbar />
+
+      {/* ======================================
+          Search
+      ====================================== */}
 
       <SearchBar />
 
-      {/* Welcome Section */}
+      {/* ======================================
+          Welcome
+      ====================================== */}
 
       <div className="welcome-section">
-        <h2>Welcome 👋</h2>
+
+        <h2>
+          Welcome 👋
+        </h2>
 
         <p>
-          Find trusted restaurants, cafes, hotels and more around you.
+          Find trusted restaurants, cafes, hotels
+          and more around you.
         </p>
+
       </div>
 
-      {/* Categories */}
+      {/* ======================================
+          Categories
+      ====================================== */}
 
       <div className="section-title">
-        <span>Categories</span>
 
-        <span>View All</span>
+        <span>
+          Categories
+        </span>
+
+        <span
+          onClick={() => navigate("/categories")}
+          style={{ cursor: "pointer" }}
+        >
+          View All
+        </span>
+
       </div>
 
       <div className="categories">
+
         {categories.length > 0 ? (
+
           categories.map((category) => (
+
             <CategoryCard
               key={category.categoryId}
               category={category}
               onClick={handleCategoryClick}
             />
+
           ))
+
         ) : (
-          <p>No Categories Found</p>
+
+          <p>
+            No Categories Found
+          </p>
+
         )}
+
       </div>
 
-      {/* Top Rated Places */}
+      {/* ======================================
+          Top Rated Places
+      ====================================== */}
 
       <div className="section-title">
-        <span>Top Rated Places</span>
+
+        <span>
+          Top Rated Places
+        </span>
+
       </div>
 
       <div className="places">
+
         {places.length > 0 ? (
-          places.map((place) => (
+
+          places.map((place, index) => (
+
             <PlaceCard
-              key={place.placeId}
+              key={
+                place.businessId
+                  ? `business-${place.businessId}`
+                  : `place-${place.placeId || index}`
+              }
               place={place}
               onClick={handlePlaceClick}
             />
+
           ))
+
         ) : (
-          <p>No Places Found</p>
+
+          <p>
+            No Places Found
+          </p>
+
         )}
+
       </div>
 
-      {/* AI Review Summary */}
+      {/* ======================================
+          AI Review Summary
+      ====================================== */}
 
       <div className="section-title">
-        <span>AI Review Summary</span>
+
+        <span>
+          AI Review Summary
+        </span>
+
       </div>
 
       <AIReviewSummary />
 
-      {/* Bottom Navigation */}
+      {/* ======================================
+          Bottom Navigation
+      ====================================== */}
 
       <BottomNavigation />
+
     </MainLayout>
   );
 }
