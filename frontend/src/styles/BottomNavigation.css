@@ -117,7 +117,6 @@
   color: #ffffff;
 }
 
-
 .bottom-nav .nav-item.active svg {
   transform: scale(1.1);
 }
@@ -139,18 +138,15 @@
     bottom: 10px;
   }
 
-
   .bottom-nav .nav-item {
     border-radius: 12px;
 
     gap: 4px;
   }
 
-
   .bottom-nav .nav-item svg {
     font-size: 18px;
   }
-
 
   .bottom-nav .nav-item span {
     font-size: 10px;
@@ -159,15 +155,95 @@
 
 
 /* =====================================================
-   TABLET / LAPTOP
+   TABLET
+===================================================== */
+
+@media (min-width: 481px) and (max-width: 767px) {
+
+  .bottom-nav {
+    max-width: 520px;
+
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+}
+
+
+/* =====================================================
+   LAPTOP / DESKTOP
 ===================================================== */
 
 @media (min-width: 768px) {
 
   .bottom-nav {
-    max-width: 420px;
+    max-width: 650px;
+
+    height: 78px;
+
+    padding: 9px 12px;
+
+    border-radius: 18px;
 
     margin-left: auto;
     margin-right: auto;
   }
+
+
+  .bottom-nav .nav-item {
+    gap: 6px;
+
+    border-radius: 13px;
+  }
+
+
+  .bottom-nav .nav-item svg {
+    font-size: 23px;
+  }
+
+
+  .bottom-nav .nav-item span {
+    font-size: 12px;
+
+    font-weight: 600;
+  }
+
+}
+
+/* =====================================================
+   TABLET / LAPTOP / DESKTOP
+===================================================== */
+
+@media (min-width: 768px) {
+
+  .bottom-nav {
+    width: 100%;
+    max-width: none;
+
+    height: 78px;
+
+    padding: 9px 16px;
+
+    border-radius: 18px;
+
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .bottom-nav .nav-item {
+    gap: 6px;
+
+    border-radius: 13px;
+  }
+
+  .bottom-nav .nav-item svg {
+    font-size: 23px;
+  }
+
+  .bottom-nav .nav-item span {
+    font-size: 12px;
+
+    font-weight: 600;
+  }
+
 }

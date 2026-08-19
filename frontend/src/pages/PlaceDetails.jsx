@@ -519,37 +519,7 @@ function PlaceDetails() {
 
       </div>
 
-      {/* ========================================
-          AI REVIEW SUMMARY
-      ======================================== */}
-
-      <div className="info-card">
-
-        <h2>
-          AI Review Summary
-        </h2>
-
-        <div className="summary-grid">
-
-          <div>
-            ☕ Excellent Quality
-          </div>
-
-          <div>
-            😊 Friendly Staff
-          </div>
-
-          <div>
-            ✨ Clean & Hygienic
-          </div>
-
-          <div>
-            🌟 Great Ambience
-          </div>
-
-        </div>
-
-      </div>
+ 
 
     </MainLayout>
   );

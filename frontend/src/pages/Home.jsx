@@ -259,19 +259,7 @@ function Home() {
 
       </div>
 
-      {/* ======================================
-          AI Review Summary
-      ====================================== */}
-
-      <div className="section-title">
-
-        <span>
-          AI Review Summary
-        </span>
-
-      </div>
-
-      <AIReviewSummary />
+      
 
       {/* ======================================
           Bottom Navigation

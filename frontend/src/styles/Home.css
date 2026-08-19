@@ -83,19 +83,7 @@
   margin-bottom:35px;
 }
 
-/* =========================
-   AI Summary
-========================= */
 
-.ai-summary{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:20px;
-  color:var(--text);
-  box-shadow:var(--shadow);
-  margin-bottom:30px;
-}
 
 /* =========================
    Responsive
