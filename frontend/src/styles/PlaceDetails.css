@@ -196,9 +196,7 @@
 
   align-items: center;
 
-  flex-wrap: wrap;
-
-  gap: 8px;
+  gap: 10px;
 
   margin-bottom: 25px;
 
@@ -219,10 +217,6 @@
   color: #bdbdbd;
 
   font-size: 17px;
-
-  white-space: normal;
-
-  overflow-wrap: anywhere;
 
 }
 
@@ -523,19 +517,11 @@
 
     font-size: 18px;
 
-    gap: 6px;
-
-    flex-wrap: wrap;
-
   }
 
   .review-text {
 
     font-size: 14px;
-
-    white-space: normal;
-
-    overflow-wrap: anywhere;
 
   }
 
@@ -544,6 +530,12 @@
     font-size: 15px;
 
     padding: 15px 0;
+
+  }
+
+  .summary-grid {
+
+    grid-template-columns: 1fr;
 
   }
 
