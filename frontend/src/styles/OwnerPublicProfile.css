@@ -1,135 +1,347 @@
+/* =====================================================
+   PUBLIC PROFILE PAGE
+===================================================== */
+
 .public-profile-page {
   min-height: 100vh;
   background: #000;
   color: #fff;
-  padding-bottom: 50px;
+  padding-bottom: 60px;
 }
+
+
+/* =====================================================
+   HEADER
+===================================================== */
 
 .public-profile-header {
   height: 72px;
   padding: 0 30px;
   border-bottom: 1px solid #222;
+
   display: flex;
   align-items: center;
   gap: 18px;
+
+  background: #000;
 }
 
 .public-back-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+
+  border-radius: 11px;
   border: 1px solid #333;
+
   background: #171717;
   color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
+
+  transition: 0.2s ease;
 }
 
-.public-profile-header span {
+.public-back-btn:hover {
+  background: #242424;
+  border-color: #555;
+}
+
+.public-back-btn svg {
+  font-size: 15px;
+}
+
+.public-header-title span {
+  display: block;
+
   color: #888;
-  font-size: 11px;
-  letter-spacing: 1.5px;
+
+  font-size: 10px;
+  font-weight: 500;
+
+  letter-spacing: 1.8px;
 }
 
 .public-profile-header h1 {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
+
   font-size: 18px;
+  font-weight: 700;
 }
+
+
+/* =====================================================
+   MAIN CONTAINER
+===================================================== */
 
 .public-profile-container {
   width: min(900px, calc(100% - 32px));
+
   margin: 30px auto;
+
+  background: #000;
 }
+
+
+/* =====================================================
+   COVER
+===================================================== */
 
 .public-cover {
-  height: 230px;
+  position: relative;
+
+  width: 100%;
+  height: 300px;
+
+  overflow: hidden;
+
   border-radius: 18px;
+
   background: #171717;
   border: 1px solid #292929;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.public-business-icon {
-  width: 90px;
-  height: 90px;
+.public-cover-image {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  display: block;
+}
+
+.public-cover-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.05),
+      rgba(0, 0, 0, 0.25)
+    );
+
+  pointer-events: none;
+}
+
+
+/* =====================================================
+   FAVORITE BUTTON
+===================================================== */
+
+.public-favorite-btn {
+  position: absolute;
+
+  right: 18px;
+  bottom: 18px;
+
+  width: 56px;
+  height: 56px;
+
   border-radius: 50%;
+
+  border: 0;
+
   background: #fff;
   color: #000;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 34px;
+
+  font-size: 23px;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.45);
+
+  transition: 0.2s ease;
 }
 
+.public-favorite-btn:hover {
+  transform: scale(1.06);
+}
+
+.public-favorite-btn svg {
+  stroke: #000;
+}
+
+
+/* =====================================================
+   BUSINESS INFORMATION
+===================================================== */
+
 .public-business-info {
-  padding: 25px 5px;
+  padding: 26px 4px 24px;
+
   border-bottom: 1px solid #222;
 }
 
 .public-title-row {
   display: flex;
+
   justify-content: space-between;
+  align-items: flex-start;
+
   gap: 20px;
+}
+
+.public-business-title {
+  min-width: 0;
 }
 
 .public-title-row h2 {
   margin: 0;
-  font-size: 30px;
+
+  font-size: 31px;
+  line-height: 1.2;
+
+  font-weight: 750;
+
+  text-transform: none;
 }
 
 .public-category {
   margin: 7px 0 20px;
+
   color: #999;
+
+  font-size: 15px;
 }
 
+
+/* =====================================================
+   RATING
+===================================================== */
+
 .public-rating {
-  height: fit-content;
+  flex-shrink: 0;
+
   display: flex;
-  gap: 7px;
   align-items: center;
+
+  gap: 7px;
+
+  margin-top: 3px;
+
   color: #fff;
 }
 
 .public-rating svg {
-  color: #fff;
+  color: #f5c518;
+
+  font-size: 16px;
 }
+
+.public-rating strong {
+  font-size: 16px;
+}
+
+.public-rating span {
+  color: #aaa;
+
+  font-size: 14px;
+}
+
+
+/* =====================================================
+   INFO ITEMS
+===================================================== */
 
 .public-info-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+
+  gap: 12px;
+
+  margin-top: 14px;
+
   color: #aaa;
-  margin-top: 12px;
+
   font-size: 14px;
+
+  text-decoration: none;
 }
 
 .public-info-item svg {
+  flex-shrink: 0;
+
+  color: #fff;
+
+  font-size: 15px;
+}
+
+.public-info-item span {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+.public-website {
+  position: relative;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.public-website:hover {
   color: #fff;
 }
 
+.public-website .website-arrow {
+  margin-left: auto;
+
+  color: #777;
+
+  font-size: 11px;
+}
+
+
+/* =====================================================
+   COMMON SECTION
+===================================================== */
+
 .public-section {
-  padding: 25px 5px;
+  padding: 26px 4px;
+
   border-bottom: 1px solid #222;
 }
 
 .public-section h3 {
   margin: 0 0 12px;
+
   font-size: 20px;
+  line-height: 1.3;
 }
 
 .public-section p {
-  color: #999;
-  line-height: 1.6;
   margin: 0;
+
+  color: #999;
+
+  font-size: 15px;
+
+  line-height: 1.65;
 }
+
+
+/* =====================================================
+   SECTION TITLE
+===================================================== */
 
 .public-section-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 15px;
-  margin-bottom: 15px;
+
+  margin-bottom: 16px;
 }
 
 .public-section-title h3 {
@@ -138,130 +350,595 @@
 
 .public-section-title span {
   color: #777;
+
   font-size: 13px;
 }
 
-.public-section-title button {
-  border: 1px solid #333;
-  background: #171717;
-  color: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-}
+
+/* =====================================================
+   PHOTOS
+===================================================== */
 
 .public-photo-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 12px;
 }
 
 .public-photo {
+  position: relative;
+
   height: 180px;
+
   overflow: hidden;
-  border-radius: 12px;
+
+  border-radius: 13px;
+
   background: #171717;
+
+  border: 1px solid #252525;
 }
 
 .public-photo img {
   width: 100%;
   height: 100%;
+
   object-fit: cover;
+
+  display: block;
+
+  transition: transform 0.3s ease;
 }
 
-.public-empty-photos,
-.public-review-empty {
-  min-height: 120px;
-  border: 1px dashed #333;
-  border-radius: 12px;
+.public-photo:hover img {
+  transform: scale(1.05);
+}
+
+.public-photo-label {
+  position: absolute;
+
+  left: 10px;
+  bottom: 10px;
+
+  padding: 5px 9px;
+
+  border-radius: 7px;
+
+  background: rgba(0, 0, 0, 0.7);
+
+  color: #fff;
+
+  font-size: 10px;
+}
+
+
+/* =====================================================
+   REVIEWS
+===================================================== */
+
+.public-reviews-section {
+  padding-bottom: 22px;
+}
+
+.public-view-reviews-btn {
+  border: 1px solid #333;
+
+  background: #171717;
+
+  color: #fff;
+
+  padding: 9px 14px;
+
+  border-radius: 9px;
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.public-view-reviews-btn:hover {
+  background: #242424;
+
+  border-color: #555;
+}
+
+
+/* =====================================================
+   REVIEW CARD
+===================================================== */
+
+.public-review-card {
+  padding: 18px;
+
+  border: 1px solid #292929;
+
+  border-radius: 14px;
+
+  background: #050505;
+}
+
+.public-review-top {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.public-review-avatar {
+  width: 42px;
+  height: 42px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #fff;
+  color: #000;
+
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+
+  font-weight: 700;
+}
+
+.public-review-user {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.public-review-user strong {
+  font-size: 14px;
+}
+
+.public-review-user span {
   color: #777;
+
+  font-size: 12px;
+}
+
+.public-review-rating {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+}
+
+.public-review-rating svg {
+  color: #f5c518;
+
+  font-size: 13px;
+}
+
+.public-review-rating strong {
+  font-size: 13px;
+}
+
+.public-review-card p {
+  margin-top: 15px;
+
+  color: #aaa;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+/* =====================================================
+   EMPTY REVIEWS
+===================================================== */
+
+.public-review-empty {
+  min-height: 120px;
+
+  border: 1px dashed #333;
+
+  border-radius: 13px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  color: #777;
+
   text-align: center;
 }
 
-.public-empty-photos svg,
 .public-review-empty svg {
   font-size: 25px;
-  color: #fff;
+
+  color: #f5c518;
 }
+
+.public-review-empty p {
+  margin: 0;
+
+  color: #777;
+}
+
+
+/* =====================================================
+   PUBLIC PREVIEW NOTE
+===================================================== */
+
+.public-preview-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin-top: 16px;
+
+  color: #666;
+
+  font-size: 12px;
+}
+
+.public-preview-note svg {
+  font-size: 11px;
+}
+
+
+/* =====================================================
+   OWNER EDIT BUTTON
+===================================================== */
 
 .public-edit-btn {
   width: 100%;
-  margin-top: 25px;
+
+  margin-top: 24px;
+
   min-height: 48px;
+
   border-radius: 10px;
-  border: 1px solid #fff;
-  background: #fff;
-  color: #000;
+
+  border: 1px solid #333;
+
+  background: #171717;
+
+  color: #fff;
+
   font-weight: 700;
+
   cursor: pointer;
+
+  transition: 0.2s ease;
 }
 
 .public-edit-btn:hover {
-  background: #000;
-  color: #fff;
+  background: #242424;
+
+  border-color: #555;
 }
 
 
-/* =========================
+/* =====================================================
+   LOADING
+===================================================== */
+
+.public-loading-card {
+  min-height: 300px;
+
+  border: 1px solid #222;
+
+  border-radius: 16px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 18px;
+
+  color: #777;
+}
+
+.public-loading-card p {
+  margin: 0;
+
+  color: #777;
+}
+
+.public-loader {
+  width: 32px;
+  height: 32px;
+
+  border: 3px solid #333;
+
+  border-top-color: #fff;
+
+  border-radius: 50%;
+
+  animation: publicLoaderSpin 0.8s linear infinite;
+}
+
+@keyframes publicLoaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+.public-error-card {
+  padding: 30px;
+
+  border: 1px solid #292929;
+
+  border-radius: 15px;
+
+  background: #050505;
+}
+
+.public-error-card h3 {
+  margin: 0 0 10px;
+
+  font-size: 20px;
+}
+
+.public-error-card p {
+  color: #999;
+
+  line-height: 1.6;
+}
+
+
+/* =====================================================
    MOBILE
-========================= */
+===================================================== */
 
 @media (max-width: 600px) {
 
-  .public-profile-header {
-    padding: 0 16px;
+  .public-profile-page {
+    padding-bottom: 40px;
   }
+
+
+  /* HEADER */
+
+  .public-profile-header {
+    height: 70px;
+
+    padding: 0 16px;
+
+    gap: 14px;
+  }
+
+  .public-back-btn {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 10px;
+  }
+
+  .public-profile-header h1 {
+    font-size: 17px;
+  }
+
+
+  /* CONTAINER */
 
   .public-profile-container {
     width: calc(100% - 24px);
-    margin: 18px auto;
+
+    margin: 16px auto;
   }
 
+
+  /* COVER */
+
   .public-cover {
-    height: 150px;
+    height: 205px;
+
     border-radius: 14px;
   }
 
-  .public-business-icon {
-    width: 65px;
-    height: 65px;
-    font-size: 25px;
+  .public-favorite-btn {
+    width: 50px;
+    height: 50px;
+
+    right: 13px;
+    bottom: 13px;
+
+    font-size: 20px;
   }
 
+
+  /* BUSINESS INFO */
+
   .public-business-info {
-    padding: 20px 2px;
+    padding: 20px 2px 20px;
+  }
+
+  .public-title-row {
+    gap: 10px;
   }
 
   .public-title-row h2 {
     font-size: 22px;
   }
 
-  .public-rating {
-    font-size: 12px;
+  .public-category {
+    margin: 6px 0 17px;
+
+    font-size: 13px;
   }
 
+  .public-rating {
+    gap: 5px;
+
+    margin-top: 2px;
+  }
+
+  .public-rating svg {
+    font-size: 13px;
+  }
+
+  .public-rating strong {
+    font-size: 13px;
+  }
+
+  .public-rating span {
+    display: none;
+  }
+
+
+  /* INFO */
+
+  .public-info-item {
+    gap: 10px;
+
+    margin-top: 12px;
+
+    font-size: 13px;
+  }
+
+
+  /* SECTIONS */
+
   .public-section {
-    padding: 20px 2px;
+    padding: 21px 2px;
+  }
+
+  .public-section h3 {
+    font-size: 18px;
+  }
+
+  .public-section p {
+    font-size: 13px;
+  }
+
+
+  /* PHOTOS */
+
+  .public-section-title {
+    margin-bottom: 13px;
+
+    align-items: center;
+  }
+
+  .public-section-title h3 {
+    font-size: 18px;
+  }
+
+  .public-section-title span {
+    font-size: 12px;
   }
 
   .public-photo-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 9px;
   }
 
   .public-photo {
-    height: 130px;
+    height: 145px;
+
+    border-radius: 11px;
   }
 
-  .public-section-title {
-    align-items: flex-start;
+  .public-photo-label {
+    left: 7px;
+    bottom: 7px;
+
+    padding: 4px 7px;
+
+    font-size: 9px;
   }
 
-  .public-section-title button {
-    font-size: 12px;
+
+  /* REVIEWS */
+
+  .public-view-reviews-btn {
+    padding: 7px 10px;
+
+    font-size: 11px;
   }
+
+  .public-review-card {
+    padding: 14px;
+  }
+
+  .public-review-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .public-review-user strong {
+    font-size: 13px;
+  }
+
+  .public-review-user span {
+    font-size: 11px;
+  }
+
+  .public-review-rating {
+    gap: 4px;
+  }
+
+  .public-review-rating svg {
+    font-size: 11px;
+  }
+
+  .public-review-rating strong {
+    font-size: 11px;
+  }
+
+
+  /* EDIT */
+
+  .public-edit-btn {
+    margin-top: 20px;
+
+    min-height: 46px;
+
+    font-size: 13px;
+  }
+
+}
+
+
+/* =====================================================
+   VERY SMALL MOBILE
+===================================================== */
+
+@media (max-width: 380px) {
+
+  .public-cover {
+    height: 180px;
+  }
+
+  .public-title-row h2 {
+    font-size: 20px;
+  }
+
+  .public-rating {
+    font-size: 11px;
+  }
+
+  .public-photo {
+    height: 125px;
+  }
+
 }

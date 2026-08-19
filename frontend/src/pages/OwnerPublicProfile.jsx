@@ -4,18 +4,47 @@ import axios from "axios";
 
 import {
   FaArrowLeft,
-  FaBuilding,
   FaMapMarkerAlt,
   FaPhone,
   FaClock,
   FaStar,
-  FaCamera,
   FaGlobe,
+  FaHeart,
+  FaLock,
+  FaChevronRight,
 } from "react-icons/fa";
 
 import "../styles/OwnerPublicProfile.css";
 
 const API_BASE = "http://localhost:5213/api";
+
+// =====================================================
+// SAMPLE PHOTOS
+// Used only when business photos are not available
+// =====================================================
+
+const SAMPLE_PHOTOS = [
+  {
+    id: "sample-1",
+    url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=85",
+    alt: "Coffee",
+  },
+  {
+    id: "sample-2",
+    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=900&q=85",
+    alt: "Cafe interior",
+  },
+  {
+    id: "sample-3",
+    url: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=85",
+    alt: "Cafe dessert",
+  },
+  {
+    id: "sample-4",
+    url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=85",
+    alt: "Restaurant interior",
+  },
+];
 
 function OwnerPublicProfile() {
   const navigate = useNavigate();
@@ -26,17 +55,17 @@ function OwnerPublicProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ==========================================
+  // =====================================================
   // GET TOKEN
-  // ==========================================
+  // =====================================================
 
   const getToken = () => {
     return localStorage.getItem("token");
   };
 
-  // ==========================================
+  // =====================================================
   // LOAD BUSINESS + PHOTOS
-  // ==========================================
+  // =====================================================
 
   useEffect(() => {
     const loadPublicProfile = async () => {
@@ -57,10 +86,10 @@ function OwnerPublicProfile() {
           },
         };
 
-        // ======================================
+        // =================================================
         // GET OWNER BUSINESS
         // GET /api/owner/business
-        // ======================================
+        // =================================================
 
         const businessResponse = await axios.get(
           `${API_BASE}/owner/business`,
@@ -72,7 +101,6 @@ function OwnerPublicProfile() {
           businessResponse?.data?.Data ??
           businessResponse?.data;
 
-        // Backend may return an array
         const ownerBusiness = Array.isArray(businessData)
           ? businessData[0]
           : businessData;
@@ -85,31 +113,42 @@ function OwnerPublicProfile() {
 
         setBusiness(ownerBusiness);
 
-        // ======================================
+        // =================================================
         // GET BUSINESS PHOTOS
         // GET /api/owner/photos/business/{id}
-        // ======================================
+        // =================================================
 
         const businessId =
           ownerBusiness.businessId ??
           ownerBusiness.BusinessId;
 
         if (businessId) {
-          const photoResponse = await axios.get(
-            `${API_BASE}/owner/photos/business/${businessId}`,
-            config
-          );
+          try {
+            const photoResponse = await axios.get(
+              `${API_BASE}/owner/photos/business/${businessId}`,
+              config
+            );
 
-          const photoData =
-            photoResponse?.data?.data ??
-            photoResponse?.data?.Data ??
-            photoResponse?.data;
+            const photoData =
+              photoResponse?.data?.data ??
+              photoResponse?.data?.Data ??
+              photoResponse?.data;
 
-          setPhotos(
-            Array.isArray(photoData)
-              ? photoData
-              : []
-          );
+            setPhotos(
+              Array.isArray(photoData)
+                ? photoData
+                : []
+            );
+          } catch (photoError) {
+            console.error(
+              "Business photos loading error:",
+              photoError
+            );
+
+            // Business profile can still be displayed
+            // even when photos are unavailable.
+            setPhotos([]);
+          }
         }
       } catch (err) {
         console.error(
@@ -137,27 +176,35 @@ function OwnerPublicProfile() {
     loadPublicProfile();
   }, []);
 
-  // ==========================================
+  // =====================================================
   // LOADING
-  // ==========================================
+  // =====================================================
 
   if (loading) {
     return (
       <div className="public-profile-page">
+
         <div className="public-profile-container">
-          <div className="public-review-empty">
+
+          <div className="public-loading-card">
+
+            <div className="public-loader"></div>
+
             <p>
               Loading your business profile...
             </p>
+
           </div>
+
         </div>
+
       </div>
     );
   }
 
-  // ==========================================
+  // =====================================================
   // ERROR
-  // ==========================================
+  // =====================================================
 
   if (error) {
     return (
@@ -170,20 +217,28 @@ function OwnerPublicProfile() {
             onClick={() =>
               navigate("/owner-dashboard")
             }
+            aria-label="Go back"
           >
             <FaArrowLeft />
           </button>
 
-          <div>
-            <span>REVIO</span>
-            <h1>Public Profile</h1>
+          <div className="public-header-title">
+
+            <span>
+              REVIO
+            </span>
+
+            <h1>
+              Public Profile
+            </h1>
+
           </div>
 
         </header>
 
         <main className="public-profile-container">
 
-          <section className="public-section">
+          <section className="public-error-card">
 
             <h3>
               Unable to load profile
@@ -210,9 +265,9 @@ function OwnerPublicProfile() {
     );
   }
 
-  // ==========================================
+  // =====================================================
   // BUSINESS VALUES
-  // ==========================================
+  // =====================================================
 
   const businessName =
     business?.businessName ??
@@ -239,11 +294,6 @@ function OwnerPublicProfile() {
     business?.PhoneNumber ??
     "";
 
-  const email =
-    business?.email ??
-    business?.Email ??
-    "";
-
   const website =
     business?.website ??
     business?.Website ??
@@ -260,43 +310,110 @@ function OwnerPublicProfile() {
     "";
 
   const rating =
-    business?.rating ??
-    business?.Rating ??
-    0;
+    Number(
+      business?.rating ??
+      business?.Rating ??
+      0
+    );
 
   const reviewCount =
-    business?.reviewCount ??
-    business?.ReviewCount ??
-    0;
+    Number(
+      business?.reviewCount ??
+      business?.ReviewCount ??
+      0
+    );
 
   const categoryName =
     business?.category?.categoryName ??
     business?.category?.CategoryName ??
     "Business";
 
-  // ==========================================
+  const businessId =
+    business?.businessId ??
+    business?.BusinessId;
+
+  // =====================================================
   // PHOTO URL
-  // ==========================================
+  // =====================================================
 
   const getPhotoUrl = (photo) => {
     return (
       photo?.photoUrl ??
       photo?.PhotoUrl ??
       photo?.image ??
+      photo?.Image ??
       ""
     );
   };
 
-  // ==========================================
+  // =====================================================
+  // PREPARE PHOTOS
+  //
+  // Uploaded photos are used first.
+  // Missing photos are filled with sample photos.
+  // =====================================================
+
+  const uploadedPhotos = photos
+    .map((photo, index) => {
+      const url = getPhotoUrl(photo);
+
+      if (!url) {
+        return null;
+      }
+
+      return {
+        id:
+          photo?.businessPhotoId ??
+          photo?.BusinessPhotoId ??
+          `uploaded-${index}`,
+
+        url,
+
+        alt:
+          photo?.caption ??
+          photo?.Caption ??
+          `${businessName} photo`,
+      };
+    })
+    .filter(Boolean);
+
+  const displayPhotos = [
+    ...uploadedPhotos,
+    ...SAMPLE_PHOTOS,
+  ].slice(0, 4);
+
+  // =====================================================
+  // COVER IMAGE
+  // =====================================================
+
+  const coverImage =
+    displayPhotos[0]?.url ??
+    SAMPLE_PHOTOS[0].url;
+
+  // =====================================================
+  // NAVIGATION
+  // =====================================================
+
+  const handleViewReviews = () => {
+    if (businessId) {
+      navigate(
+        `/owner/reviews/business/${businessId}`
+      );
+    } else {
+      navigate("/owner/reviews");
+    }
+  };
+
+  // =====================================================
   // RENDER
-  // ==========================================
+  // =====================================================
 
   return (
     <div className="public-profile-page">
 
-      {/* =========================
+      {/* =================================================
           HEADER
-      ========================= */}
+      ================================================= */}
 
       <header className="public-profile-header">
 
@@ -305,46 +422,67 @@ function OwnerPublicProfile() {
           onClick={() =>
             navigate("/owner-dashboard")
           }
+          aria-label="Go back"
         >
           <FaArrowLeft />
         </button>
 
-        <div>
-          <span>REVIO</span>
-          <h1>Public Profile</h1>
+        <div className="public-header-title">
+
+          <span>
+            REVIO
+          </span>
+
+          <h1>
+            Public Profile
+          </h1>
+
         </div>
 
       </header>
 
 
-      {/* =========================
-          PROFILE
-      ========================= */}
+      {/* =================================================
+          MAIN PROFILE
+      ================================================= */}
 
       <main className="public-profile-container">
 
-        {/* =========================
-            COVER
-        ========================= */}
+
+        {/* =================================================
+            COVER IMAGE
+        ================================================= */}
 
         <section className="public-cover">
 
-          <div className="public-business-icon">
-            <FaBuilding />
-          </div>
+          <img
+            src={coverImage}
+            alt={`${businessName} cover`}
+            className="public-cover-image"
+          />
+
+          <div className="public-cover-overlay"></div>
+
+          <button
+            className="public-favorite-btn"
+            type="button"
+            aria-label="Favorite"
+          >
+            <FaHeart />
+          </button>
 
         </section>
 
 
-        {/* =========================
-            BUSINESS INFORMATION
-        ========================= */}
+        {/* =================================================
+            BUSINESS HEADER
+        ================================================= */}
 
         <section className="public-business-info">
 
           <div className="public-title-row">
 
-            <div>
+            <div className="public-business-title">
 
               <h2>
                 {businessName}
@@ -361,27 +499,40 @@ function OwnerPublicProfile() {
 
               <FaStar />
 
-              <span>
-                {rating > 0
-                  ? `${Number(rating).toFixed(1)} (${reviewCount})`
-                  : "New"}
-              </span>
+              {rating > 0 ? (
+                <>
+                  <strong>
+                    {rating.toFixed(1)}
+                  </strong>
+
+                  <span>
+                    ({reviewCount}{" "}
+                    {reviewCount === 1
+                      ? "Review"
+                      : "Reviews"})
+                  </span>
+                </>
+              ) : (
+                <strong>
+                  New
+                </strong>
+              )}
 
             </div>
 
           </div>
 
 
-          {/* ADDRESS */}
+          {/* =================================================
+              ADDRESS
+          ================================================= */}
 
           {(address || city) && (
-
             <div className="public-info-item">
 
               <FaMapMarkerAlt />
 
               <span>
-
                 {address}
 
                 {address && city
@@ -389,18 +540,17 @@ function OwnerPublicProfile() {
                   : ""}
 
                 {city}
-
               </span>
 
             </div>
-
           )}
 
 
-          {/* PHONE */}
+          {/* =================================================
+              PHONE
+          ================================================= */}
 
           {phone && (
-
             <div className="public-info-item">
 
               <FaPhone />
@@ -410,14 +560,14 @@ function OwnerPublicProfile() {
               </span>
 
             </div>
-
           )}
 
 
-          {/* OPENING HOURS */}
+          {/* =================================================
+              OPENING HOURS
+          ================================================= */}
 
           {(openingTime || closingTime) && (
-
             <div className="public-info-item">
 
               <FaClock />
@@ -435,40 +585,44 @@ function OwnerPublicProfile() {
               </span>
 
             </div>
-
           )}
 
 
-          {/* WEBSITE */}
+          {/* =================================================
+              WEBSITE
+          ================================================= */}
 
           {website && (
-
-            <div className="public-info-item">
+            <a
+              className="public-info-item public-website"
+              href={
+                website.startsWith("http")
+                  ? website
+                  : `https://${website}`
+              }
+              target="_blank"
+              rel="noreferrer"
+            >
 
               <FaGlobe />
 
-              <a
-                href={
-                  website.startsWith("http")
-                    ? website
-                    : `https://${website}`
-                }
-                target="_blank"
-                rel="noreferrer"
-              >
+              <span>
                 {website}
-              </a>
+              </span>
 
-            </div>
+              <FaChevronRight
+                className="website-arrow"
+              />
 
+            </a>
           )}
 
         </section>
 
 
-        {/* =========================
+        {/* =================================================
             ABOUT
-        ========================= */}
+        ================================================= */}
 
         <section className="public-section">
 
@@ -483,11 +637,11 @@ function OwnerPublicProfile() {
         </section>
 
 
-        {/* =========================
+        {/* =================================================
             PHOTOS
-        ========================= */}
+        ================================================= */}
 
-        <section className="public-section">
+        <section className="public-section public-photos-section">
 
           <div className="public-section-title">
 
@@ -496,75 +650,50 @@ function OwnerPublicProfile() {
             </h3>
 
             <span>
-              {photos.length} photos
+              {displayPhotos.length} Photos
             </span>
 
           </div>
 
 
-          {photos.length > 0 ? (
+          <div className="public-photo-grid">
 
-            <div className="public-photo-grid">
+            {displayPhotos.map(
+              (photo, index) => (
+                <div
+                  className={`public-photo ${
+                    index === 0
+                      ? "public-photo-main"
+                      : ""
+                  }`}
+                  key={photo.id}
+                >
 
-              {photos.map((photo, index) => {
+                  <img
+                    src={photo.url}
+                    alt={photo.alt}
+                  />
 
-                const photoUrl =
-                  getPhotoUrl(photo);
+                  {index === 0 && (
+                    <div className="public-photo-label">
+                      Featured
+                    </div>
+                  )}
 
-                return (
+                </div>
+              )
+            )}
 
-                  <div
-                    className="public-photo"
-                    key={
-                      photo?.businessPhotoId ??
-                      photo?.BusinessPhotoId ??
-                      index
-                    }
-                  >
-
-                    {photoUrl && (
-
-                      <img
-                        src={photoUrl}
-                        alt={
-                          photo?.caption ??
-                          photo?.Caption ??
-                          `Business ${index + 1}`
-                        }
-                      />
-
-                    )}
-
-                  </div>
-
-                );
-
-              })}
-
-            </div>
-
-          ) : (
-
-            <div className="public-empty-photos">
-
-              <FaCamera />
-
-              <p>
-                No business photos uploaded yet.
-              </p>
-
-            </div>
-
-          )}
+          </div>
 
         </section>
 
 
-        {/* =========================
-            REVIEWS
-        ========================= */}
+        {/* =================================================
+            CUSTOMER REVIEWS
+        ================================================= */}
 
-        <section className="public-section">
+        <section className="public-section public-reviews-section">
 
           <div className="public-section-title">
 
@@ -573,15 +702,10 @@ function OwnerPublicProfile() {
             </h3>
 
             <button
-              onClick={() =>
-                navigate(
-                  business?.businessId
-                    ? `/owner/reviews/business/${business.businessId}`
-                    : "/owner/reviews"
-                )
-              }
+              className="public-view-reviews-btn"
+              onClick={handleViewReviews}
             >
-              View Reviews
+              View All
             </button>
 
           </div>
@@ -589,16 +713,50 @@ function OwnerPublicProfile() {
 
           {reviewCount > 0 ? (
 
-            <div className="public-review-empty">
+            <div className="public-review-card">
 
-              <FaStar />
+              <div className="public-review-top">
+
+                <div className="public-review-avatar">
+
+                  <span>
+                    R
+                  </span>
+
+                </div>
+
+
+                <div className="public-review-user">
+
+                  <strong>
+                    Customer Review
+                  </strong>
+
+                  <span>
+                    Recent review
+                  </span>
+
+                </div>
+
+
+                <div className="public-review-rating">
+
+                  <FaStar />
+
+                  <strong>
+                    {rating > 0
+                      ? rating.toFixed(1)
+                      : "5.0"}
+                  </strong>
+
+                </div>
+
+              </div>
+
 
               <p>
-                This business has{" "}
-                {reviewCount} customer{" "}
-                {reviewCount === 1
-                  ? "review"
-                  : "reviews"}.
+                Customers have shared their
+                experience with this business.
               </p>
 
             </div>
@@ -620,9 +778,24 @@ function OwnerPublicProfile() {
         </section>
 
 
-        {/* =========================
+        {/* =================================================
+            PUBLIC PREVIEW NOTE
+        ================================================= */}
+
+        <div className="public-preview-note">
+
+          <FaLock />
+
+          <span>
+            You are seeing this as a public user
+          </span>
+
+        </div>
+
+
+        {/* =================================================
             OWNER EDIT
-        ========================= */}
+        ================================================= */}
 
         <button
           className="public-edit-btn"
