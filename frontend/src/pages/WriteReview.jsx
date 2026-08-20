@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import {
   FaArrowLeft,
   FaStar,
@@ -12,13 +13,20 @@ import { addReview } from "../services/ReviewService";
 import "../styles/WriteReview.css";
 
 function WriteReview() {
-  const { placeId } = useParams();
+  const { placeId, businessId } = useParams();
+
   const navigate = useNavigate();
 
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // =========================
+  // Determine Review Type
+  // =========================
+
+  const isBusinessReview = Boolean(businessId);
 
   // =========================
   // Get User ID
@@ -41,45 +49,128 @@ function WriteReview() {
 
     const userId = getUserId();
 
+    // =========================
+    // Login Check
+    // =========================
+
     if (!userId) {
-      alert("Please login first to write a review.");
+      alert(
+        "Please login first to write a review."
+      );
+
       navigate("/login");
+
       return;
     }
+
+    // =========================
+    // Rating Check
+    // =========================
 
     if (rating === 0) {
       alert("Please select a rating.");
+
       return;
     }
 
+    // =========================
+    // Comment Check
+    // =========================
+
     if (!comment.trim()) {
       alert("Please write your review.");
+
+      return;
+    }
+
+    // =========================
+    // ID Check
+    // =========================
+
+    if (!placeId && !businessId) {
+      alert(
+        "Unable to identify the place or business."
+      );
+
       return;
     }
 
     try {
       setLoading(true);
 
+      // =========================
+      // REVIEW DATA
+      // =========================
+
       const reviewData = {
-        placeId: Number(placeId),
         userId: userId,
+
         rating: rating,
+
         comment: comment.trim(),
+
+        // Existing Place Review
+        ...(placeId && {
+          placeId: Number(placeId),
+        }),
+
+        // New Business Review
+        ...(businessId && {
+          businessId: Number(businessId),
+        }),
       };
+
+      console.log(
+        "Submitting Review:",
+        reviewData
+      );
+
+      // =========================
+      // SAVE REVIEW
+      // =========================
 
       await addReview(reviewData);
 
-      alert("Review added successfully!");
+      // =========================
+      // SUCCESS
+      // =========================
 
-      navigate(`/place/${placeId}`);
-    } catch (error) {
-      console.error("Failed to add review:", error);
+      alert(
+        "Review added successfully!"
+      );
 
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
+      // =========================
+      // NAVIGATE BACK
+      // =========================
+
+      if (isBusinessReview) {
+        navigate(
+          `/business/${businessId}`
+        );
       } else {
-        alert("Failed to add review. Please try again.");
+        navigate(
+          `/place/${placeId}`
+        );
       }
+
+    } catch (error) {
+      console.error(
+        "Failed to add review:",
+        error
+      );
+
+      if (
+        error.response?.data?.message
+      ) {
+        alert(
+          error.response.data.message
+        );
+      } else {
+        alert(
+          "Failed to add review. Please try again."
+        );
+      }
+
     } finally {
       setLoading(false);
     }
@@ -108,10 +199,15 @@ function WriteReview() {
 
         <div className="write-review-card">
 
-          <h1>Write a Review</h1>
+          <h1>
+            Write a Review
+          </h1>
 
           <p className="review-subtitle">
-            Share your experience with this place
+            Share your experience with this{" "}
+            {isBusinessReview
+              ? "business"
+              : "place"}
           </p>
 
           {/* =========================
@@ -120,35 +216,41 @@ function WriteReview() {
 
           <div className="rating-section">
 
-            <h3>Your Rating</h3>
+            <h3>
+              Your Rating
+            </h3>
 
             <div className="star-container">
 
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  className="star-button"
-                  onMouseEnter={() =>
-                    setHoverRating(star)
-                  }
-                  onMouseLeave={() =>
-                    setHoverRating(0)
-                  }
-                  onClick={() =>
-                    setRating(star)
-                  }
-                >
-                  <FaStar
-                    className={
-                      star <=
-                      (hoverRating || rating)
-                        ? "star-active"
-                        : "star-inactive"
+              {[1, 2, 3, 4, 5].map(
+                (star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    className="star-button"
+                    onMouseEnter={() =>
+                      setHoverRating(star)
                     }
-                  />
-                </button>
-              ))}
+                    onMouseLeave={() =>
+                      setHoverRating(0)
+                    }
+                    onClick={() =>
+                      setRating(star)
+                    }
+                    aria-label={`Rate ${star} out of 5`}
+                  >
+                    <FaStar
+                      className={
+                        star <=
+                        (hoverRating ||
+                          rating)
+                          ? "star-active"
+                          : "star-inactive"
+                      }
+                    />
+                  </button>
+                )
+              )}
 
             </div>
 
@@ -176,7 +278,9 @@ function WriteReview() {
                 id="comment"
                 value={comment}
                 onChange={(e) =>
-                  setComment(e.target.value)
+                  setComment(
+                    e.target.value
+                  )
                 }
                 placeholder="Tell others about your experience..."
                 maxLength={500}
@@ -205,6 +309,7 @@ function WriteReview() {
                   ? "Submitting..."
                   : "Submit Review"}
               </span>
+
             </button>
 
           </form>

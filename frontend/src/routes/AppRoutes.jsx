@@ -6,6 +6,8 @@ import Signup from "../pages/Signup";
 import Home from "../pages/Home";
 import PlaceDetails from "../pages/PlaceDetails";
 import BusinessDetails from "../pages/BusinessDetails";
+import MyReviews from "../pages/MyReviews";
+import OwnerReviews from "../pages/OwnerReviews";
 
 function AppRoutes() {
   return (
@@ -61,6 +63,24 @@ function AppRoutes() {
         <Route
           path="/business/:id"
           element={<BusinessDetails />}
+        />
+
+        {/* ======================================
+            REVIEWER - MY REVIEWS
+        ====================================== */}
+
+        <Route
+          path="/reviews"
+          element={<MyReviews />}
+        />
+
+        {/* ======================================
+            OWNER - BUSINESS REVIEWS
+        ====================================== */}
+
+        <Route
+          path="/owner/reviews/business/:businessId"
+          element={<OwnerReviews />}
         />
 
       </Routes>

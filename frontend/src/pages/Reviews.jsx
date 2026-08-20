@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   FaArrowLeft,
   FaStar,
   FaMapMarkerAlt,
   FaCommentAlt,
+  FaStore,
 } from "react-icons/fa";
 
 import MainLayout from "../layouts/MainLayout";
+
 import { getMyReviews } from "../services/HomeService";
 
 import "../styles/Reviews.css";
@@ -19,9 +22,9 @@ function Reviews() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // =============================
-  // Get Logged-in User ID
-  // =============================
+  // =====================================================
+  // GET LOGGED-IN USER ID
+  // =====================================================
 
   const getUserId = () => {
     const userId =
@@ -31,37 +34,75 @@ function Reviews() {
     return userId ? Number(userId) : null;
   };
 
-  // =============================
-  // Load My Reviews
-  // =============================
+  // =====================================================
+  // LOAD MY REVIEWS
+  // =====================================================
 
   useEffect(() => {
     const loadMyReviews = async () => {
       try {
+        setLoading(true);
+        setError("");
+
         const userId = getUserId();
 
         if (!userId) {
-          setError("Please login to view your reviews.");
-          setLoading(false);
+          setError(
+            "Please login to view your reviews."
+          );
+
           return;
         }
 
-        const response = await getMyReviews(userId);
+        const response =
+          await getMyReviews(userId);
+
+        // Debug response
+        console.log(
+          "My Reviews API Response:",
+          response.data
+        );
 
         /*
-          Backend returns:
-          {
-            Success: true,
-            Message: "...",
-            Data: [...]
-          }
+          Supports all possible response formats:
+
+          1. Direct array:
+             [...]
+
+          2. {
+               data: [...]
+             }
+
+          3. {
+               Data: [...]
+             }
         */
 
-        const data = response.data?.data || response.data?.Data || [];
+        let data = [];
+
+        if (Array.isArray(response.data)) {
+          data = response.data;
+        } else if (
+          Array.isArray(response.data?.data)
+        ) {
+          data = response.data.data;
+        } else if (
+          Array.isArray(response.data?.Data)
+        ) {
+          data = response.data.Data;
+        }
+
+        console.log(
+          "My Reviews Data:",
+          data
+        );
 
         setReviews(data);
       } catch (error) {
-        console.error("Failed to load reviews:", error);
+        console.error(
+          "Failed to load reviews:",
+          error
+        );
 
         setError(
           "Unable to load your reviews. Please try again."
@@ -74,45 +115,66 @@ function Reviews() {
     loadMyReviews();
   }, []);
 
-  // =============================
-  // Format Date
-  // =============================
+  // =====================================================
+  // FORMAT DATE
+  // =====================================================
 
   const formatDate = (date) => {
-    if (!date) return "";
+    if (!date) {
+      return "";
+    }
 
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    const formattedDate =
+      new Date(date);
+
+    if (
+      Number.isNaN(
+        formattedDate.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    return formattedDate.toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
-  // =============================
-  // Render Stars
-  // =============================
+  // =====================================================
+  // RENDER STARS
+  // =====================================================
 
   const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <FaStar
-        key={index}
-        className={
-          index < rating
-            ? "review-star active"
-            : "review-star"
-        }
-      />
-    ));
+    return Array.from(
+      { length: 5 },
+      (_, index) => (
+        <FaStar
+          key={index}
+          className={
+            index < rating
+              ? "review-star active"
+              : "review-star"
+          }
+        />
+      )
+    );
   };
 
-  // =============================
-  // Loading
-  // =============================
+  // =====================================================
+  // LOADING
+  // =====================================================
 
   if (loading) {
     return (
       <MainLayout>
+
         <div className="reviews-page">
+
           <button
             className="reviews-back-btn"
             onClick={() => navigate(-1)}
@@ -122,25 +184,33 @@ function Reviews() {
           </button>
 
           <div className="reviews-loading">
+
             <div className="review-loader"></div>
-            <p>Loading your reviews...</p>
+
+            <p>
+              Loading your reviews...
+            </p>
+
           </div>
+
         </div>
+
       </MainLayout>
     );
   }
 
-  // =============================
+  // =====================================================
   // UI
-  // =============================
+  // =====================================================
 
   return (
     <MainLayout>
+
       <div className="reviews-page">
 
-        {/* =========================
-            Header
-        ========================= */}
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
         <div className="reviews-header">
 
@@ -153,204 +223,360 @@ function Reviews() {
           </button>
 
           <div>
-            <h1>My Reviews</h1>
+
+            <h1>
+              My Reviews
+            </h1>
 
             <p>
               Reviews you have shared on REVIO
             </p>
+
           </div>
 
         </div>
 
-
-        {/* =========================
-            Error
-        ========================= */}
+        {/* =================================================
+            ERROR
+        ================================================= */}
 
         {error && (
           <div className="reviews-message error">
-            <p>{error}</p>
-
-            <button
-              onClick={() => navigate("/login")}
-            >
-              Login
-            </button>
-          </div>
-        )}
-
-
-        {/* =========================
-            No Reviews
-        ========================= */}
-
-        {!error && reviews.length === 0 && (
-          <div className="reviews-message">
-
-            <FaCommentAlt className="empty-review-icon" />
-
-            <h2>No Reviews Yet</h2>
 
             <p>
-              You haven't written any reviews yet.
+              {error}
             </p>
 
             <button
-              onClick={() => navigate("/home")}
+              onClick={() =>
+                navigate("/login")
+              }
             >
-              Explore Places
+              Login
             </button>
 
           </div>
         )}
 
+        {/* =================================================
+            NO REVIEWS
+        ================================================= */}
 
-        {/* =========================
-            Reviews List
-        ========================= */}
+        {!error &&
+          reviews.length === 0 && (
+            <div className="reviews-message">
 
-        {!error && reviews.length > 0 && (
-          <div className="my-reviews-list">
+              <FaCommentAlt
+                className="empty-review-icon"
+              />
 
-            {reviews.map((review) => {
+              <h2>
+                No Reviews Yet
+              </h2>
 
-              const place = review.place || review.Place;
+              <p>
+                You haven't written any
+                reviews yet.
+              </p>
 
-              const placeName =
-                place?.name ||
-                place?.Name ||
-                "Place";
+              <button
+                onClick={() =>
+                  navigate("/home")
+                }
+              >
+                Explore Places
+              </button>
 
-              const address =
-                place?.address ||
-                place?.Address ||
-                "";
+            </div>
+          )}
 
-              const city =
-                place?.city ||
-                place?.City ||
-                "";
+        {/* =================================================
+            REVIEWS LIST
+        ================================================= */}
 
-              const rating =
-                Number(review.rating ?? review.Rating ?? 0);
+        {!error &&
+          reviews.length > 0 && (
+            <div className="my-reviews-list">
 
-              const comment =
-                review.comment ||
-                review.Comment ||
-                "";
+              {reviews.map(
+                (review, index) => {
 
-              const createdAt =
-                review.createdAt ||
-                review.CreatedAt;
+                  // =================================================
+                  // PLACE
+                  // =================================================
 
-              const reviewId =
-                review.reviewId ||
-                review.ReviewId;
+                  const place =
+                    review.place ||
+                    review.Place ||
+                    null;
 
-              const placeId =
-                review.placeId ||
-                review.PlaceId;
+                  // =================================================
+                  // BUSINESS
+                  // =================================================
 
-              return (
-                <div
-                  className="my-review-card"
-                  key={reviewId}
-                >
+                  const business =
+                    review.business ||
+                    review.Business ||
+                    null;
 
-                  {/* =========================
-                      Place Header
-                  ========================= */}
+                  // =================================================
+                  // IDENTIFY REVIEW TYPE
+                  // =================================================
 
-                  <div className="review-card-top">
+                  const placeId =
+                    review.placeId ??
+                    review.PlaceId ??
+                    null;
 
-                    <div className="review-place-info">
+                  const businessId =
+                    review.businessId ??
+                    review.BusinessId ??
+                    null;
 
-                      <div className="review-place-icon">
-                        <FaCommentAlt />
-                      </div>
+                  const isBusinessReview =
+                    !!businessId &&
+                    !placeId;
 
-                      <div>
-                        <h2>{placeName}</h2>
+                  // =================================================
+                  // NAME
+                  // =================================================
 
-                        {(address || city) && (
-                          <div className="review-location">
-                            <FaMapMarkerAlt />
+                  const placeName =
+                    place?.name ||
+                    place?.Name ||
+                    null;
 
-                            <span>
-                              {address}
-                              {address && city
-                                ? ", "
-                                : ""}
-                              {city}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                  const businessName =
+                    business?.name ||
+                    business?.Name ||
+                    null;
 
-                    </div>
+                  const reviewTargetName =
+                    isBusinessReview
+                      ? businessName ||
+                        "Business"
+                      : placeName ||
+                        "Place";
 
-                    {createdAt && (
-                      <span className="review-date">
-                        {formatDate(createdAt)}
-                      </span>
-                    )}
+                  // =================================================
+                  // ADDRESS
+                  // =================================================
 
-                  </div>
+                  const address =
+                    place?.address ||
+                    place?.Address ||
+                    business?.address ||
+                    business?.Address ||
+                    "";
 
+                  // =================================================
+                  // CITY
+                  // =================================================
 
-                  {/* =========================
-                      Rating
-                  ========================= */}
+                  const city =
+                    place?.city ||
+                    place?.City ||
+                    business?.city ||
+                    business?.City ||
+                    "";
 
-                  <div className="my-review-rating">
+                  // =================================================
+                  // RATING
+                  // =================================================
 
-                    <div className="stars">
-                      {renderStars(rating)}
-                    </div>
+                  const rating = Number(
+                    review.rating ??
+                    review.Rating ??
+                    0
+                  );
 
-                    <span>
-                      {rating}/5
-                    </span>
+                  // =================================================
+                  // COMMENT
+                  // =================================================
 
-                  </div>
+                  const comment =
+                    review.comment ||
+                    review.Comment ||
+                    "";
 
+                  // =================================================
+                  // CREATED DATE
+                  // =================================================
 
-                  {/* =========================
-                      Comment
-                  ========================= */}
+                  const createdAt =
+                    review.createdAt ||
+                    review.CreatedAt ||
+                    null;
 
-                  <div className="review-comment">
+                  // =================================================
+                  // REVIEW ID
+                  // =================================================
 
-                    <p>
-                      "{comment}"
-                    </p>
+                  const reviewId =
+                    review.reviewId ??
+                    review.ReviewId ??
+                    `review-${index}`;
 
-                  </div>
-
-
-                  {/* =========================
-                      View Place
-                  ========================= */}
-
-                  {placeId && (
-                    <button
-                      className="view-place-btn"
-                      onClick={() =>
-                        navigate(`/place/${placeId}`)
-                      }
+                  return (
+                    <div
+                      className="my-review-card"
+                      key={reviewId}
                     >
-                      View Place
-                    </button>
-                  )}
 
-                </div>
-              );
-            })}
+                      {/* ==========================================
+                          REVIEW HEADER
+                      ========================================== */}
 
-          </div>
-        )}
+                      <div className="review-card-top">
+
+                        <div className="review-place-info">
+
+                          {/* ICON */}
+
+                          <div className="review-place-icon">
+
+                            {isBusinessReview ? (
+                              <FaStore />
+                            ) : (
+                              <FaCommentAlt />
+                            )}
+
+                          </div>
+
+                          {/* NAME + LOCATION */}
+
+                          <div>
+
+                            <h2>
+                              {reviewTargetName}
+                            </h2>
+
+                            {(address ||
+                              city) && (
+                              <div className="review-location">
+
+                                <FaMapMarkerAlt />
+
+                                <span>
+
+                                  {address}
+
+                                  {address &&
+                                  city
+                                    ? ", "
+                                    : ""}
+
+                                  {city}
+
+                                </span>
+
+                              </div>
+                            )}
+
+                          </div>
+
+                        </div>
+
+                        {/* DATE */}
+
+                        {createdAt && (
+                          <span className="review-date">
+                            {formatDate(
+                              createdAt
+                            )}
+                          </span>
+                        )}
+
+                      </div>
+
+                      {/* ==========================================
+                          REVIEW TYPE
+                      ========================================== */}
+
+                      <div
+                        className="review-type"
+                      >
+                        {isBusinessReview
+                          ? "Business Review"
+                          : "Place Review"}
+                      </div>
+
+                      {/* ==========================================
+                          RATING
+                      ========================================== */}
+
+                      <div className="my-review-rating">
+
+                        <div className="stars">
+
+                          {renderStars(
+                            rating
+                          )}
+
+                        </div>
+
+                        <span>
+                          {rating}/5
+                        </span>
+
+                      </div>
+
+                      {/* ==========================================
+                          COMMENT
+                      ========================================== */}
+
+                      <div className="review-comment">
+
+                        <p>
+                          "{comment}"
+                        </p>
+
+                      </div>
+
+                      {/* ==========================================
+                          VIEW PLACE
+                      ========================================== */}
+
+                      {placeId && (
+                        <button
+                          className="view-place-btn"
+                          onClick={() =>
+                            navigate(
+                              `/place/${placeId}`
+                            )
+                          }
+                        >
+                          View Place
+                        </button>
+                      )}
+
+                      {/* ==========================================
+                          VIEW BUSINESS
+                      ========================================== */}
+
+                      {businessId && (
+                        <button
+                          className="view-place-btn"
+                          onClick={() =>
+                            navigate(
+                              `/business/${businessId}`
+                            )
+                          }
+                        >
+                          View Business
+                        </button>
+                      )}
+
+                    </div>
+                  );
+                }
+              )}
+
+            </div>
+          )}
 
       </div>
+
     </MainLayout>
   );
 }
