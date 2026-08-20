@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import {
   FaArrowLeft,
   FaFlag,
@@ -6,80 +7,324 @@ import {
   FaStar,
   FaUserCircle,
 } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 
 import MainLayout from "../layouts/MainLayout";
 import "../styles/OwnerReviews.css";
 
+const API_BASE = "http://localhost:5213/api";
+
 function OwnerReviews() {
   const navigate = useNavigate();
+  const { businessId } = useParams();
 
   // =====================================================
-  // Temporary Reviews Data
-  // Later this will come from Backend API
+  // STATES
   // =====================================================
 
-  const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      userName: "Rahul Sharma",
-      rating: 5,
-      comment:
-        "Excellent hotel. Rooms were clean and the staff was very helpful. I really enjoyed my stay.",
-      date: "2 days ago",
-      reply: "",
-    },
-    {
-      id: 2,
-      userName: "Priya Patil",
-      rating: 4,
-      comment:
-        "Good service and nice rooms. Food quality was also good. Overall a pleasant experience.",
-      date: "5 days ago",
-      reply:
-        "Thank you Priya for your valuable feedback. We are happy that you enjoyed your stay.",
-    },
-    {
-      id: 3,
-      userName: "Amit Joshi",
-      rating: 3,
-      comment:
-        "The hotel was good but the room service was a little slow.",
-      date: "1 week ago",
-      reply: "",
-    },
-    {
-      id: 4,
-      userName: "Sneha Kulkarni",
-      rating: 5,
-      comment:
-        "Amazing experience! Very clean property and friendly staff.",
-      date: "2 weeks ago",
-      reply: "",
-    },
-    {
-      id: 5,
-      userName: "Vikas More",
-      rating: 2,
-      comment:
-        "The location was good but I expected better service.",
-      date: "3 weeks ago",
-      reply: "",
-    },
-  ]);
-
-  // =====================================================
-  // States
-  // =====================================================
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [selectedFilter, setSelectedFilter] = useState("all");
 
   const [replyingTo, setReplyingTo] = useState(null);
-
   const [replyText, setReplyText] = useState("");
 
   // =====================================================
-  // Filter Reviews
+  // TOKEN
+  // =====================================================
+
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
+
+  // =====================================================
+  // NORMALIZE NUMBER
+  // =====================================================
+
+  const normalizeNumber = (value) => {
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : null;
+    }
+
+    if (typeof value === "string") {
+      const cleanedValue = value.trim();
+
+      if (!cleanedValue) {
+        return null;
+      }
+
+      const match = cleanedValue.match(/(\d+(?:\.\d+)?)/);
+
+      if (!match) {
+        return null;
+      }
+
+      const parsed = Number(match[1]);
+
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    return null;
+  };
+
+  // =====================================================
+  // GET REVIEW RATING
+  // =====================================================
+
+  const getReviewRating = (review) => {
+    if (!review || typeof review !== "object") {
+      return 0;
+    }
+
+    const possibleRatings = [
+      review.rating,
+      review.Rating,
+
+      review.ratingValue,
+      review.RatingValue,
+
+      review.reviewRating,
+      review.ReviewRating,
+
+      review.stars,
+      review.Stars,
+
+      review.starRating,
+      review.StarRating,
+
+      review.ratingScore,
+      review.RatingScore,
+
+      review.review?.rating,
+      review.review?.Rating,
+
+      review.Review?.rating,
+      review.Review?.Rating,
+    ];
+
+    for (const value of possibleRatings) {
+      const parsedRating = normalizeNumber(value);
+
+      if (
+        parsedRating !== null &&
+        parsedRating >= 0 &&
+        parsedRating <= 5
+      ) {
+        return parsedRating;
+      }
+    }
+
+    return 0;
+  };
+
+  // =====================================================
+  // GET REVIEW ID
+  // =====================================================
+
+  const getReviewId = (review, index = 0) => {
+    return (
+      review?.reviewId ??
+      review?.ReviewId ??
+      review?.id ??
+      review?.Id ??
+      `review-${index}`
+    );
+  };
+
+  // =====================================================
+  // GET USER NAME
+  // =====================================================
+
+  const getUserName = (review) => {
+    return (
+      review?.user?.fullName ??
+      review?.user?.FullName ??
+      review?.user?.name ??
+      review?.user?.Name ??
+      review?.User?.fullName ??
+      review?.User?.FullName ??
+      review?.User?.name ??
+      review?.User?.Name ??
+      review?.fullName ??
+      review?.FullName ??
+      review?.userName ??
+      review?.UserName ??
+      review?.name ??
+      review?.Name ??
+      "REVIO User"
+    );
+  };
+
+  // =====================================================
+  // GET COMMENT
+  // =====================================================
+
+  const getReviewComment = (review) => {
+    return (
+      review?.comment ??
+      review?.Comment ??
+      review?.reviewText ??
+      review?.ReviewText ??
+      review?.text ??
+      review?.Text ??
+      ""
+    );
+  };
+
+  // =====================================================
+  // GET DATE
+  // =====================================================
+
+  const getReviewDate = (review) => {
+    return (
+      review?.createdAt ??
+      review?.CreatedAt ??
+      review?.reviewDate ??
+      review?.ReviewDate ??
+      review?.date ??
+      review?.Date ??
+      ""
+    );
+  };
+
+  // =====================================================
+  // GET OWNER REPLY
+  // =====================================================
+
+  const getReply = (review) => {
+    return (
+      review?.ownerReply ??
+      review?.OwnerReply ??
+      review?.reply ??
+      review?.Reply ??
+      review?.ownerResponse ??
+      review?.OwnerResponse ??
+      ""
+    );
+  };
+
+  // =====================================================
+  // FORMAT DATE
+  // =====================================================
+
+  const formatDate = (date) => {
+    if (!date) {
+      return "";
+    }
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "";
+    }
+
+    return parsedDate.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  // =====================================================
+  // LOAD BUSINESS REVIEWS
+  // =====================================================
+
+  useEffect(() => {
+    const loadBusinessReviews = async () => {
+      if (!businessId) {
+        setError("Business information is missing.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+
+        const token = getToken();
+
+        if (!token) {
+          setError("Please login again to view your reviews.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(
+          `${API_BASE}/Review/business/${businessId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log(
+          "Owner Business Reviews API Response:",
+          response.data
+        );
+
+        const reviewData =
+          response?.data?.data ??
+          response?.data?.Data ??
+          response?.data;
+
+        const finalReviews = Array.isArray(reviewData)
+          ? reviewData
+          : [];
+
+        console.log("FINAL BUSINESS REVIEWS:", finalReviews);
+
+        finalReviews.forEach((review, index) => {
+          console.log(`Review ${index + 1}`, {
+            ReviewId: getReviewId(review, index),
+            Rating: getReviewRating(review),
+            Comment: getReviewComment(review),
+            User: getUserName(review),
+            Date: getReviewDate(review),
+            OwnerReply: getReply(review),
+          });
+        });
+
+        setReviews(finalReviews);
+      } catch (err) {
+        console.error(
+          "Failed to load business reviews:",
+          err
+        );
+
+        setReviews([]);
+
+        if (err.response?.status === 401) {
+          setError(
+            "Your session has expired. Please login again."
+          );
+        } else if (err.response?.status === 404) {
+          setError(
+            "No reviews found for this business."
+          );
+        } else {
+          setError(
+            "Unable to load customer reviews."
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBusinessReviews();
+  }, [businessId]);
+
+  // =====================================================
+  // FILTER REVIEWS
   // =====================================================
 
   const filteredReviews = useMemo(() => {
@@ -87,61 +332,99 @@ function OwnerReviews() {
       return reviews;
     }
 
-    return reviews.filter(
-      (review) =>
-        review.rating === Number(selectedFilter)
-    );
+    const filterRating = Number(selectedFilter);
+
+    return reviews.filter((review) => {
+      const rating = getReviewRating(review);
+
+      return Math.round(rating) === filterRating;
+    });
   }, [reviews, selectedFilter]);
 
   // =====================================================
-  // Calculate Rating
+  // TOTAL REVIEWS
   // =====================================================
 
   const totalReviews = reviews.length;
 
-  const averageRating =
-    totalReviews > 0
-      ? (
-          reviews.reduce(
-            (sum, review) => sum + review.rating,
-            0
-          ) / totalReviews
-        ).toFixed(1)
-      : "0.0";
+  // =====================================================
+  // RATED REVIEWS
+  // =====================================================
+
+  const ratedReviews = useMemo(() => {
+    return reviews.filter((review) => {
+      return getReviewRating(review) > 0;
+    });
+  }, [reviews]);
 
   // =====================================================
-  // Rating Count
+  // AVERAGE RATING
+  // =====================================================
+
+  const averageRating = useMemo(() => {
+    if (ratedReviews.length === 0) {
+      return "0.0";
+    }
+
+    const totalRating = ratedReviews.reduce(
+      (sum, review) => {
+        return sum + getReviewRating(review);
+      },
+      0
+    );
+
+    return (totalRating / ratedReviews.length).toFixed(1);
+  }, [ratedReviews]);
+
+  // =====================================================
+  // RATING COUNT
   // =====================================================
 
   const getRatingCount = (rating) => {
-    return reviews.filter(
-      (review) => review.rating === rating
-    ).length;
+    return reviews.filter((review) => {
+      return Math.round(getReviewRating(review)) === rating;
+    }).length;
   };
 
   // =====================================================
-  // Render Stars
+  // RENDER STARS
   // =====================================================
 
   const renderStars = (rating) => {
+    const numericRating =
+      normalizeNumber(rating) ?? 0;
+
+    const safeRating = Math.min(
+      Math.max(numericRating, 0),
+      5
+    );
+
     return (
-      <div className="owner-review-stars">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <FaStar
-            key={star}
-            className={
-              star <= rating
-                ? "star-filled"
-                : "star-empty"
-            }
-          />
-        ))}
+      <div
+        className="owner-review-stars"
+        aria-label={`${safeRating} out of 5 stars`}
+      >
+        {[1, 2, 3, 4, 5].map((star) => {
+          const isFilled =
+            star <= Math.round(safeRating);
+
+          return (
+            <FaStar
+              key={star}
+              className={
+                isFilled
+                  ? "star-filled"
+                  : "star-empty"
+              }
+            />
+          );
+        })}
       </div>
     );
   };
 
   // =====================================================
-  // Open Reply Box
+  // OPEN REPLY
   // =====================================================
 
   const handleReplyClick = (reviewId) => {
@@ -150,7 +433,7 @@ function OwnerReviews() {
   };
 
   // =====================================================
-  // Cancel Reply
+  // CANCEL REPLY
   // =====================================================
 
   const handleCancelReply = () => {
@@ -159,24 +442,43 @@ function OwnerReviews() {
   };
 
   // =====================================================
-  // Submit Reply
+  // SUBMIT REPLY
+  //
+  // NOTE:
+  // Currently local UI only because backend does not
+  // have an OwnerReply API endpoint yet.
   // =====================================================
 
   const handleSubmitReply = (reviewId) => {
-    if (!replyText.trim()) {
+    const trimmedReply = replyText.trim();
+
+    if (!trimmedReply) {
       alert("Please enter your reply.");
       return;
     }
 
-    setReviews((prevReviews) =>
-      prevReviews.map((review) =>
-        review.id === reviewId
-          ? {
-              ...review,
-              reply: replyText.trim(),
-            }
-          : review
-      )
+    setReviews((previousReviews) =>
+      previousReviews.map((review) => {
+        const currentReviewId =
+          getReviewId(review);
+
+        if (currentReviewId === reviewId) {
+          return {
+            ...review,
+
+            ownerReply: trimmedReply,
+            OwnerReply: trimmedReply,
+
+            ownerReplyAt:
+              new Date().toISOString(),
+
+            OwnerReplyAt:
+              new Date().toISOString(),
+          };
+        }
+
+        return review;
+      })
     );
 
     setReplyingTo(null);
@@ -186,7 +488,7 @@ function OwnerReviews() {
   };
 
   // =====================================================
-  // Report Review
+  // REPORT REVIEW
   // =====================================================
 
   const handleReport = (reviewId) => {
@@ -194,17 +496,120 @@ function OwnerReviews() {
       "Do you want to report this review?"
     );
 
-    if (confirmed) {
-      console.log(
-        "Reported Review ID:",
-        reviewId
-      );
-
-      alert(
-        "Review has been reported to REVIO admin."
-      );
+    if (!confirmed) {
+      return;
     }
+
+    console.log(
+      "Reported Review ID:",
+      reviewId
+    );
+
+    alert(
+      "Review has been reported to REVIO admin."
+    );
   };
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="owner-reviews-page">
+
+          <div className="owner-reviews-header">
+            <button
+              className="owner-reviews-back"
+              onClick={() => navigate(-1)}
+              title="Go Back"
+            >
+              <FaArrowLeft />
+            </button>
+
+            <div>
+              <h1>Customer Reviews</h1>
+
+              <p>
+                Loading customer reviews...
+              </p>
+            </div>
+          </div>
+
+          <div className="owner-review-empty">
+            <FaStar />
+
+            <h2>
+              Loading Reviews...
+            </h2>
+
+            <p>
+              Please wait while we load
+              customer reviews.
+            </p>
+          </div>
+
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // =====================================================
+  // ERROR
+  // =====================================================
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="owner-reviews-page">
+
+          <div className="owner-reviews-header">
+            <button
+              className="owner-reviews-back"
+              onClick={() => navigate(-1)}
+              title="Go Back"
+            >
+              <FaArrowLeft />
+            </button>
+
+            <div>
+              <h1>Customer Reviews</h1>
+
+              <p>
+                See what customers are saying
+                about your business.
+              </p>
+            </div>
+          </div>
+
+          <div className="owner-review-empty">
+            <FaStar />
+
+            <h2>
+              Unable to Load Reviews
+            </h2>
+
+            <p>{error}</p>
+
+            <button
+              className="review-filter active"
+              onClick={() =>
+                window.location.reload()
+              }
+            >
+              Try Again
+            </button>
+          </div>
+
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // =====================================================
+  // MAIN UI
+  // =====================================================
 
   return (
     <MainLayout>
@@ -228,15 +633,15 @@ function OwnerReviews() {
             <h1>Customer Reviews</h1>
 
             <p>
-              See what customers are saying about
-              your business.
+              See what customers are saying
+              about your business.
             </p>
           </div>
 
         </div>
 
         {/* =================================================
-            BUSINESS SUMMARY
+            BUSINESS RATING SUMMARY
         ================================================= */}
 
         <section className="owner-rating-summary">
@@ -248,7 +653,7 @@ function OwnerReviews() {
             </div>
 
             {renderStars(
-              Math.round(Number(averageRating))
+              Number(averageRating)
             )}
 
             <p>
@@ -260,45 +665,50 @@ function OwnerReviews() {
 
           </div>
 
+          {/* =================================================
+              RATING DISTRIBUTION
+          ================================================= */}
+
           <div className="rating-distribution">
 
-            {[5, 4, 3, 2, 1].map((rating) => {
+            {[5, 4, 3, 2, 1].map(
+              (rating) => {
+                const count =
+                  getRatingCount(rating);
 
-              const count =
-                getRatingCount(rating);
+                const percentage =
+                  totalReviews > 0
+                    ? (count / totalReviews) * 100
+                    : 0;
 
-              const percentage =
-                totalReviews > 0
-                  ? (count / totalReviews) * 100
-                  : 0;
+                return (
+                  <div
+                    className="rating-row"
+                    key={rating}
+                  >
 
-              return (
-                <div
-                  className="rating-row"
-                  key={rating}
-                >
+                    <span className="rating-label">
+                      {rating}
+                      <FaStar />
+                    </span>
 
-                  <span className="rating-label">
-                    {rating}
-                    <FaStar />
-                  </span>
+                    <div className="rating-bar">
+                      <div
+                        className="rating-bar-fill"
+                        style={{
+                          width: `${percentage}%`,
+                        }}
+                      />
+                    </div>
 
-                  <div className="rating-bar">
-                    <div
-                      className="rating-bar-fill"
-                      style={{
-                        width: `${percentage}%`,
-                      }}
-                    />
+                    <span className="rating-count">
+                      {count}
+                    </span>
+
                   </div>
-
-                  <span className="rating-count">
-                    {count}
-                  </span>
-
-                </div>
-              );
-            })}
+                );
+              }
+            )}
 
           </div>
 
@@ -308,44 +718,50 @@ function OwnerReviews() {
             FILTERS
         ================================================= */}
 
-        <div className="review-filters">
+        {totalReviews > 0 && (
+          <div className="review-filters">
 
-          <span className="filter-title">
-            Filter:
-          </span>
+            <span className="filter-title">
+              Filter:
+            </span>
 
-          <button
-            className={
-              selectedFilter === "all"
-                ? "review-filter active"
-                : "review-filter"
-            }
-            onClick={() =>
-              setSelectedFilter("all")
-            }
-          >
-            All
-          </button>
-
-          {[5, 4, 3, 2, 1].map((rating) => (
             <button
-              key={rating}
               className={
-                selectedFilter === String(rating)
+                selectedFilter === "all"
                   ? "review-filter active"
                   : "review-filter"
               }
               onClick={() =>
-                setSelectedFilter(
-                  String(rating)
-                )
+                setSelectedFilter("all")
               }
             >
-              {rating} <FaStar />
+              All
             </button>
-          ))}
 
-        </div>
+            {[5, 4, 3, 2, 1].map(
+              (rating) => (
+                <button
+                  key={rating}
+                  className={
+                    selectedFilter ===
+                    String(rating)
+                      ? "review-filter active"
+                      : "review-filter"
+                  }
+                  onClick={() =>
+                    setSelectedFilter(
+                      String(rating)
+                    )
+                  }
+                >
+                  {rating}
+                  <FaStar />
+                </button>
+              )
+            )}
+
+          </div>
+        )}
 
         {/* =================================================
             REVIEW LIST
@@ -359,162 +775,219 @@ function OwnerReviews() {
 
               <FaStar />
 
-              <h2>No reviews found</h2>
+              <h2>
+                {totalReviews === 0
+                  ? "No Reviews Yet"
+                  : "No Reviews Found"}
+              </h2>
 
               <p>
-                There are no reviews for this
-                rating yet.
+                {totalReviews === 0
+                  ? "Customers have not reviewed this business yet."
+                  : "There are no reviews for this rating yet."}
               </p>
 
             </div>
 
           ) : (
 
-            filteredReviews.map((review) => (
+            filteredReviews.map(
+              (review, index) => {
 
-              <article
-                className="owner-review-card"
-                key={review.id}
-              >
+                const reviewId =
+                  getReviewId(
+                    review,
+                    index
+                  );
 
-                {/* Customer Header */}
+                const userName =
+                  getUserName(review);
 
-                <div className="review-customer-header">
+                const rating =
+                  getReviewRating(review);
 
-                  <div className="customer-info">
+                const comment =
+                  getReviewComment(review);
 
-                    <FaUserCircle className="customer-avatar" />
+                const date =
+                  getReviewDate(review);
 
-                    <div>
-                      <h3>
-                        {review.userName}
-                      </h3>
+                const reply =
+                  getReply(review);
 
-                      <span>
-                        {review.date}
-                      </span>
+                return (
+                  <article
+                    className="owner-review-card"
+                    key={reviewId}
+                  >
+
+                    {/* =================================================
+                        CUSTOMER HEADER
+                    ================================================= */}
+
+                    <div className="review-customer-header">
+
+                      <div className="customer-info">
+
+                        <FaUserCircle
+                          className="customer-avatar"
+                        />
+
+                        <div>
+                          <h3>
+                            {userName}
+                          </h3>
+
+                          {date && (
+                            <span>
+                              {formatDate(date)}
+                            </span>
+                          )}
+                        </div>
+
+                      </div>
+
+                      <div className="customer-rating">
+                        {renderStars(rating)}
+                      </div>
+
                     </div>
 
-                  </div>
+                    {/* =================================================
+                        RATING NUMBER
+                    ================================================= */}
 
-                  <div className="customer-rating">
-                    {renderStars(
-                      review.rating
-                    )}
-                  </div>
-
-                </div>
-
-                {/* Comment */}
-
-                <p className="customer-comment">
-                  "{review.comment}"
-                </p>
-
-                {/* Existing Owner Reply */}
-
-                {review.reply && (
-
-                  <div className="owner-reply">
-
-                    <div className="owner-reply-header">
-                      <FaReply />
-
-                      <strong>
-                        Your response
-                      </strong>
-                    </div>
-
-                    <p>
-                      {review.reply}
-                    </p>
-
-                  </div>
-
-                )}
-
-                {/* Reply Form */}
-
-                {replyingTo === review.id && (
-
-                  <div className="reply-form">
-
-                    <textarea
-                      value={replyText}
-                      onChange={(e) =>
-                        setReplyText(
-                          e.target.value
-                        )
-                      }
-                      placeholder="Write a professional response to this customer..."
-                      rows="4"
-                    />
-
-                    <div className="reply-actions">
-
-                      <button
-                        className="cancel-reply-btn"
-                        onClick={
-                          handleCancelReply
-                        }
+                    {rating > 0 && (
+                      <div
+                        style={{
+                          marginTop: "7px",
+                          fontSize: "11px",
+                          color: "#777777",
+                          textAlign: "right",
+                        }}
                       >
-                        Cancel
-                      </button>
+                        {rating}/5
+                      </div>
+                    )}
+
+                    {/* =================================================
+                        COMMENT
+                    ================================================= */}
+
+                    {comment && (
+                      <p className="customer-comment">
+                        "{comment}"
+                      </p>
+                    )}
+
+                    {/* =================================================
+                        OWNER REPLY
+                    ================================================= */}
+
+                    {reply && (
+                      <div className="owner-reply">
+
+                        <div className="owner-reply-header">
+
+                          <FaReply />
+
+                          <strong>
+                            Your response
+                          </strong>
+
+                        </div>
+
+                        <p>
+                          {reply}
+                        </p>
+
+                      </div>
+                    )}
+
+                    {/* =================================================
+                        REPLY FORM
+                    ================================================= */}
+
+                    {replyingTo === reviewId && (
+                      <div className="reply-form">
+
+                        <textarea
+                          value={replyText}
+                          onChange={(event) =>
+                            setReplyText(
+                              event.target.value
+                            )
+                          }
+                          placeholder="Write a professional response to this customer..."
+                          rows="4"
+                        />
+
+                        <div className="reply-actions">
+
+                          <button
+                            className="cancel-reply-btn"
+                            onClick={
+                              handleCancelReply
+                            }
+                          >
+                            Cancel
+                          </button>
+
+                          <button
+                            className="submit-reply-btn"
+                            onClick={() =>
+                              handleSubmitReply(
+                                reviewId
+                              )
+                            }
+                          >
+                            <FaReply />
+                            Submit Reply
+                          </button>
+
+                        </div>
+
+                      </div>
+                    )}
+
+                    {/* =================================================
+                        ACTIONS
+                    ================================================= */}
+
+                    <div className="review-actions">
+
+                      {!reply && (
+                        <button
+                          className="reply-btn"
+                          onClick={() =>
+                            handleReplyClick(
+                              reviewId
+                            )
+                          }
+                        >
+                          <FaReply />
+                          Reply
+                        </button>
+                      )}
 
                       <button
-                        className="submit-reply-btn"
+                        className="report-btn"
                         onClick={() =>
-                          handleSubmitReply(
-                            review.id
+                          handleReport(
+                            reviewId
                           )
                         }
                       >
-                        <FaReply />
-                        Submit Reply
+                        <FaFlag />
+                        Report
                       </button>
 
                     </div>
 
-                  </div>
-
-                )}
-
-                {/* Actions */}
-
-                <div className="review-actions">
-
-                  {!review.reply && (
-                    <button
-                      className="reply-btn"
-                      onClick={() =>
-                        handleReplyClick(
-                          review.id
-                        )
-                      }
-                    >
-                      <FaReply />
-                      Reply
-                    </button>
-                  )}
-
-                  <button
-                    className="report-btn"
-                    onClick={() =>
-                      handleReport(
-                        review.id
-                      )
-                    }
-                  >
-                    <FaFlag />
-                    Report
-                  </button>
-
-                </div>
-
-              </article>
-
-            ))
-
+                  </article>
+                );
+              }
+            )
           )}
 
         </section>

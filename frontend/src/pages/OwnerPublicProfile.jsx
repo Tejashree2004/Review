@@ -20,7 +20,6 @@ const API_BASE = "http://localhost:5213/api";
 
 // =====================================================
 // SAMPLE PHOTOS
-// Used only when business photos are not available
 // =====================================================
 
 const SAMPLE_PHOTOS = [
@@ -49,14 +48,22 @@ const SAMPLE_PHOTOS = [
 function OwnerPublicProfile() {
   const navigate = useNavigate();
 
+  // =====================================================
+  // STATES
+  // =====================================================
+
   const [business, setBusiness] = useState(null);
   const [photos, setPhotos] = useState([]);
+
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] =
+    useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   // =====================================================
-  // GET TOKEN
+  // TOKEN
   // =====================================================
 
   const getToken = () => {
@@ -64,7 +71,103 @@ function OwnerPublicProfile() {
   };
 
   // =====================================================
-  // LOAD BUSINESS + PHOTOS
+  // NORMALIZE NUMBER
+  // =====================================================
+
+  const normalizeNumber = (value) => {
+    if (
+      value === null ||
+      value === undefined
+    ) {
+      return null;
+    }
+
+    if (typeof value === "number") {
+      return Number.isFinite(value)
+        ? value
+        : null;
+    }
+
+    if (typeof value === "string") {
+      const cleanedValue = value.trim();
+
+      if (!cleanedValue) {
+        return null;
+      }
+
+      const match =
+        cleanedValue.match(
+          /(\d+(?:\.\d+)?)/
+        );
+
+      if (!match) {
+        return null;
+      }
+
+      const parsed =
+        Number(match[1]);
+
+      return Number.isFinite(parsed)
+        ? parsed
+        : null;
+    }
+
+    return null;
+  };
+
+  // =====================================================
+  // GET REVIEW RATING
+  // =====================================================
+
+  const getReviewRating = (review) => {
+    if (!review || typeof review !== "object") {
+      return 0;
+    }
+
+    const possibleRatings = [
+      review.rating,
+      review.Rating,
+
+      review.ratingValue,
+      review.RatingValue,
+
+      review.reviewRating,
+      review.ReviewRating,
+
+      review.stars,
+      review.Stars,
+
+      review.starRating,
+      review.StarRating,
+
+      review.ratingScore,
+      review.RatingScore,
+
+      review.review?.rating,
+      review.review?.Rating,
+
+      review.Review?.rating,
+      review.Review?.Rating,
+    ];
+
+    for (const value of possibleRatings) {
+      const parsedRating =
+        normalizeNumber(value);
+
+      if (
+        parsedRating !== null &&
+        parsedRating >= 0 &&
+        parsedRating <= 5
+      ) {
+        return parsedRating;
+      }
+    }
+
+    return 0;
+  };
+
+  // =====================================================
+  // LOAD BUSINESS + PHOTOS + REVIEWS
   // =====================================================
 
   useEffect(() => {
@@ -88,67 +191,172 @@ function OwnerPublicProfile() {
 
         // =================================================
         // GET OWNER BUSINESS
-        // GET /api/owner/business
         // =================================================
 
-        const businessResponse = await axios.get(
-          `${API_BASE}/owner/business`,
-          config
-        );
+        const businessResponse =
+          await axios.get(
+            `${API_BASE}/owner/business`,
+            config
+          );
 
         const businessData =
           businessResponse?.data?.data ??
           businessResponse?.data?.Data ??
           businessResponse?.data;
 
-        const ownerBusiness = Array.isArray(businessData)
-          ? businessData[0]
-          : businessData;
+        const ownerBusiness =
+          Array.isArray(businessData)
+            ? businessData[0]
+            : businessData;
 
         if (!ownerBusiness) {
           setBusiness(null);
           setPhotos([]);
+          setReviews([]);
           return;
         }
+
+        console.log(
+          "OWNER BUSINESS:",
+          ownerBusiness
+        );
 
         setBusiness(ownerBusiness);
 
         // =================================================
-        // GET BUSINESS PHOTOS
-        // GET /api/owner/photos/business/{id}
+        // BUSINESS ID
         // =================================================
 
         const businessId =
           ownerBusiness.businessId ??
           ownerBusiness.BusinessId;
 
-        if (businessId) {
-          try {
-            const photoResponse = await axios.get(
+        if (!businessId) {
+          console.error(
+            "Business ID not found."
+          );
+
+          setPhotos([]);
+          setReviews([]);
+
+          return;
+        }
+
+        console.log(
+          "BUSINESS ID:",
+          businessId
+        );
+
+        // =================================================
+        // GET BUSINESS PHOTOS
+        // =================================================
+
+        try {
+          const photoResponse =
+            await axios.get(
               `${API_BASE}/owner/photos/business/${businessId}`,
               config
             );
 
-            const photoData =
-              photoResponse?.data?.data ??
-              photoResponse?.data?.Data ??
-              photoResponse?.data;
+          const photoData =
+            photoResponse?.data?.data ??
+            photoResponse?.data?.Data ??
+            photoResponse?.data;
 
-            setPhotos(
-              Array.isArray(photoData)
-                ? photoData
-                : []
-            );
-          } catch (photoError) {
-            console.error(
-              "Business photos loading error:",
-              photoError
+          const finalPhotos =
+            Array.isArray(photoData)
+              ? photoData
+              : [];
+
+          console.log(
+            "BUSINESS PHOTOS:",
+            finalPhotos
+          );
+
+          setPhotos(finalPhotos);
+        } catch (photoError) {
+          console.error(
+            "Business photos loading error:",
+            photoError
+          );
+
+          setPhotos([]);
+        }
+
+        // =================================================
+        // GET CUSTOMER REVIEWS
+        // =================================================
+
+        try {
+          setReviewsLoading(true);
+
+          const reviewResponse =
+            await axios.get(
+              `${API_BASE}/Review/business/${businessId}`,
+              config
             );
 
-            // Business profile can still be displayed
-            // even when photos are unavailable.
-            setPhotos([]);
-          }
+          console.log(
+            "BUSINESS CUSTOMER REVIEWS API:",
+            reviewResponse.data
+          );
+
+          const reviewData =
+            reviewResponse?.data?.data ??
+            reviewResponse?.data?.Data ??
+            reviewResponse?.data;
+
+          const finalReviews =
+            Array.isArray(reviewData)
+              ? reviewData
+              : [];
+
+          console.log(
+            "FINAL PUBLIC PROFILE REVIEWS:",
+            finalReviews
+          );
+
+          // DEBUG EACH REVIEW
+          finalReviews.forEach(
+            (review, index) => {
+              console.log(
+                `PUBLIC REVIEW ${index + 1}:`,
+                {
+                  ReviewId:
+                    review?.reviewId ??
+                    review?.ReviewId,
+
+                  Rating:
+                    getReviewRating(review),
+
+                  Comment:
+                    review?.comment ??
+                    review?.Comment,
+
+                  User:
+                    review?.user?.fullName ??
+                    review?.user?.FullName ??
+                    review?.userName ??
+                    review?.UserName,
+
+                  CreatedAt:
+                    review?.createdAt ??
+                    review?.CreatedAt,
+                }
+              );
+            }
+          );
+
+          setReviews(finalReviews);
+        } catch (reviewError) {
+          console.error(
+            "Business reviews loading error:",
+            reviewError
+          );
+
+          setReviews([]);
+        } finally {
+          setReviewsLoading(false);
         }
       } catch (err) {
         console.error(
@@ -156,13 +364,18 @@ function OwnerPublicProfile() {
           err
         );
 
-        if (err.response?.status === 401) {
+        if (
+          err.response?.status === 401
+        ) {
           setError(
             "Your session has expired. Please login again."
           );
-        } else if (err.response?.status === 404) {
+        } else if (
+          err.response?.status === 404
+        ) {
           setBusiness(null);
           setPhotos([]);
+          setReviews([]);
         } else {
           setError(
             "Unable to load business profile."
@@ -224,9 +437,7 @@ function OwnerPublicProfile() {
 
           <div className="public-header-title">
 
-            <span>
-              REVIO
-            </span>
+            <span>REVIO</span>
 
             <h1>
               Public Profile
@@ -309,24 +520,79 @@ function OwnerPublicProfile() {
     business?.ClosingTime ??
     "";
 
-  const rating =
-    Number(
-      business?.rating ??
-      business?.Rating ??
-      0
-    );
+  // =====================================================
+  // ACTUAL REVIEW RATING
+  // =====================================================
 
-  const reviewCount =
+  const ratedReviews =
+    reviews.filter((review) => {
+      return getReviewRating(review) > 0;
+    });
+
+  const calculatedRating =
+    ratedReviews.length > 0
+      ? ratedReviews.reduce(
+          (sum, review) => {
+            return (
+              sum +
+              getReviewRating(review)
+            );
+          },
+          0
+        ) / ratedReviews.length
+      : 0;
+
+  // =====================================================
+  // BACKEND BUSINESS RATING
+  // =====================================================
+
+  const backendRating =
+    normalizeNumber(
+      business?.rating ??
+      business?.Rating
+    ) ?? 0;
+
+  const backendReviewCount =
     Number(
       business?.reviewCount ??
       business?.ReviewCount ??
       0
     );
 
+  // =====================================================
+  // FINAL RATING
+  //
+  // Reviews loaded from ReviewController are preferred.
+  // =====================================================
+
+  const rating =
+    ratedReviews.length > 0
+      ? calculatedRating
+      : backendRating;
+
+  // =====================================================
+  // FINAL REVIEW COUNT
+  // =====================================================
+
+  const reviewCount =
+    reviews.length > 0
+      ? reviews.length
+      : backendReviewCount;
+
+  // =====================================================
+  // CATEGORY
+  // =====================================================
+
   const categoryName =
     business?.category?.categoryName ??
     business?.category?.CategoryName ??
+    business?.categoryName ??
+    business?.CategoryName ??
     "Business";
+
+  // =====================================================
+  // BUSINESS ID
+  // =====================================================
 
   const businessId =
     business?.businessId ??
@@ -348,34 +614,33 @@ function OwnerPublicProfile() {
 
   // =====================================================
   // PREPARE PHOTOS
-  //
-  // Uploaded photos are used first.
-  // Missing photos are filled with sample photos.
   // =====================================================
 
-  const uploadedPhotos = photos
-    .map((photo, index) => {
-      const url = getPhotoUrl(photo);
+  const uploadedPhotos =
+    photos
+      .map((photo, index) => {
+        const url =
+          getPhotoUrl(photo);
 
-      if (!url) {
-        return null;
-      }
+        if (!url) {
+          return null;
+        }
 
-      return {
-        id:
-          photo?.businessPhotoId ??
-          photo?.BusinessPhotoId ??
-          `uploaded-${index}`,
+        return {
+          id:
+            photo?.businessPhotoId ??
+            photo?.BusinessPhotoId ??
+            `uploaded-${index}`,
 
-        url,
+          url,
 
-        alt:
-          photo?.caption ??
-          photo?.Caption ??
-          `${businessName} photo`,
-      };
-    })
-    .filter(Boolean);
+          alt:
+            photo?.caption ??
+            photo?.Caption ??
+            `${businessName} photo`,
+        };
+      })
+      .filter(Boolean);
 
   const displayPhotos = [
     ...uploadedPhotos,
@@ -405,6 +670,133 @@ function OwnerPublicProfile() {
   };
 
   // =====================================================
+  // REVIEW USER NAME
+  // =====================================================
+
+  const getReviewUserName = (review) => {
+    return (
+      review?.user?.fullName ??
+      review?.user?.FullName ??
+      review?.user?.name ??
+      review?.user?.Name ??
+      review?.User?.fullName ??
+      review?.User?.FullName ??
+      review?.User?.name ??
+      review?.User?.Name ??
+      review?.fullName ??
+      review?.FullName ??
+      review?.userName ??
+      review?.UserName ??
+      "REVIO User"
+    );
+  };
+
+  // =====================================================
+  // REVIEW COMMENT
+  // =====================================================
+
+  const getReviewComment = (review) => {
+    return (
+      review?.comment ??
+      review?.Comment ??
+      review?.reviewText ??
+      review?.ReviewText ??
+      ""
+    );
+  };
+
+  // =====================================================
+  // REVIEW DATE
+  // =====================================================
+
+  const getReviewDate = (review) => {
+    return (
+      review?.createdAt ??
+      review?.CreatedAt ??
+      review?.reviewDate ??
+      review?.ReviewDate ??
+      review?.date ??
+      review?.Date ??
+      ""
+    );
+  };
+
+  // =====================================================
+  // FORMAT REVIEW DATE
+  // =====================================================
+
+  const formatReviewDate = (date) => {
+    if (!date) {
+      return "";
+    }
+
+    const parsedDate =
+      new Date(date);
+
+    if (
+      Number.isNaN(
+        parsedDate.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    return parsedDate.toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  };
+
+  // =====================================================
+  // RENDER REVIEW STARS
+  // =====================================================
+
+  const renderStars = (reviewRating) => {
+    const numericRating =
+      normalizeNumber(
+        reviewRating
+      ) ?? 0;
+
+    const safeRating =
+      Math.min(
+        Math.max(
+          numericRating,
+          0
+        ),
+        5
+      );
+
+    return (
+      <div
+        className="public-review-stars"
+        aria-label={`${safeRating} out of 5 stars`}
+      >
+
+        {[1, 2, 3, 4, 5].map(
+          (star) => (
+            <FaStar
+              key={star}
+              className={
+                star <=
+                Math.round(
+                  safeRating
+                )
+                  ? "public-star-filled"
+                  : "public-star-empty"
+              }
+            />
+          )
+        )}
+
+      </div>
+    );
+  };
+
+  // =====================================================
   // RENDER
   // =====================================================
 
@@ -420,7 +812,9 @@ function OwnerPublicProfile() {
         <button
           className="public-back-btn"
           onClick={() =>
-            navigate("/owner-dashboard")
+            navigate(
+              "/owner-dashboard"
+            )
           }
           aria-label="Go back"
         >
@@ -429,9 +823,7 @@ function OwnerPublicProfile() {
 
         <div className="public-header-title">
 
-          <span>
-            REVIO
-          </span>
+          <span>REVIO</span>
 
           <h1>
             Public Profile
@@ -441,13 +833,11 @@ function OwnerPublicProfile() {
 
       </header>
 
-
       {/* =================================================
           MAIN PROFILE
       ================================================= */}
 
       <main className="public-profile-container">
-
 
         {/* =================================================
             COVER IMAGE
@@ -473,7 +863,6 @@ function OwnerPublicProfile() {
 
         </section>
 
-
         {/* =================================================
             BUSINESS HEADER
         ================================================= */}
@@ -493,7 +882,6 @@ function OwnerPublicProfile() {
               </p>
 
             </div>
-
 
             <div className="public-rating">
 
@@ -522,7 +910,6 @@ function OwnerPublicProfile() {
 
           </div>
 
-
           {/* =================================================
               ADDRESS
           ================================================= */}
@@ -545,7 +932,6 @@ function OwnerPublicProfile() {
             </div>
           )}
 
-
           {/* =================================================
               PHONE
           ================================================= */}
@@ -562,31 +948,29 @@ function OwnerPublicProfile() {
             </div>
           )}
 
-
           {/* =================================================
               OPENING HOURS
           ================================================= */}
 
-          {(openingTime || closingTime) && (
+          {(openingTime ||
+            closingTime) && (
             <div className="public-info-item">
 
               <FaClock />
 
               <span>
-
                 {openingTime}
 
-                {openingTime && closingTime
+                {openingTime &&
+                closingTime
                   ? " - "
                   : ""}
 
                 {closingTime}
-
               </span>
 
             </div>
           )}
-
 
           {/* =================================================
               WEBSITE
@@ -619,7 +1003,6 @@ function OwnerPublicProfile() {
 
         </section>
 
-
         {/* =================================================
             ABOUT
         ================================================= */}
@@ -635,7 +1018,6 @@ function OwnerPublicProfile() {
           </p>
 
         </section>
-
 
         {/* =================================================
             PHOTOS
@@ -654,7 +1036,6 @@ function OwnerPublicProfile() {
             </span>
 
           </div>
-
 
           <div className="public-photo-grid">
 
@@ -688,7 +1069,6 @@ function OwnerPublicProfile() {
 
         </section>
 
-
         {/* =================================================
             CUSTOMER REVIEWS
         ================================================= */}
@@ -697,67 +1077,167 @@ function OwnerPublicProfile() {
 
           <div className="public-section-title">
 
-            <h3>
-              Customer Reviews
-            </h3>
+            <div>
+
+              <h3>
+                Customer Reviews
+              </h3>
+
+              {reviewCount > 0 && (
+                <span>
+                  {reviewCount}{" "}
+                  {reviewCount === 1
+                    ? "Review"
+                    : "Reviews"}
+                </span>
+              )}
+
+            </div>
 
             <button
               className="public-view-reviews-btn"
-              onClick={handleViewReviews}
+              onClick={
+                handleViewReviews
+              }
             >
               View All
             </button>
 
           </div>
 
+          {/* =================================================
+              LOADING REVIEWS
+          ================================================= */}
 
-          {reviewCount > 0 ? (
+          {reviewsLoading ? (
 
-            <div className="public-review-card">
+            <div className="public-review-empty">
 
-              <div className="public-review-top">
-
-                <div className="public-review-avatar">
-
-                  <span>
-                    R
-                  </span>
-
-                </div>
-
-
-                <div className="public-review-user">
-
-                  <strong>
-                    Customer Review
-                  </strong>
-
-                  <span>
-                    Recent review
-                  </span>
-
-                </div>
-
-
-                <div className="public-review-rating">
-
-                  <FaStar />
-
-                  <strong>
-                    {rating > 0
-                      ? rating.toFixed(1)
-                      : "5.0"}
-                  </strong>
-
-                </div>
-
-              </div>
-
+              <FaStar />
 
               <p>
-                Customers have shared their
-                experience with this business.
+                Loading customer reviews...
               </p>
+
+            </div>
+
+          ) : reviews.length > 0 ? (
+
+            <div className="public-review-list">
+
+              {reviews
+                .slice(0, 3)
+                .map(
+                  (review, index) => {
+
+                    const reviewRating =
+                      getReviewRating(
+                        review
+                      );
+
+                    const userName =
+                      getReviewUserName(
+                        review
+                      );
+
+                    const comment =
+                      getReviewComment(
+                        review
+                      );
+
+                    const reviewDate =
+                      getReviewDate(
+                        review
+                      );
+
+                    const reviewId =
+                      review?.reviewId ??
+                      review?.ReviewId ??
+                      index;
+
+                    return (
+                      <article
+                        className="public-review-card"
+                        key={reviewId}
+                      >
+
+                        {/* =================================================
+                            CUSTOMER HEADER
+                        ================================================= */}
+
+                        <div className="public-review-top">
+
+                          <div className="public-review-avatar">
+
+                            <span>
+                              {userName
+                                .charAt(0)
+                                .toUpperCase()}
+                            </span>
+
+                          </div>
+
+                          <div className="public-review-user">
+
+                            <strong>
+                              {userName}
+                            </strong>
+
+                            {reviewDate && (
+                              <span>
+                                {formatReviewDate(
+                                  reviewDate
+                                )}
+                              </span>
+                            )}
+
+                          </div>
+
+                          <div className="public-review-rating">
+
+                            {renderStars(
+                              reviewRating
+                            )}
+
+                          </div>
+
+                        </div>
+
+                        {/* =================================================
+                            RATING NUMBER
+                        ================================================= */}
+
+                        {reviewRating > 0 && (
+                          <div
+                            style={{
+                              marginTop:
+                                "5px",
+                              fontSize:
+                                "11px",
+                              color:
+                                "#777",
+                              textAlign:
+                                "right",
+                            }}
+                          >
+                            {reviewRating}/5
+                          </div>
+                        )}
+
+                        {/* =================================================
+                            COMMENT
+                        ================================================= */}
+
+                        {comment && (
+                          <p className="public-review-comment">
+                            "{comment}"
+                          </p>
+                        )}
+
+                      </article>
+                    );
+                  }
+                )}
 
             </div>
 
@@ -768,15 +1248,22 @@ function OwnerPublicProfile() {
               <FaStar />
 
               <p>
-                Customer reviews will appear here.
+                Customer reviews will
+                appear here.
               </p>
+
+              <span>
+                Once customers review
+                your business, their
+                ratings and comments
+                will appear here.
+              </span>
 
             </div>
 
           )}
 
         </section>
-
 
         {/* =================================================
             PUBLIC PREVIEW NOTE
@@ -787,11 +1274,11 @@ function OwnerPublicProfile() {
           <FaLock />
 
           <span>
-            You are seeing this as a public user
+            You are seeing this as a
+            public user
           </span>
 
         </div>
-
 
         {/* =================================================
             OWNER EDIT
@@ -800,7 +1287,9 @@ function OwnerPublicProfile() {
         <button
           className="public-edit-btn"
           onClick={() =>
-            navigate("/owner/business")
+            navigate(
+              "/owner/business"
+            )
           }
         >
           Edit Business Information

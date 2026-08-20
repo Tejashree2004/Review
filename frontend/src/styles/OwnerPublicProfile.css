@@ -515,9 +515,15 @@
 }
 
 .public-review-rating svg {
-  color: #f5c518;
-
   font-size: 13px;
+}
+
+.public-review-rating .public-star-filled {
+  color: #f5c518;
+}
+
+.public-review-rating .public-star-empty {
+  color: #3b3b3b;
 }
 
 .public-review-rating strong {

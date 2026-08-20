@@ -1,27 +1,39 @@
 import API from "./api";
 
-// ==========================================
-// Get Reviews for a Place
+// =====================================================
+// GET REVIEWS FOR A PLACE
 // GET: /api/Review/place/{placeId}
-// ==========================================
+// =====================================================
 
 export const getReviews = (placeId) => {
   return API.get(`/Review/place/${placeId}`);
 };
 
-// ==========================================
-// Add Review
+
+// =====================================================
+// GET REVIEWS FOR A BUSINESS
+// GET: /api/Review/business/{businessId}
+// =====================================================
+
+export const getBusinessReviews = (businessId) => {
+  return API.get(`/Review/business/${businessId}`);
+};
+
+
+// =====================================================
+// ADD REVIEW
 // POST: /api/Review
-// ==========================================
+// =====================================================
 
 export const addReview = (data) => {
   return API.post("/Review", data);
 };
 
-// ==========================================
-// Delete Review
+
+// =====================================================
+// DELETE REVIEW
 // DELETE: /api/Review/{reviewId}
-// ==========================================
+// =====================================================
 
 export const deleteReview = (reviewId) => {
   return API.delete(`/Review/${reviewId}`);
