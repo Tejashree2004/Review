@@ -8,11 +8,24 @@ namespace Review.API.Models
         [Key]
         public int ReviewId { get; set; }
 
+        // ==========================================
+        // RATING
+        // ==========================================
+
         [Required]
+        [Range(1, 5)]
         public int Rating { get; set; }
+
+        // ==========================================
+        // COMMENT
+        // ==========================================
 
         [Required]
         public string Comment { get; set; } = string.Empty;
+
+        // ==========================================
+        // CREATED DATE
+        // ==========================================
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

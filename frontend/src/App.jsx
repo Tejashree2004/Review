@@ -7,13 +7,15 @@ import Splash from "./pages/Splash";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RoleSelection from "./pages/RoleSelection";
-import BusinessDetails from "./pages/BusinessDetails";
+
 // =========================
 // Reviewer / Normal User
 // =========================
 import Home from "./pages/Home";
 import Search from "./pages/Search";
 import PlaceDetails from "./pages/PlaceDetails";
+import BusinessDetails from "./pages/BusinessDetails";
+import BusinessReviews from "./pages/BusinessReviews";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import Reviews from "./pages/Reviews";
@@ -38,7 +40,6 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminBusinesses from "./pages/AdminBusinesses";
 import AdminReviews from "./pages/AdminReviews";
 import AdminReports from "./pages/AdminReports";
-
 
 function App() {
   return (
@@ -88,41 +89,81 @@ function App() {
         element={<Categories />}
       />
 
-      <Route
-  path="/place/:id"
-  element={<PlaceDetails />}
-/>
+      {/* =====================================================
+          PLACE DETAILS
+      ===================================================== */}
 
-<Route
-  path="/business/:id"
-  element={<BusinessDetails />}
-/>
+      <Route
+        path="/place/:id"
+        element={<PlaceDetails />}
+      />
+
+      {/* =====================================================
+          BUSINESS DETAILS
+      ===================================================== */}
+
+      <Route
+        path="/business/:id"
+        element={<BusinessDetails />}
+      />
+
+      {/* =====================================================
+          ALL BUSINESS CUSTOMER REVIEWS
+      ===================================================== */}
+
+      <Route
+        path="/business/:businessId/reviews"
+        element={<BusinessReviews />}
+      />
+
+      {/* =====================================================
+          FAVORITES
+      ===================================================== */}
 
       <Route
         path="/favorites"
         element={<Favorites />}
       />
 
+      {/* =====================================================
+          MY REVIEWS
+      ===================================================== */}
+
       <Route
         path="/reviews"
         element={<Reviews />}
       />
 
-      
-      <Route
-  path="/write-review/:placeId"
-  element={<WriteReview />}
-/>
+      {/* =====================================================
+          WRITE REVIEW FOR PLACE
+      ===================================================== */}
 
-<Route
-  path="/write-review/business/:businessId"
-  element={<WriteReview />}
-/>
+      <Route
+        path="/write-review/:placeId"
+        element={<WriteReview />}
+      />
+
+      {/* =====================================================
+          WRITE REVIEW FOR BUSINESS
+      ===================================================== */}
+
+      <Route
+        path="/write-review/business/:businessId"
+        element={<WriteReview />}
+      />
+
+      {/* =====================================================
+          NOTIFICATIONS
+      ===================================================== */}
 
       <Route
         path="/notifications"
         element={<Notifications />}
       />
+
+      {/* =====================================================
+          PROFILE
+      ===================================================== */}
 
       <Route
         path="/profile"
@@ -155,10 +196,17 @@ function App() {
         element={<OwnerPhotos />}
       />
 
-      {/* Customer Reviews */}
+      {/* Customer Reviews - Owner's Business */}
 
       <Route
         path="/owner/reviews"
+        element={<OwnerReviews />}
+      />
+
+      {/* Customer Reviews - Specific Business */}
+
+      <Route
+        path="/owner/reviews/business/:businessId"
         element={<OwnerReviews />}
       />
 

@@ -1,0 +1,430 @@
+/* =====================================================
+   ALL BUSINESS REVIEWS PAGE
+===================================================== */
+
+.all-business-reviews-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 0 50px;
+}
+
+
+/* =====================================================
+   BACK BUTTON
+===================================================== */
+
+.all-reviews-back-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid #2d2d2d;
+  background: #171717;
+  color: #ffffff;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+  transition: 0.3s ease;
+  margin-bottom: 25px;
+}
+
+.all-reviews-back-btn:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+
+/* =====================================================
+   BUSINESS HEADER
+===================================================== */
+
+.all-reviews-business-header {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+
+  background: #171717;
+  border: 1px solid #2d2d2d;
+  border-radius: 20px;
+
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.all-reviews-business-icon {
+  width: 70px;
+  height: 70px;
+
+  border-radius: 18px;
+
+  background: #222222;
+  border: 1px solid #3a3a3a;
+
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.all-reviews-business-info h1 {
+  margin: 0 0 8px;
+
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.all-reviews-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #bdbdbd;
+  font-size: 15px;
+
+  margin-bottom: 10px;
+}
+
+.all-reviews-location svg {
+  color: #ffffff;
+}
+
+.all-reviews-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #ffffff;
+}
+
+.all-reviews-summary svg {
+  color: #ffd700;
+}
+
+.all-reviews-summary strong {
+  font-size: 18px;
+}
+
+.all-reviews-summary span {
+  color: #bdbdbd;
+}
+
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.all-reviews-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+.all-reviews-title h2 {
+  color: #ffffff;
+  font-size: 28px;
+  margin: 0 0 5px;
+}
+
+.all-reviews-title p {
+  color: #a9a9a9;
+  margin: 0;
+}
+
+.all-reviews-title > strong {
+  color: #ffffff;
+  background: #171717;
+  border: 1px solid #2d2d2d;
+
+  padding: 10px 16px;
+  border-radius: 30px;
+
+  font-size: 14px;
+}
+
+
+/* =====================================================
+   REVIEWS LIST
+===================================================== */
+
+.all-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+
+/* =====================================================
+   REVIEW CARD
+===================================================== */
+
+.all-review-card {
+  background: #171717;
+  border: 1px solid #2d2d2d;
+  border-radius: 18px;
+
+  padding: 24px;
+
+  transition: 0.3s ease;
+}
+
+.all-review-card:hover {
+  border-color: #444444;
+}
+
+
+/* =====================================================
+   REVIEW TOP
+===================================================== */
+
+.all-review-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.all-review-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.all-review-avatar {
+  width: 48px;
+  height: 48px;
+
+  border-radius: 50%;
+
+  background: #ffffff;
+  color: #000000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  flex-shrink: 0;
+}
+
+.all-review-user h3 {
+  color: #ffffff;
+
+  margin: 0 0 4px;
+
+  font-size: 17px;
+}
+
+.all-review-user span {
+  color: #929292;
+  font-size: 13px;
+}
+
+
+/* =====================================================
+   STARS
+===================================================== */
+
+.all-review-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.all-review-star-filled {
+  color: #ffd700;
+  font-size: 17px;
+}
+
+.all-review-star-empty {
+  color: #555555;
+  font-size: 17px;
+}
+
+
+/* =====================================================
+   COMMENT
+===================================================== */
+
+.all-review-comment {
+  color: #dddddd;
+
+  font-size: 16px;
+  line-height: 1.7;
+
+  margin: 20px 0 0;
+}
+
+
+/* =====================================================
+   OWNER REPLY
+===================================================== */
+
+.all-review-owner-reply {
+  margin-top: 18px;
+
+  background: #202020;
+  border-left: 3px solid #ffffff;
+
+  padding: 14px 16px;
+
+  border-radius: 8px;
+}
+
+.all-review-owner-reply strong {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.all-review-owner-reply p {
+  color: #cfcfcf;
+
+  margin: 7px 0 0;
+
+  line-height: 1.6;
+}
+
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+.all-reviews-loading {
+  text-align: center;
+
+  color: #cfcfcf;
+
+  background: #171717;
+  border: 1px solid #2d2d2d;
+
+  border-radius: 18px;
+
+  padding: 40px;
+
+  font-size: 16px;
+}
+
+
+/* =====================================================
+   EMPTY
+===================================================== */
+
+.all-reviews-empty {
+  text-align: center;
+
+  background: #171717;
+  border: 1px solid #2d2d2d;
+
+  border-radius: 18px;
+
+  padding: 60px 25px;
+}
+
+.all-reviews-empty svg {
+  color: #ffffff;
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+.all-reviews-empty h2 {
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.all-reviews-empty p {
+  color: #999999;
+  margin: 0;
+}
+
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 768px) {
+
+  .all-business-reviews-page {
+    padding: 5px 0 40px;
+  }
+
+  .all-reviews-business-header {
+    padding: 20px;
+  }
+
+  .all-reviews-business-info h1 {
+    font-size: 26px;
+  }
+
+  .all-reviews-title h2 {
+    font-size: 24px;
+  }
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 576px) {
+
+  .all-reviews-business-header {
+    align-items: flex-start;
+  }
+
+  .all-reviews-business-icon {
+    width: 55px;
+    height: 55px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+
+  .all-reviews-business-info h1 {
+    font-size: 22px;
+  }
+
+  .all-reviews-location {
+    font-size: 13px;
+  }
+
+  .all-reviews-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .all-reviews-title h2 {
+    font-size: 22px;
+  }
+
+  .all-review-card {
+    padding: 20px;
+  }
+
+  .all-review-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .all-review-stars {
+    margin-left: 62px;
+  }
+
+  .all-review-comment {
+    font-size: 15px;
+  }
+
+}

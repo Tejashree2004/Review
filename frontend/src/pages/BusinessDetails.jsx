@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -5,10 +6,12 @@ import MainLayout from "../layouts/MainLayout";
 
 import {
   getBusinessDetails,
-  addFavorite,
-  removeFavorite,
   getFavorites,
 } from "../services/HomeService";
+
+import {
+  getBusinessReviews,
+} from "../services/reviewService";
 
 import {
   FaArrowLeft,
@@ -28,18 +31,21 @@ function BusinessDetails() {
   const navigate = useNavigate();
 
   const [business, setBusiness] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [reviews, setReviews] = useState([]);
 
-  // =============================
-  // Favorite State
-  // =============================
+  const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  // =====================================================
+  // FAVORITE
+  // =====================================================
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  // =============================
-  // Get User ID
-  // =============================
+  // =====================================================
+  // GET USER ID
+  // =====================================================
 
   const getUserId = () => {
     const userId =
@@ -49,17 +55,17 @@ function BusinessDetails() {
     return userId ? Number(userId) : null;
   };
 
-  // =============================
-  // Load Business
-  // =============================
+  // =====================================================
+  // LOAD BUSINESS
+  // =====================================================
 
   useEffect(() => {
     loadBusiness();
   }, [id]);
 
-  // =============================
-  // Load Business Details
-  // =============================
+  // =====================================================
+  // LOAD BUSINESS DETAILS
+  // =====================================================
 
   const loadBusiness = async () => {
     try {
@@ -73,28 +79,22 @@ function BusinessDetails() {
         response.data
       );
 
-      /*
-        Backend response:
-
-        {
-          success: true,
-          message: "...",
-          data: {...}
-        }
-
-        Therefore use response.data.data
-      */
-
       const businessData =
-        response.data?.data || response.data;
+        response.data?.data ||
+        response.data;
 
       setBusiness(businessData);
 
-      // Check favorite after business loads
-      await checkFavorite(
-        businessData?.businessId
-      );
+      const businessId =
+        businessData?.businessId ||
+        businessData?.id;
 
+      if (businessId) {
+        await Promise.all([
+          loadBusinessReviews(businessId),
+          checkFavorite(businessId),
+        ]);
+      }
     } catch (error) {
       console.error(
         "Failed to load business details:",
@@ -107,9 +107,53 @@ function BusinessDetails() {
     }
   };
 
-  // =============================
-  // Check Favorite
-  // =============================
+  // =====================================================
+  // LOAD BUSINESS REVIEWS
+  // =====================================================
+
+  const loadBusinessReviews = async (businessId) => {
+    try {
+      setReviewsLoading(true);
+
+      const response =
+        await getBusinessReviews(businessId);
+
+      console.log(
+        "Business Reviews:",
+        response.data
+      );
+
+      const reviewData =
+        response.data?.data ||
+        response.data ||
+        [];
+
+      const finalReviews =
+        Array.isArray(reviewData)
+          ? reviewData
+          : [];
+
+      console.log(
+        "FINAL BUSINESS DETAILS REVIEWS:",
+        finalReviews
+      );
+
+      setReviews(finalReviews);
+    } catch (error) {
+      console.error(
+        "Failed to load business reviews:",
+        error
+      );
+
+      setReviews([]);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  // =====================================================
+  // CHECK FAVORITE
+  // =====================================================
 
   const checkFavorite = async (businessId) => {
     try {
@@ -137,7 +181,6 @@ function BusinessDetails() {
         );
 
       setIsFavorite(alreadyFavorite);
-
     } catch (error) {
       console.error(
         "Failed to check favorite:",
@@ -148,9 +191,9 @@ function BusinessDetails() {
     }
   };
 
-  // =============================
-  // Toggle Favorite
-  // =============================
+  // =====================================================
+  // TOGGLE FAVORITE
+  // =====================================================
 
   const handleFavorite = async () => {
     try {
@@ -170,26 +213,15 @@ function BusinessDetails() {
       setFavoriteLoading(true);
 
       /*
-        IMPORTANT:
+        Business Favorite backend is not yet
+        connected with BusinessId.
 
-        Your existing Favorite backend
-        currently appears to work with
-        PlaceId.
-
-        Since Business has no PlaceId,
-        don't send a fake placeId here.
-
-        We will connect Business Favorites
-        separately when the Favorite backend
-        supports BusinessId.
+        Therefore we only update the UI here.
       */
 
-      if (isFavorite) {
-        setIsFavorite(false);
-      } else {
-        setIsFavorite(true);
-      }
-
+      setIsFavorite(
+        (previous) => !previous
+      );
     } catch (error) {
       console.error(
         "Favorite operation failed:",
@@ -204,9 +236,9 @@ function BusinessDetails() {
     }
   };
 
-  // =============================
-  // Open Google Maps
-  // =============================
+  // =====================================================
+  // GOOGLE MAP
+  // =====================================================
 
   const handleMapClick = () => {
     if (!business) {
@@ -230,9 +262,9 @@ function BusinessDetails() {
     );
   };
 
-  // =============================
-  // Write Review
-  // =============================
+  // =====================================================
+  // WRITE REVIEW
+  // =====================================================
 
   const handleWriteReview = () => {
     const userId = getUserId();
@@ -248,14 +280,251 @@ function BusinessDetails() {
       return;
     }
 
+    const businessId =
+      business.businessId ||
+      business.id;
+
     navigate(
-      `/write-review/business/${business.businessId}`
+      `/write-review/business/${businessId}`
     );
   };
 
-  // =============================
-  // Loading
-  // =============================
+  // =====================================================
+  // VIEW ALL REVIEWS
+  // =====================================================
+
+  const handleViewAllReviews = () => {
+    const businessId =
+      business?.businessId ||
+      business?.id;
+
+    if (!businessId) {
+      return;
+    }
+
+    navigate(
+      `/business/${businessId}/reviews`
+    );
+  };
+
+  // =====================================================
+  // FORMAT REVIEW DATE
+  // =====================================================
+
+  const getRelativeDate = (dateValue) => {
+    if (!dateValue) {
+      return "";
+    }
+
+    const reviewDate =
+      new Date(dateValue);
+
+    if (Number.isNaN(reviewDate.getTime())) {
+      return "";
+    }
+
+    const now = new Date();
+
+    const difference =
+      now.getTime() -
+      reviewDate.getTime();
+
+    const seconds =
+      Math.floor(difference / 1000);
+
+    const minutes =
+      Math.floor(seconds / 60);
+
+    const hours =
+      Math.floor(minutes / 60);
+
+    const days =
+      Math.floor(hours / 24);
+
+    if (days < 1) {
+      if (hours < 1) {
+        return "Just now";
+      }
+
+      if (hours === 1) {
+        return "1 hour ago";
+      }
+
+      return `${hours} hours ago`;
+    }
+
+    if (days === 1) {
+      return "1 day ago";
+    }
+
+    if (days < 7) {
+      return `${days} days ago`;
+    }
+
+    if (days < 14) {
+      return "1 week ago";
+    }
+
+    if (days < 30) {
+      return `${Math.floor(days / 7)} weeks ago`;
+    }
+
+    if (days < 365) {
+      return `${Math.floor(days / 30)} months ago`;
+    }
+
+    return `${Math.floor(days / 365)} years ago`;
+  };
+
+  // =====================================================
+  // RATING STARS
+  // =====================================================
+
+  const renderStars = (rating) => {
+    const numericRating =
+      Number(rating) || 0;
+
+    return (
+      <div className="review-stars">
+        {[1, 2, 3, 4, 5].map(
+          (star) => (
+            <FaStar
+              key={star}
+              className={
+                star <= numericRating
+                  ? "review-star-filled"
+                  : "review-star-empty"
+              }
+            />
+          )
+        )}
+      </div>
+    );
+  };
+
+  // =====================================================
+  // GET REVIEW USER NAME
+  // =====================================================
+
+  const getReviewerName = (review) => {
+    /*
+      Your current API response is:
+
+      {
+        ReviewId: 13,
+        Rating: 3,
+        Comment: "good hotel",
+        User: "gauri",
+        CreatedAt: "..."
+      }
+
+      So first use User.
+
+      We also support object-style User
+      in case backend changes later.
+    */
+
+    if (typeof review.User === "string") {
+      return review.User;
+    }
+
+    if (typeof review.user === "string") {
+      return review.user;
+    }
+
+    if (review.User?.FullName) {
+      return review.User.FullName;
+    }
+
+    if (review.user?.fullName) {
+      return review.user.fullName;
+    }
+
+    if (review.FullName) {
+      return review.FullName;
+    }
+
+    if (review.fullName) {
+      return review.fullName;
+    }
+
+    return "Anonymous User";
+  };
+
+  // =====================================================
+  // GET REVIEW RATING
+  // =====================================================
+
+  const getReviewRating = (review) => {
+    return Number(
+      review.Rating ??
+      review.rating ??
+      0
+    );
+  };
+
+  // =====================================================
+  // GET REVIEW COMMENT
+  // =====================================================
+
+  const getReviewComment = (review) => {
+    return (
+      review.Comment ??
+      review.comment ??
+      ""
+    );
+  };
+
+  // =====================================================
+  // GET REVIEW DATE
+  // =====================================================
+
+  const getReviewDate = (review) => {
+    return (
+      review.CreatedAt ??
+      review.createdAt ??
+      null
+    );
+  };
+
+  // =====================================================
+  // GET REVIEW ID
+  // =====================================================
+
+  const getReviewId = (review) => {
+    return (
+      review.ReviewId ??
+      review.reviewId
+    );
+  };
+
+  // =====================================================
+  // CALCULATE RATING
+  // =====================================================
+
+  const calculateAverageRating = () => {
+    if (!reviews.length) {
+      return Number(
+        business?.rating ?? 0
+      ).toFixed(1);
+    }
+
+    const total =
+      reviews.reduce(
+        (sum, review) =>
+          sum +
+          getReviewRating(review),
+        0
+      );
+
+    return (
+      total / reviews.length
+    ).toFixed(1);
+  };
+
+  // =====================================================
+  // LOADING
+  // =====================================================
 
   if (loading) {
     return (
@@ -267,9 +536,9 @@ function BusinessDetails() {
     );
   }
 
-  // =============================
-  // Business Not Found
-  // =============================
+  // =====================================================
+  // BUSINESS NOT FOUND
+  // =====================================================
 
   if (!business) {
     return (
@@ -289,9 +558,9 @@ function BusinessDetails() {
     );
   }
 
-  // =============================
-  // Business Values
-  // =============================
+  // =====================================================
+  // BUSINESS VALUES
+  // =====================================================
 
   const businessName =
     business.businessName ||
@@ -301,32 +570,40 @@ function BusinessDetails() {
   const imageUrl =
     business.imageUrl ||
     business.photos?.find(
-      (photo) => photo.isPrimary
+      (photo) =>
+        photo.isPrimary
     )?.photoUrl ||
     business.photos?.[0]?.photoUrl ||
     "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
 
   const rating =
-    business.rating ?? 0;
+    calculateAverageRating();
 
   const reviewCount =
-    business.reviewCount ?? 0;
+    reviews.length ||
+    business.reviewCount ||
+    0;
 
   const isOpen =
     business.isOpen ??
     business.openStatus ??
     false;
 
-  // =============================
+  const description =
+    business.description ||
+    business.businessDescription ||
+    `${businessName} provides quality services and aims to provide a great customer experience.`;
+
+  // =====================================================
   // UI
-  // =============================
+  // =====================================================
 
   return (
     <MainLayout>
 
-      {/* =========================
-          Back Button
-      ========================= */}
+      {/* =================================================
+          BACK BUTTON
+      ================================================= */}
 
       <button
         className="back-btn"
@@ -336,16 +613,13 @@ function BusinessDetails() {
         <FaArrowLeft />
       </button>
 
-
-      {/* =========================
-          Main Business Section
-      ========================= */}
+      {/* =================================================
+          BUSINESS DETAILS
+      ================================================= */}
 
       <div className="place-details">
 
-        {/* =========================
-            Image Section
-        ========================= */}
+        {/* IMAGE */}
 
         <div className="image-section">
 
@@ -357,8 +631,6 @@ function BusinessDetails() {
                 "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
             }}
           />
-
-          {/* Favorite Button */}
 
           <button
             className={`heart-btn ${
@@ -379,21 +651,15 @@ function BusinessDetails() {
 
         </div>
 
-
-        {/* =========================
-            Right Details
-        ========================= */}
+        {/* DETAILS */}
 
         <div className="details-card">
-
-          {/* Business Name */}
 
           <h1>
             {businessName}
           </h1>
 
-
-          {/* Rating */}
+          {/* RATING */}
 
           <div className="rating-row">
 
@@ -409,15 +675,16 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* Location */}
+          {/* LOCATION */}
 
           <div className="info-row">
 
             <FaMapMarkerAlt />
 
             <span>
-              {business.address || "Address not available"}
+              {business.address ||
+                "Address not available"}
+
               {business.city
                 ? `, ${business.city}`
                 : ""}
@@ -425,8 +692,7 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* Category */}
+          {/* CATEGORY */}
 
           <div className="info-row">
 
@@ -437,15 +703,15 @@ function BusinessDetails() {
             </span>
 
             <strong>
-              {business.category?.categoryName ||
+              {business.category
+                ?.categoryName ||
                 business.categoryName ||
                 "Not available"}
             </strong>
 
           </div>
 
-
-          {/* Reviews */}
+          {/* REVIEWS */}
 
           <div className="info-row">
 
@@ -461,8 +727,7 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* Status */}
+          {/* STATUS */}
 
           <div className="info-row">
 
@@ -484,14 +749,9 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* =========================
-              Action Buttons
-          ========================= */}
+          {/* ACTION BUTTONS */}
 
           <div className="place-actions">
-
-            {/* View on Map */}
 
             <button
               className="place-action-btn map-btn"
@@ -503,9 +763,6 @@ function BusinessDetails() {
                 View on Map
               </span>
             </button>
-
-
-            {/* Write Review */}
 
             <button
               className="place-action-btn review-btn"
@@ -524,10 +781,9 @@ function BusinessDetails() {
 
       </div>
 
-
-      {/* =========================
-          About
-      ========================= */}
+      {/* =================================================
+          ABOUT
+      ================================================= */}
 
       <div className="info-card">
 
@@ -536,18 +792,201 @@ function BusinessDetails() {
         </h2>
 
         <p>
-          {businessName} is a business located in{" "}
-          {business.city || "the selected location"}.
-          It provides quality services and aims to
-          provide a great customer experience.
+          {description}
         </p>
 
       </div>
 
+      {/* =================================================
+          CUSTOMER REVIEWS
+      ================================================= */}
 
+      <div className="customer-reviews-card">
+
+        {/* HEADER */}
+
+        <div className="customer-reviews-header">
+
+          <div>
+
+            <h2>
+              Customer Reviews
+            </h2>
+
+            <span>
+              {reviewCount} Reviews
+            </span>
+
+          </div>
+
+        </div>
+
+        {/* REVIEWS LOADING */}
+
+        {reviewsLoading && (
+          <div className="reviews-loading">
+            Loading reviews...
+          </div>
+        )}
+
+        {/* NO REVIEWS */}
+
+        {!reviewsLoading &&
+          reviews.length === 0 && (
+
+            <div className="no-reviews">
+
+              <h3>
+                No reviews yet
+              </h3>
+
+              <p>
+                Be the first customer to
+                review this business.
+              </p>
+
+              <button
+                className="place-action-btn review-btn"
+                onClick={handleWriteReview}
+              >
+                <FaPen />
+
+                <span>
+                  Write a Review
+                </span>
+              </button>
+
+            </div>
+          )}
+
+        {/* =================================================
+            REVIEW LIST
+        ================================================= */}
+
+        {!reviewsLoading &&
+          reviews.length > 0 && (
+
+            <div className="reviews-list">
+
+              {reviews
+                .slice(0, 3)
+                .map((review) => {
+
+                  const reviewerName =
+                    getReviewerName(review);
+
+                  const reviewRating =
+                    getReviewRating(review);
+
+                  const reviewComment =
+                    getReviewComment(review);
+
+                  const reviewDate =
+                    getReviewDate(review);
+
+                  const reviewId =
+                    getReviewId(review);
+
+                  return (
+                    <div
+                      className="customer-review-item"
+                      key={reviewId}
+                    >
+
+                      {/* REVIEW HEADER */}
+
+                      <div className="customer-review-top">
+
+                        <div className="reviewer-info">
+
+                          <div className="reviewer-avatar">
+
+                            {reviewerName
+                              .charAt(0)
+                              .toUpperCase()}
+
+                          </div>
+
+                          <div>
+
+                            <h3>
+                              {reviewerName}
+                            </h3>
+
+                            <span>
+                              {getRelativeDate(
+                                reviewDate
+                              )}
+                            </span>
+
+                          </div>
+
+                        </div>
+
+                        {/* STARS */}
+
+                        {renderStars(
+                          reviewRating
+                        )}
+
+                      </div>
+
+                      {/* COMMENT */}
+
+                      <p className="customer-review-comment">
+                        "{reviewComment}"
+                      </p>
+
+                      {/* OWNER REPLY */}
+
+                      {(review.OwnerReply ||
+                        review.ownerReply) && (
+
+                        <div className="owner-reply">
+
+                          <strong>
+                            Business Owner Reply
+                          </strong>
+
+                          <p>
+                            {review.OwnerReply ||
+                              review.ownerReply}
+                          </p>
+
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })}
+
+            </div>
+          )}
+
+        {/* VIEW ALL */}
+
+        {!reviewsLoading &&
+          reviews.length > 3 && (
+
+            <div className="view-all-reviews-wrapper">
+
+              <button
+                className="view-all-reviews-btn"
+                onClick={
+                  handleViewAllReviews
+                }
+              >
+                View All Reviews
+              </button>
+
+            </div>
+          )}
+
+      </div>
 
     </MainLayout>
   );
 }
 
 export default BusinessDetails;
+

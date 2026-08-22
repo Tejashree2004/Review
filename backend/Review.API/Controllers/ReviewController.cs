@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Review.API.DTOs;
 using Review.API.Models;
 using Review.API.Services;
 
@@ -16,183 +15,166 @@ namespace Review.API.Controllers
             _reviewService = reviewService;
         }
 
-        // ==========================================
-        // GET: api/review/place/1
-        // Get all reviews of a place
-        // ==========================================
-
-        [HttpGet("place/{placeId}")]
-        public async Task<IActionResult> GetReviews(int placeId)
-        {
-            var reviews =
-                await _reviewService.GetReviewsAsync(placeId);
-
-            return Ok(new
-            {
-                Success = true,
-                Message = "Reviews fetched successfully.",
-                Data = reviews
-            });
-        }
-
-        // ==========================================
-        // GET: api/review/business/1
-        // Get all reviews of a business
-        // ==========================================
+        // =====================================================
+        // GET BUSINESS REVIEWS
+        // =====================================================
 
         [HttpGet("business/{businessId}")]
         public async Task<IActionResult> GetBusinessReviews(
             int businessId)
         {
-            var reviews =
-                await _reviewService.GetBusinessReviewsAsync(
-                    businessId);
-
-            return Ok(new
+            try
             {
-                Success = true,
-                Message = "Business reviews fetched successfully.",
-                Data = reviews
-            });
+                var reviews =
+                    await _reviewService.GetBusinessReviewsAsync(
+                        businessId);
+
+                return Ok(reviews);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message = "Failed to load business reviews.",
+                        error = ex.Message
+                    });
+            }
         }
 
-        // ==========================================
-        // POST: api/review
-        // Add Review
-        //
-        // Supports:
-        // 1. Place Review
-        // 2. Business Review
-        // ==========================================
+        // =====================================================
+        // GET PLACE REVIEWS
+        // =====================================================
+
+        [HttpGet("place/{placeId}")]
+        public async Task<IActionResult> GetPlaceReviews(
+            int placeId)
+        {
+            try
+            {
+                var reviews =
+                    await _reviewService.GetReviewsAsync(
+                        placeId);
+
+                return Ok(reviews);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message = "Failed to load place reviews.",
+                        error = ex.Message
+                    });
+            }
+        }
+
+        // =====================================================
+        // ADD REVIEW
+        // =====================================================
 
         [HttpPost]
         public async Task<IActionResult> AddReview(
-            [FromBody] ReviewDto dto)
+            [FromBody] ReviewItem review)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(new
+                if (review.UserId <= 0)
                 {
-                    Success = false,
-                    Message = "Invalid review data.",
-                    Errors = ModelState
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid reviewer."
+                    });
+                }
+
+                if (review.Rating < 1 || review.Rating > 5)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Rating must be between 1 and 5."
+                    });
+                }
+
+                if (!review.PlaceId.HasValue &&
+                    !review.BusinessId.HasValue)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message =
+                            "Either PlaceId or BusinessId is required."
+                    });
+                }
+
+                var result =
+                    await _reviewService.AddReviewAsync(review);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Review added successfully.",
+                    data = result
                 });
             }
-
-            // ==========================================
-            // PLACE / BUSINESS VALIDATION
-            // Exactly one must be provided
-            // ==========================================
-
-            if (!dto.PlaceId.HasValue &&
-                !dto.BusinessId.HasValue)
+            catch (Exception ex)
             {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message =
-                        "Either PlaceId or BusinessId is required."
-                });
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message = "Failed to add review.",
+                        error = ex.Message
+                    });
             }
-
-            if (dto.PlaceId.HasValue &&
-                dto.BusinessId.HasValue)
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message =
-                        "A review cannot belong to both a Place and a Business."
-                });
-            }
-
-            // ==========================================
-            // RATING VALIDATION
-            // ==========================================
-
-            if (dto.Rating < 1 || dto.Rating > 5)
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message =
-                        "Rating must be between 1 and 5."
-                });
-            }
-
-            // ==========================================
-            // COMMENT VALIDATION
-            // ==========================================
-
-            if (string.IsNullOrWhiteSpace(dto.Comment))
-            {
-                return BadRequest(new
-                {
-                    Success = false,
-                    Message =
-                        "Review comment is required."
-                });
-            }
-
-            // ==========================================
-            // CREATE REVIEW
-            // ==========================================
-
-            var review = new ReviewItem
-            {
-                UserId = dto.UserId,
-
-                PlaceId = dto.PlaceId,
-
-                BusinessId = dto.BusinessId,
-
-                Rating = dto.Rating,
-
-                Comment = dto.Comment.Trim(),
-
-                CreatedAt = DateTime.UtcNow
-            };
-
-            // ==========================================
-            // SAVE REVIEW
-            // ==========================================
-
-            var result =
-                await _reviewService.AddReviewAsync(review);
-
-            return Ok(new
-            {
-                Success = true,
-                Message = "Review added successfully.",
-                Data = result
-            });
         }
 
-        // ==========================================
-        // DELETE: api/review/5
-        // Delete Review
-        // ==========================================
+        // =====================================================
+        // DELETE REVIEW
+        // =====================================================
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteReview(int id)
+        [HttpDelete("{reviewId}")]
+        public async Task<IActionResult> DeleteReview(
+            int reviewId)
         {
-            var deleted =
-                await _reviewService.DeleteReviewAsync(id);
-
-            if (!deleted)
+            try
             {
-                return NotFound(new
+                var deleted =
+                    await _reviewService.DeleteReviewAsync(
+                        reviewId);
+
+                if (!deleted)
                 {
-                    Success = false,
-                    Message = "Review not found."
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "Review not found."
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Review deleted successfully."
                 });
             }
-
-            return Ok(new
+            catch (Exception ex)
             {
-                Success = true,
-                Message = "Review deleted successfully."
-            });
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message = "Failed to delete review.",
+                        error = ex.Message
+                    });
+            }
         }
     }
 }

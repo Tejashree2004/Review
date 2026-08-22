@@ -17,8 +17,7 @@ namespace Review.API.Services
         // GET PLACE REVIEWS
         // =====================================================
 
-        public async Task<List<ReviewItem>> GetReviewsAsync(
-            int placeId)
+        public async Task<List<ReviewItem>> GetReviewsAsync(int placeId)
         {
             return await _context.Reviews
                 .Include(x => x.User)
@@ -54,12 +53,12 @@ namespace Review.API.Services
 
             await _context.SaveChangesAsync();
 
-            // Load related data after saving
-            // so API response can contain reviewer/business/place
+            // Load reviewer
             await _context.Entry(review)
                 .Reference(x => x.User)
                 .LoadAsync();
 
+            // Load Place if this is a Place review
             if (review.PlaceId.HasValue)
             {
                 await _context.Entry(review)
@@ -67,6 +66,7 @@ namespace Review.API.Services
                     .LoadAsync();
             }
 
+            // Load Business if this is a Business review
             if (review.BusinessId.HasValue)
             {
                 await _context.Entry(review)

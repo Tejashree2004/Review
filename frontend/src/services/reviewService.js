@@ -1,40 +1,44 @@
-import API from "./api";
+import axios from "axios";
+
+const API_BASE = "http://localhost:5213/api";
 
 // =====================================================
-// GET REVIEWS FOR A PLACE
-// GET: /api/Review/place/{placeId}
-// =====================================================
-
-export const getReviews = (placeId) => {
-  return API.get(`/Review/place/${placeId}`);
-};
-
-
-// =====================================================
-// GET REVIEWS FOR A BUSINESS
-// GET: /api/Review/business/{businessId}
+// GET BUSINESS REVIEWS
 // =====================================================
 
 export const getBusinessReviews = (businessId) => {
-  return API.get(`/Review/business/${businessId}`);
+  return axios.get(
+    `${API_BASE}/Review/business/${businessId}`
+  );
 };
 
+// =====================================================
+// GET PLACE REVIEWS
+// =====================================================
+
+export const getPlaceReviews = (placeId) => {
+  return axios.get(
+    `${API_BASE}/Review/place/${placeId}`
+  );
+};
 
 // =====================================================
 // ADD REVIEW
-// POST: /api/Review
 // =====================================================
 
-export const addReview = (data) => {
-  return API.post("/Review", data);
+export const addReview = (reviewData) => {
+  return axios.post(
+    `${API_BASE}/Review`,
+    reviewData
+  );
 };
-
 
 // =====================================================
 // DELETE REVIEW
-// DELETE: /api/Review/{reviewId}
 // =====================================================
 
 export const deleteReview = (reviewId) => {
-  return API.delete(`/Review/${reviewId}`);
+  return axios.delete(
+    `${API_BASE}/Review/${reviewId}`
+  );
 };

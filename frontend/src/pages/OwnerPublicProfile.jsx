@@ -45,6 +45,10 @@ const SAMPLE_PHOTOS = [
   },
 ];
 
+// =====================================================
+// COMPONENT
+// =====================================================
+
 function OwnerPublicProfile() {
   const navigate = useNavigate();
 
@@ -54,8 +58,8 @@ function OwnerPublicProfile() {
 
   const [business, setBusiness] = useState(null);
   const [photos, setPhotos] = useState([]);
-
   const [reviews, setReviews] = useState([]);
+
   const [reviewsLoading, setReviewsLoading] =
     useState(false);
 
@@ -104,8 +108,7 @@ function OwnerPublicProfile() {
         return null;
       }
 
-      const parsed =
-        Number(match[1]);
+      const parsed = Number(match[1]);
 
       return Number.isFinite(parsed)
         ? parsed
@@ -120,32 +123,28 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const getReviewRating = (review) => {
-    if (!review || typeof review !== "object") {
+    if (
+      !review ||
+      typeof review !== "object"
+    ) {
       return 0;
     }
 
     const possibleRatings = [
       review.rating,
       review.Rating,
-
       review.ratingValue,
       review.RatingValue,
-
       review.reviewRating,
       review.ReviewRating,
-
       review.stars,
       review.Stars,
-
       review.starRating,
       review.StarRating,
-
       review.ratingScore,
       review.RatingScore,
-
       review.review?.rating,
       review.review?.Rating,
-
       review.Review?.rating,
       review.Review?.Rating,
     ];
@@ -229,7 +228,9 @@ function OwnerPublicProfile() {
 
         const businessId =
           ownerBusiness.businessId ??
-          ownerBusiness.BusinessId;
+          ownerBusiness.BusinessId ??
+          ownerBusiness.id ??
+          ownerBusiness.Id;
 
         if (!businessId) {
           console.error(
@@ -316,7 +317,6 @@ function OwnerPublicProfile() {
             finalReviews
           );
 
-          // DEBUG EACH REVIEW
           finalReviews.forEach(
             (review, index) => {
               console.log(
@@ -334,8 +334,8 @@ function OwnerPublicProfile() {
                     review?.Comment,
 
                   User:
-                    review?.user?.fullName ??
-                    review?.user?.FullName ??
+                    review?.User ??
+                    review?.user ??
                     review?.userName ??
                     review?.UserName,
 
@@ -396,21 +396,15 @@ function OwnerPublicProfile() {
   if (loading) {
     return (
       <div className="public-profile-page">
-
         <div className="public-profile-container">
-
           <div className="public-loading-card">
-
             <div className="public-loader"></div>
 
             <p>
               Loading your business profile...
             </p>
-
           </div>
-
         </div>
-
       </div>
     );
   }
@@ -436,13 +430,11 @@ function OwnerPublicProfile() {
           </button>
 
           <div className="public-header-title">
-
             <span>REVIO</span>
 
             <h1>
               Public Profile
             </h1>
-
           </div>
 
         </header>
@@ -561,8 +553,6 @@ function OwnerPublicProfile() {
 
   // =====================================================
   // FINAL RATING
-  //
-  // Reviews loaded from ReviewController are preferred.
   // =====================================================
 
   const rating =
@@ -596,7 +586,9 @@ function OwnerPublicProfile() {
 
   const businessId =
     business?.businessId ??
-    business?.BusinessId;
+    business?.BusinessId ??
+    business?.id ??
+    business?.Id;
 
   // =====================================================
   // PHOTO URL
@@ -656,17 +648,25 @@ function OwnerPublicProfile() {
     SAMPLE_PHOTOS[0].url;
 
   // =====================================================
-  // NAVIGATION
+  // VIEW ALL REVIEWS
+  // =====================================================
+  //
+  // IMPORTANT:
+  // App.jsx already has:
+  //
+  // /owner/reviews
+  //
+  // It does NOT have:
+  //
+  // /owner/reviews/business/:businessId
+  //
+  // Therefore View All uses the existing OwnerReviews
+  // page. OwnerReviews should load the logged-in owner's
+  // business reviews.
   // =====================================================
 
   const handleViewReviews = () => {
-    if (businessId) {
-      navigate(
-        `/owner/reviews/business/${businessId}`
-      );
-    } else {
-      navigate("/owner/reviews");
-    }
+    navigate("/owner/reviews");
   };
 
   // =====================================================
@@ -674,6 +674,24 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const getReviewUserName = (review) => {
+
+    // Current API response:
+    // { User: "tanu" }
+
+    if (
+      typeof review?.User === "string" &&
+      review.User.trim()
+    ) {
+      return review.User;
+    }
+
+    if (
+      typeof review?.user === "string" &&
+      review.user.trim()
+    ) {
+      return review.user;
+    }
+
     return (
       review?.user?.fullName ??
       review?.user?.FullName ??
@@ -775,7 +793,6 @@ function OwnerPublicProfile() {
         className="public-review-stars"
         aria-label={`${safeRating} out of 5 stars`}
       >
-
         {[1, 2, 3, 4, 5].map(
           (star) => (
             <FaStar
@@ -791,7 +808,6 @@ function OwnerPublicProfile() {
             />
           )
         )}
-
       </div>
     );
   };
@@ -910,9 +926,7 @@ function OwnerPublicProfile() {
 
           </div>
 
-          {/* =================================================
-              ADDRESS
-          ================================================= */}
+          {/* ADDRESS */}
 
           {(address || city) && (
             <div className="public-info-item">
@@ -932,9 +946,7 @@ function OwnerPublicProfile() {
             </div>
           )}
 
-          {/* =================================================
-              PHONE
-          ================================================= */}
+          {/* PHONE */}
 
           {phone && (
             <div className="public-info-item">
@@ -948,9 +960,7 @@ function OwnerPublicProfile() {
             </div>
           )}
 
-          {/* =================================================
-              OPENING HOURS
-          ================================================= */}
+          {/* OPENING HOURS */}
 
           {(openingTime ||
             closingTime) && (
@@ -972,9 +982,7 @@ function OwnerPublicProfile() {
             </div>
           )}
 
-          {/* =================================================
-              WEBSITE
-          ================================================= */}
+          {/* WEBSITE */}
 
           {website && (
             <a
@@ -1094,11 +1102,12 @@ function OwnerPublicProfile() {
 
             </div>
 
+            {/* VIEW ALL */}
+
             <button
               className="public-view-reviews-btn"
-              onClick={
-                handleViewReviews
-              }
+              onClick={handleViewReviews}
+              type="button"
             >
               View All
             </button>
@@ -1110,7 +1119,6 @@ function OwnerPublicProfile() {
           ================================================= */}
 
           {reviewsLoading ? (
-
             <div className="public-review-empty">
 
               <FaStar />
@@ -1120,7 +1128,6 @@ function OwnerPublicProfile() {
               </p>
 
             </div>
-
           ) : reviews.length > 0 ? (
 
             <div className="public-review-list">
@@ -1161,9 +1168,7 @@ function OwnerPublicProfile() {
                         key={reviewId}
                       >
 
-                        {/* =================================================
-                            CUSTOMER HEADER
-                        ================================================= */}
+                        {/* CUSTOMER HEADER */}
 
                         <div className="public-review-top">
 
@@ -1203,9 +1208,7 @@ function OwnerPublicProfile() {
 
                         </div>
 
-                        {/* =================================================
-                            RATING NUMBER
-                        ================================================= */}
+                        {/* RATING NUMBER */}
 
                         {reviewRating > 0 && (
                           <div
@@ -1224,9 +1227,7 @@ function OwnerPublicProfile() {
                           </div>
                         )}
 
-                        {/* =================================================
-                            COMMENT
-                        ================================================= */}
+                        {/* COMMENT */}
 
                         {comment && (
                           <p className="public-review-comment">

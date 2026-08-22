@@ -11,7 +11,10 @@ import {
 
 import MainLayout from "../layouts/MainLayout";
 
-import { getMyReviews } from "../services/HomeService";
+import {
+  getMyReviews,
+  getBusinessDetails,
+} from "../services/HomeService";
 
 import "../styles/Reviews.css";
 
@@ -32,6 +35,39 @@ function Reviews() {
       localStorage.getItem("UserId");
 
     return userId ? Number(userId) : null;
+  };
+
+  // =====================================================
+  // GET BUSINESS DETAILS
+  // =====================================================
+
+  const getBusinessInfo = async (businessId) => {
+    try {
+      if (!businessId) {
+        return null;
+      }
+
+      const response =
+        await getBusinessDetails(businessId);
+
+      console.log(
+        `Business Details for ${businessId}:`,
+        response.data
+      );
+
+      const businessData =
+        response.data?.data ||
+        response.data;
+
+      return businessData || null;
+    } catch (error) {
+      console.error(
+        `Failed to load business ${businessId}:`,
+        error
+      );
+
+      return null;
+    }
   };
 
   // =====================================================
@@ -57,26 +93,14 @@ function Reviews() {
         const response =
           await getMyReviews(userId);
 
-        // Debug response
         console.log(
           "My Reviews API Response:",
           response.data
         );
 
-        /*
-          Supports all possible response formats:
-
-          1. Direct array:
-             [...]
-
-          2. {
-               data: [...]
-             }
-
-          3. {
-               Data: [...]
-             }
-        */
+        // =================================================
+        // SUPPORT DIFFERENT RESPONSE FORMATS
+        // =================================================
 
         let data = [];
 
@@ -97,7 +121,110 @@ function Reviews() {
           data
         );
 
-        setReviews(data);
+        // =================================================
+        // LOAD MISSING BUSINESS DETAILS
+        // =================================================
+
+        const businessCache = {};
+
+        const reviewsWithBusiness =
+          await Promise.all(
+            data.map(async (review) => {
+              const businessId =
+                review.businessId ??
+                review.BusinessId ??
+                null;
+
+              const placeId =
+                review.placeId ??
+                review.PlaceId ??
+                null;
+
+              // Only fetch details for BUSINESS reviews
+              if (
+                businessId &&
+                !placeId
+              ) {
+                // -----------------------------------------
+                // First try Business object from API
+                // -----------------------------------------
+
+                const existingBusiness =
+                  review.business ||
+                  review.Business ||
+                  null;
+
+                const existingBusinessName =
+                  existingBusiness?.businessName ||
+                  existingBusiness?.BusinessName ||
+                  existingBusiness?.name ||
+                  existingBusiness?.Name ||
+                  null;
+
+                // -----------------------------------------
+                // If name already exists, don't call API
+                // -----------------------------------------
+
+                if (
+                  existingBusiness &&
+                  existingBusinessName
+                ) {
+                  return review;
+                }
+
+                // -----------------------------------------
+                // Check cache
+                // -----------------------------------------
+
+                if (
+                  businessCache[businessId]
+                ) {
+                  return {
+                    ...review,
+                    business:
+                      businessCache[businessId],
+                    Business:
+                      businessCache[businessId],
+                  };
+                }
+
+                // -----------------------------------------
+                // Fetch actual business details
+                // -----------------------------------------
+
+                const business =
+                  await getBusinessInfo(
+                    businessId
+                  );
+
+                if (business) {
+                  businessCache[businessId] =
+                    business;
+
+                  return {
+                    ...review,
+                    business,
+                    Business: business,
+                  };
+                }
+              }
+
+              return review;
+            })
+          );
+
+        console.log(
+          "Final My Reviews:",
+          reviewsWithBusiness
+        );
+
+        setReviews(
+          Array.isArray(
+            reviewsWithBusiness
+          )
+            ? reviewsWithBusiness
+            : []
+        );
       } catch (error) {
         console.error(
           "Failed to load reviews:",
@@ -150,13 +277,16 @@ function Reviews() {
   // =====================================================
 
   const renderStars = (rating) => {
+    const numericRating =
+      Number(rating) || 0;
+
     return Array.from(
       { length: 5 },
       (_, index) => (
         <FaStar
           key={index}
           className={
-            index < rating
+            index < numericRating
               ? "review-star active"
               : "review-star"
           }
@@ -320,7 +450,7 @@ function Reviews() {
                     null;
 
                   // =================================================
-                  // IDENTIFY REVIEW TYPE
+                  // IDs
                   // =================================================
 
                   const placeId =
@@ -333,12 +463,16 @@ function Reviews() {
                     review.BusinessId ??
                     null;
 
+                  // =================================================
+                  // REVIEW TYPE
+                  // =================================================
+
                   const isBusinessReview =
                     !!businessId &&
                     !placeId;
 
                   // =================================================
-                  // NAME
+                  // PLACE NAME
                   // =================================================
 
                   const placeName =
@@ -346,15 +480,28 @@ function Reviews() {
                     place?.Name ||
                     null;
 
+                  // =================================================
+                  // BUSINESS NAME
+                  //
+                  // IMPORTANT:
+                  // Business model uses BusinessName
+                  // =================================================
+
                   const businessName =
+                    business?.businessName ||
+                    business?.BusinessName ||
                     business?.name ||
                     business?.Name ||
                     null;
 
+                  // =================================================
+                  // FINAL TARGET NAME
+                  // =================================================
+
                   const reviewTargetName =
                     isBusinessReview
                       ? businessName ||
-                        "Business"
+                        `Business #${businessId}`
                       : placeName ||
                         "Place";
 
@@ -384,11 +531,12 @@ function Reviews() {
                   // RATING
                   // =================================================
 
-                  const rating = Number(
-                    review.rating ??
-                    review.Rating ??
-                    0
-                  );
+                  const rating =
+                    Number(
+                      review.rating ??
+                      review.Rating ??
+                      0
+                    );
 
                   // =================================================
                   // COMMENT
@@ -493,12 +641,12 @@ function Reviews() {
                           REVIEW TYPE
                       ========================================== */}
 
-                      <div
-                        className="review-type"
-                      >
+                      <div className="review-type">
+
                         {isBusinessReview
                           ? "Business Review"
                           : "Place Review"}
+
                       </div>
 
                       {/* ==========================================
