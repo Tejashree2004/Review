@@ -1,5 +1,8 @@
-
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +14,7 @@ import {
   FaClock,
   FaGlobe,
   FaSave,
+  FaChevronDown,
 } from "react-icons/fa";
 
 import "../styles/OwnerBusinessProfile.css";
@@ -40,6 +44,16 @@ function OwnerBusinessProfile() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [businessId, setBusinessId] = useState(null);
+
+  // =====================================================
+  // CATEGORY DROPDOWN
+  // =====================================================
+
+  const [categoryOpen, setCategoryOpen] =
+    useState(false);
+
+  const categoryDropdownRef =
+    useRef(null);
 
   // =====================================================
   // GET TOKEN
@@ -90,11 +104,15 @@ function OwnerBusinessProfile() {
         // LOAD CATEGORIES
         // =================================================
 
-        const categoryResponse = await axios.get(
-          `${API_BASE}/Home/categories`
-        );
+        const categoryResponse =
+          await axios.get(
+            `${API_BASE}/Home/categories`
+          );
 
-        const categoryData = getResponseData(categoryResponse);
+        const categoryData =
+          getResponseData(
+            categoryResponse
+          );
 
         setCategories(
           Array.isArray(categoryData)
@@ -107,17 +125,21 @@ function OwnerBusinessProfile() {
         // GET: /api/owner/business
         // =================================================
 
-        const businessResponse = await axios.get(
-          `${API_BASE}/owner/business`,
-          config
-        );
+        const businessResponse =
+          await axios.get(
+            `${API_BASE}/owner/business`,
+            config
+          );
 
         const businessData =
-          getResponseData(businessResponse);
+          getResponseData(
+            businessResponse
+          );
 
-        const business = Array.isArray(businessData)
-          ? businessData[0]
-          : businessData;
+        const business =
+          Array.isArray(businessData)
+            ? businessData[0]
+            : businessData;
 
         if (business) {
           const category =
@@ -214,8 +236,12 @@ function OwnerBusinessProfile() {
           );
         }
       } catch (error) {
-        if (error.response?.status === 401) {
-          console.error("Unauthorized.");
+        if (
+          error.response?.status === 401
+        ) {
+          console.error(
+            "Unauthorized."
+          );
 
           alert(
             "Your login session has expired. Please login again."
@@ -239,11 +265,45 @@ function OwnerBusinessProfile() {
   }, [navigate]);
 
   // =====================================================
+  // CLOSE CATEGORY DROPDOWN WHEN CLICKING OUTSIDE
+  // =====================================================
+
+  useEffect(() => {
+    const handleOutsideClick = (
+      event
+    ) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(
+          event.target
+        )
+      ) {
+        setCategoryOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+    };
+  }, []);
+
+  // =====================================================
   // HANDLE INPUT CHANGE
   // =====================================================
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setFormData((prev) => ({
       ...prev,
@@ -252,23 +312,43 @@ function OwnerBusinessProfile() {
   };
 
   // =====================================================
+  // HANDLE CATEGORY SELECTION
+  // =====================================================
+
+  const handleCategorySelect = (
+    categoryName
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      businessType: categoryName,
+    }));
+
+    setCategoryOpen(false);
+  };
+
+  // =====================================================
   // FIND CATEGORY ID
   // =====================================================
 
   const getSelectedCategoryId = () => {
-    const selectedCategory = categories.find(
-      (category) => {
-        const categoryName =
-          category?.categoryName ??
-          category?.CategoryName ??
-          "";
+    const selectedCategory =
+      categories.find(
+        (category) => {
+          const categoryName =
+            category?.categoryName ??
+            category?.CategoryName ??
+            "";
 
-        return (
-          categoryName.toLowerCase().trim() ===
-          formData.businessType.toLowerCase().trim()
-        );
-      }
-    );
+          return (
+            categoryName
+              .toLowerCase()
+              .trim() ===
+            formData.businessType
+              .toLowerCase()
+              .trim()
+          );
+        }
+      );
 
     return (
       selectedCategory?.categoryId ??
@@ -288,28 +368,40 @@ function OwnerBusinessProfile() {
     // VALIDATION
     // ---------------------------------------------------
 
-    if (!formData.businessName.trim()) {
-      alert("Please enter your business name.");
+    if (
+      !formData.businessName.trim()
+    ) {
+      alert(
+        "Please enter your business name."
+      );
       return;
     }
 
     if (!formData.businessType) {
-      alert("Please select your business type.");
+      alert(
+        "Please select your business type."
+      );
       return;
     }
 
     if (!formData.address.trim()) {
-      alert("Please enter your business address.");
+      alert(
+        "Please enter your business address."
+      );
       return;
     }
 
     if (!formData.city.trim()) {
-      alert("Please enter your city.");
+      alert(
+        "Please enter your city."
+      );
       return;
     }
 
     if (!formData.phone.trim()) {
-      alert("Please enter your contact number.");
+      alert(
+        "Please enter your contact number."
+      );
       return;
     }
 
@@ -328,7 +420,8 @@ function OwnerBusinessProfile() {
     // CATEGORY ID
     // ---------------------------------------------------
 
-    const categoryId = getSelectedCategoryId();
+    const categoryId =
+      getSelectedCategoryId();
 
     if (!categoryId) {
       alert(
@@ -343,7 +436,8 @@ function OwnerBusinessProfile() {
     // ---------------------------------------------------
 
     const businessData = {
-      categoryId: Number(categoryId),
+      categoryId:
+        Number(categoryId),
 
       businessName:
         formData.businessName.trim(),
@@ -378,8 +472,11 @@ function OwnerBusinessProfile() {
 
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+        Authorization:
+          `Bearer ${token}`,
+
+        "Content-Type":
+          "application/json",
       },
     };
 
@@ -394,14 +491,15 @@ function OwnerBusinessProfile() {
       // =================================================
 
       if (businessId) {
-        response = await axios.put(
-          `${API_BASE}/owner/business/${businessId}`,
-          {
-            ...businessData,
-            isOpen: true,
-          },
-          config
-        );
+        response =
+          await axios.put(
+            `${API_BASE}/owner/business/${businessId}`,
+            {
+              ...businessData,
+              isOpen: true,
+            },
+            config
+          );
       }
 
       // =================================================
@@ -410,11 +508,12 @@ function OwnerBusinessProfile() {
       // =================================================
 
       else {
-        response = await axios.post(
-          `${API_BASE}/owner/business`,
-          businessData,
-          config
-        );
+        response =
+          await axios.post(
+            `${API_BASE}/owner/business`,
+            businessData,
+            config
+          );
       }
 
       // =================================================
@@ -436,7 +535,9 @@ function OwnerBusinessProfile() {
       const categoryObject =
         savedBusiness?.category ??
         savedBusiness?.Category ?? {
-          categoryId: Number(categoryId),
+          categoryId:
+            Number(categoryId),
+
           categoryName:
             formData.businessType,
         };
@@ -513,7 +614,9 @@ function OwnerBusinessProfile() {
       // SAVE ID
       // =================================================
 
-      setBusinessId(savedBusinessId);
+      setBusinessId(
+        savedBusinessId
+      );
 
       // =================================================
       // SAVE FOR PUBLIC PROFILE
@@ -545,8 +648,9 @@ function OwnerBusinessProfile() {
       // GO TO OWNER DASHBOARD
       // =================================================
 
-      navigate("/owner-dashboard");
-
+      navigate(
+        "/owner-dashboard"
+      );
     } catch (error) {
       console.error(
         "Business save error:",
@@ -558,7 +662,8 @@ function OwnerBusinessProfile() {
       // -------------------------------------------------
 
       if (
-        error.response?.status === 401
+        error.response?.status ===
+        401
       ) {
         alert(
           "Your login session has expired. Please login again."
@@ -574,7 +679,8 @@ function OwnerBusinessProfile() {
       // -------------------------------------------------
 
       if (
-        error.response?.status === 400
+        error.response?.status ===
+        400
       ) {
         const message =
           error.response?.data?.message ??
@@ -591,7 +697,8 @@ function OwnerBusinessProfile() {
       // -------------------------------------------------
 
       if (
-        error.response?.status === 404
+        error.response?.status ===
+        404
       ) {
         alert(
           "Business endpoint was not found. Please check the backend route."
@@ -607,7 +714,6 @@ function OwnerBusinessProfile() {
       alert(
         "Something went wrong while saving the business. Please try again."
       );
-
     } finally {
       setSaving(false);
     }
@@ -620,6 +726,7 @@ function OwnerBusinessProfile() {
   if (loading) {
     return (
       <div className="owner-business-page">
+
         <div
           style={{
             minHeight: "100vh",
@@ -630,6 +737,7 @@ function OwnerBusinessProfile() {
         >
           Loading business information...
         </div>
+
       </div>
     );
   }
@@ -651,7 +759,9 @@ function OwnerBusinessProfile() {
           type="button"
           className="business-back-btn"
           onClick={() =>
-            navigate("/owner-dashboard")
+            navigate(
+              "/owner-dashboard"
+            )
           }
         >
           <FaArrowLeft />
@@ -741,13 +851,19 @@ function OwnerBusinessProfile() {
                 type="text"
                 name="businessName"
                 placeholder="e.g. The Grand Palace"
-                value={formData.businessName}
-                onChange={handleChange}
+                value={
+                  formData.businessName
+                }
+                onChange={
+                  handleChange
+                }
               />
 
             </div>
 
-            {/* Business Type */}
+            {/* =================================================
+                Business Type - CUSTOM SCROLL DROPDOWN
+            ================================================= */}
 
             <div className="form-group">
 
@@ -756,64 +872,186 @@ function OwnerBusinessProfile() {
                 <span>*</span>
               </label>
 
-              <select
-                name="businessType"
-                value={formData.businessType}
-                onChange={handleChange}
+              <div
+                className="category-dropdown"
+                ref={
+                  categoryDropdownRef
+                }
               >
 
-                <option value="">
-                  Select business type
-                </option>
+                {/* =================================================
+                    SELECTED VALUE
+                ================================================= */}
 
-                {categories.length > 0 ? (
-                  categories.map((category) => {
-                    const id =
-                      category?.categoryId ??
-                      category?.CategoryId;
+                <button
+                  type="button"
+                  className="category-dropdown-trigger"
+                  onClick={() =>
+                    setCategoryOpen(
+                      (previous) =>
+                        !previous
+                    )
+                  }
+                  aria-expanded={
+                    categoryOpen
+                  }
+                >
 
-                    const name =
-                      category?.categoryName ??
-                      category?.CategoryName;
+                  <span
+                    className={
+                      formData.businessType
+                        ? "category-selected-text"
+                        : "category-placeholder"
+                    }
+                  >
+                    {formData.businessType ||
+                      "Select business type"}
+                  </span>
 
-                    return (
-                      <option
-                        key={id}
-                        value={name}
-                      >
-                        {name}
-                      </option>
-                    );
-                  })
-                ) : (
-                  <>
-                    <option value="Hotel">
-                      Hotel
-                    </option>
+                  <FaChevronDown
+                    className={
+                      categoryOpen
+                        ? "category-arrow category-arrow-open"
+                        : "category-arrow"
+                    }
+                  />
 
-                    <option value="Restaurant">
-                      Restaurant
-                    </option>
+                </button>
 
-                    <option value="Cafe">
-                      Cafe
-                    </option>
+                {/* =================================================
+                    CATEGORY OPTIONS
+                ================================================= */}
 
-                    <option value="Salon">
-                      Salon
-                    </option>
+                {categoryOpen && (
 
-                    <option value="Hospital">
-                      Hospital
-                    </option>
+                  <div className="category-dropdown-menu">
 
-                    <option value="Shop">
-                      Shop
-                    </option>
-                  </>
+                    {categories.length > 0 ? (
+
+                      categories.map(
+                        (category) => {
+
+                          const id =
+                            category?.categoryId ??
+                            category?.CategoryId;
+
+                          const name =
+                            category?.categoryName ??
+                            category?.CategoryName ??
+                            "";
+
+                          const isSelected =
+                            formData.businessType
+                              .toLowerCase()
+                              .trim() ===
+                            name
+                              .toLowerCase()
+                              .trim();
+
+                          return (
+                            <button
+                              type="button"
+                              key={id}
+                              className={
+                                isSelected
+                                  ? "category-dropdown-option selected"
+                                  : "category-dropdown-option"
+                              }
+                              onClick={() =>
+                                handleCategorySelect(
+                                  name
+                                )
+                              }
+                            >
+                              {name}
+                            </button>
+                          );
+                        }
+                      )
+
+                    ) : (
+
+                      <>
+                        <button
+                          type="button"
+                          className="category-dropdown-option"
+                          onClick={() =>
+                            handleCategorySelect(
+                              "Hotel"
+                            )
+                          }
+                        >
+                          Hotel
+                        </button>
+
+                        <button
+                          type="button"
+                          className="category-dropdown-option"
+                          onClick={() =>
+                            handleCategorySelect(
+                              "Restaurant"
+                            )
+                          }
+                        >
+                          Restaurant
+                        </button>
+
+                        <button
+                          type="button"
+                          className="category-dropdown-option"
+                          onClick={() =>
+                            handleCategorySelect(
+                              "Cafe"
+                            )
+                          }
+                        >
+                          Cafe
+                        </button>
+
+                        <button
+                          type="button"
+                          className="category-dropdown-option"
+                          onClick={() =>
+                            handleCategorySelect(
+                              "Salon"
+                            )
+                          }
+                        >
+                          Salon
+                        </button>
+
+                        <button
+                          type="button"
+                          className="category-dropdown-option"
+                          onClick={() =>
+                            handleCategorySelect(
+                              "Hospital"
+                            )
+                          }
+                        >
+                          Hospital
+                        </button>
+
+                        <button
+                          type="button"
+                          className="category-dropdown-option"
+                          onClick={() =>
+                            handleCategorySelect(
+                              "Shop"
+                            )
+                          }
+                        >
+                          Shop
+                        </button>
+                      </>
+
+                    )}
+
+                  </div>
+
                 )}
 
-              </select>
+              </div>
 
             </div>
 
@@ -828,8 +1066,12 @@ function OwnerBusinessProfile() {
               <textarea
                 name="description"
                 placeholder="Describe your business, services and what makes it special..."
-                value={formData.description}
-                onChange={handleChange}
+                value={
+                  formData.description
+                }
+                onChange={
+                  handleChange
+                }
                 rows="4"
               />
 
@@ -877,8 +1119,12 @@ function OwnerBusinessProfile() {
               <textarea
                 name="address"
                 placeholder="Enter your complete business address"
-                value={formData.address}
-                onChange={handleChange}
+                value={
+                  formData.address
+                }
+                onChange={
+                  handleChange
+                }
                 rows="3"
               />
 
@@ -899,8 +1145,12 @@ function OwnerBusinessProfile() {
                   type="text"
                   name="city"
                   placeholder="Pune"
-                  value={formData.city}
-                  onChange={handleChange}
+                  value={
+                    formData.city
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -917,8 +1167,12 @@ function OwnerBusinessProfile() {
                   type="text"
                   name="state"
                   placeholder="Maharashtra"
-                  value={formData.state}
-                  onChange={handleChange}
+                  value={
+                    formData.state
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -935,8 +1189,12 @@ function OwnerBusinessProfile() {
                   type="text"
                   name="pincode"
                   placeholder="411001"
-                  value={formData.pincode}
-                  onChange={handleChange}
+                  value={
+                    formData.pincode
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -984,8 +1242,12 @@ function OwnerBusinessProfile() {
                   type="tel"
                   name="phone"
                   placeholder="Enter phone number"
-                  value={formData.phone}
-                  onChange={handleChange}
+                  value={
+                    formData.phone
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -1002,8 +1264,12 @@ function OwnerBusinessProfile() {
                   type="email"
                   name="email"
                   placeholder="business@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
+                  value={
+                    formData.email
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -1026,8 +1292,12 @@ function OwnerBusinessProfile() {
                   type="url"
                   name="website"
                   placeholder="https://example.com"
-                  value={formData.website}
-                  onChange={handleChange}
+                  value={
+                    formData.website
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -1070,8 +1340,12 @@ function OwnerBusinessProfile() {
 
               <select
                 name="workingDays"
-                value={formData.workingDays}
-                onChange={handleChange}
+                value={
+                  formData.workingDays
+                }
+                onChange={
+                  handleChange
+                }
               >
 
                 <option value="Monday - Sunday">
@@ -1103,8 +1377,12 @@ function OwnerBusinessProfile() {
                 <input
                   type="time"
                   name="openingTime"
-                  value={formData.openingTime}
-                  onChange={handleChange}
+                  value={
+                    formData.openingTime
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -1120,8 +1398,12 @@ function OwnerBusinessProfile() {
                 <input
                   type="time"
                   name="closingTime"
-                  value={formData.closingTime}
-                  onChange={handleChange}
+                  value={
+                    formData.closingTime
+                  }
+                  onChange={
+                    handleChange
+                  }
                 />
 
               </div>
@@ -1140,7 +1422,9 @@ function OwnerBusinessProfile() {
               type="button"
               className="cancel-business-btn"
               onClick={() =>
-                navigate("/owner-dashboard")
+                navigate(
+                  "/owner-dashboard"
+                )
               }
               disabled={saving}
             >
@@ -1174,4 +1458,3 @@ function OwnerBusinessProfile() {
 }
 
 export default OwnerBusinessProfile;
-

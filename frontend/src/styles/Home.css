@@ -133,3 +133,77 @@
   }
 
 }
+/* =====================================================
+   CATEGORY VIEW ALL
+   Existing Home CSS is untouched
+===================================================== */
+
+.categories-view-all-btn {
+  border: none;
+  background: transparent;
+
+  color: var(--text-light);
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  padding: 0;
+
+  transition: 0.3s ease;
+}
+
+.categories-view-all-btn:hover {
+  color: var(--text);
+}
+
+
+/* =====================================================
+   EXPANDED CATEGORY LIST
+   Scroll only when View All is clicked
+===================================================== */
+
+.categories-scrollable {
+  max-height: 360px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 8px;
+}
+
+
+/* =====================================================
+   SCROLLBAR
+===================================================== */
+
+.categories-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.categories-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.categories-scrollable::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 10px;
+}
+
+.categories-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+  .categories-scrollable {
+    max-height: 420px;
+    padding-right: 5px;
+  }
+
+}

@@ -185,5 +185,143 @@ public class AppDbContext : DbContext
                 x.UserId,
                 x.CreatedAt
             });
+
+        // =================================================
+        // DEFAULT CATEGORIES
+        //
+        // Existing CategoryId 1-4 are preserved.
+        // New categories start from CategoryId 5.
+        // =================================================
+
+        modelBuilder.Entity<Category>().HasData(
+
+            new Category
+            {
+                CategoryId = 5,
+                CategoryName = "Salon",
+                Icon = "💇",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 6,
+                CategoryName = "Gym",
+                Icon = "🏋️",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 7,
+                CategoryName = "Bakery",
+                Icon = "🥐",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 8,
+                CategoryName = "Pharmacy",
+                Icon = "💊",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 9,
+                CategoryName = "Shopping",
+                Icon = "🛍️",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 10,
+                CategoryName = "Supermarket",
+                Icon = "🛒",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 11,
+                CategoryName = "Spa",
+                Icon = "💆",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 12,
+                CategoryName = "Cinema",
+                Icon = "🎬",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 13,
+                CategoryName = "Electronics",
+                Icon = "📱",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 14,
+                CategoryName = "Clothing",
+                Icon = "👗",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 15,
+                CategoryName = "Jewellery",
+                Icon = "💍",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 16,
+                CategoryName = "Bookstore",
+                Icon = "📚",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 17,
+                CategoryName = "Pet Store",
+                Icon = "🐾",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 18,
+                CategoryName = "Travel Agency",
+                Icon = "✈️",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 19,
+                CategoryName = "Car Service",
+                Icon = "🚗",
+                ImageUrl = ""
+            },
+
+            new Category
+            {
+                CategoryId = 20,
+                CategoryName = "Real Estate",
+                Icon = "🏠",
+                ImageUrl = ""
+            }
+        );
     }
 }

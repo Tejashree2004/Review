@@ -646,3 +646,168 @@
   }
 
 }
+/* =====================================================
+   CUSTOM BUSINESS TYPE DROPDOWN
+   Existing styles remain untouched
+===================================================== */
+
+.category-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+/* Selected value button */
+
+.category-dropdown-trigger {
+  width: 100%;
+  min-height: 50px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 15px;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 10px;
+
+  background: #171717;
+  color: #ffffff;
+
+  font-size: 15px;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.category-dropdown-trigger:hover {
+  border-color: #444444;
+}
+
+.category-placeholder {
+  color: #888888;
+}
+
+.category-selected-text {
+  color: #ffffff;
+}
+
+.category-arrow {
+  font-size: 12px;
+  color: #aaaaaa;
+
+  transition: transform 0.2s ease;
+}
+
+.category-arrow-open {
+  transform: rotate(180deg);
+}
+
+/* =====================================================
+   DROPDOWN LIST
+===================================================== */
+
+.category-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+
+  z-index: 1000;
+
+  max-height: 245px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 6px;
+
+  background: #171717;
+
+  border: 1px solid #2d2d2d;
+  border-radius: 10px;
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.35);
+
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
+
+/* =====================================================
+   CATEGORY OPTION
+===================================================== */
+
+.category-dropdown-option {
+  width: 100%;
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 10px 12px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #e8e8e8;
+
+  font-size: 14px;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.category-dropdown-option:hover {
+  background: #242424;
+  color: #ffffff;
+}
+
+.category-dropdown-option.selected {
+  background: #2a2a2a;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* =====================================================
+   CHROME / EDGE / SAFARI SCROLLBAR
+===================================================== */
+
+.category-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.category-dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.category-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 10px;
+}
+
+.category-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+  .category-dropdown-menu {
+    max-height: 235px;
+  }
+
+  .category-dropdown-option {
+    min-height: 42px;
+    font-size: 14px;
+  }
+}

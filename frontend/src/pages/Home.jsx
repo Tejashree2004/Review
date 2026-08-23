@@ -28,26 +28,40 @@ function Home() {
   const [categories, setCategories] = useState([]);
   const [places, setPlaces] = useState([]);
 
-  // ==========================================
-  // Load Home Data
-  // ==========================================
+  // =====================================================
+  // SHOW ALL CATEGORIES
+  // =====================================================
+
+  const [showAllCategories, setShowAllCategories] =
+    useState(false);
+
+  // =====================================================
+  // LOAD HOME DATA
+  // =====================================================
 
   useEffect(() => {
     loadCategories();
     loadTopPlaces();
   }, []);
 
-  // ==========================================
-  // Load Categories
-  // ==========================================
+  // =====================================================
+  // LOAD CATEGORIES
+  // =====================================================
 
   const loadCategories = async () => {
     try {
       const response = await getCategories();
 
-      console.log("Categories:", response.data);
+      console.log(
+        "Categories:",
+        response.data
+      );
 
-      setCategories(response.data || []);
+      setCategories(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
     } catch (error) {
       console.error(
         "Failed to load categories:",
@@ -58,20 +72,25 @@ function Home() {
     }
   };
 
-  // ==========================================
-  // Load Top Places + Businesses
-  // ==========================================
+  // =====================================================
+  // LOAD TOP PLACES + BUSINESSES
+  // =====================================================
 
   const loadTopPlaces = async () => {
     try {
-      const response = await getTopRatedPlaces();
+      const response =
+        await getTopRatedPlaces();
 
       console.log(
         "Top Places + Businesses:",
         response.data
       );
 
-      setPlaces(response.data || []);
+      setPlaces(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
     } catch (error) {
       console.error(
         "Failed to load top places:",
@@ -82,9 +101,9 @@ function Home() {
     }
   };
 
-  // ==========================================
-  // Category Click
-  // ==========================================
+  // =====================================================
+  // CATEGORY CLICK
+  // =====================================================
 
   const handleCategoryClick = (category) => {
     console.log(
@@ -92,13 +111,22 @@ function Home() {
       category
     );
 
-    // Future category navigation
-    // navigate(`/search/category/${category.categoryId}`);
+    // Existing flow kept unchanged.
   };
 
-  // ==========================================
-  // Place / Business Click
-  // ==========================================
+  // =====================================================
+  // VIEW ALL / SHOW LESS CATEGORIES
+  // =====================================================
+
+  const handleViewAllCategories = () => {
+    setShowAllCategories(
+      (previous) => !previous
+    );
+  };
+
+  // =====================================================
+  // PLACE / BUSINESS CLICK
+  // =====================================================
 
   const handlePlaceClick = (place) => {
     console.log(
@@ -106,11 +134,8 @@ function Home() {
       place
     );
 
-    // ========================================
     // OWNER BUSINESS
-    // ========================================
-
-    if (place.businessId) {
+    if (place?.businessId) {
       navigate(
         `/business/${place.businessId}`
       );
@@ -118,11 +143,8 @@ function Home() {
       return;
     }
 
-    // ========================================
     // EXISTING PLACE
-    // ========================================
-
-    if (place.placeId) {
+    if (place?.placeId) {
       navigate(
         `/place/${place.placeId}`
       );
@@ -130,37 +152,45 @@ function Home() {
       return;
     }
 
-    // ========================================
-    // Safety
-    // ========================================
-
     console.warn(
       "No PlaceId or BusinessId found:",
       place
     );
   };
 
-  // ==========================================
+  // =====================================================
+  // VISIBLE CATEGORIES
+  //
+  // Initially: only 4
+  // View All: all categories
+  // =====================================================
+
+  const visibleCategories =
+    showAllCategories
+      ? categories
+      : categories.slice(0, 4);
+
+  // =====================================================
   // UI
-  // ==========================================
+  // =====================================================
 
   return (
     <MainLayout>
 
       {/* ======================================
-          Navbar
+          NAVBAR
       ====================================== */}
 
       <Navbar />
 
       {/* ======================================
-          Search
+          SEARCH
       ====================================== */}
 
       <SearchBar />
 
       {/* ======================================
-          Welcome
+          WELCOME
       ====================================== */}
 
       <div className="welcome-section">
@@ -177,7 +207,7 @@ function Home() {
       </div>
 
       {/* ======================================
-          Categories
+          CATEGORIES HEADER
       ====================================== */}
 
       <div className="section-title">
@@ -186,28 +216,51 @@ function Home() {
           Categories
         </span>
 
-        <span
-          onClick={() => navigate("/categories")}
-          style={{ cursor: "pointer" }}
+        <button
+          type="button"
+          className="categories-view-all-btn"
+          onClick={
+            handleViewAllCategories
+          }
         >
-          View All
-        </span>
+          {showAllCategories
+            ? "Show Less"
+            : "View All"}
+        </button>
 
       </div>
 
-      <div className="categories">
+      {/* ======================================
+          CATEGORIES
+      ====================================== */}
 
-        {categories.length > 0 ? (
+      <div
+        className={
+          showAllCategories
+            ? "categories categories-scrollable"
+            : "categories"
+        }
+      >
 
-          categories.map((category) => (
+        {visibleCategories.length > 0 ? (
 
-            <CategoryCard
-              key={category.categoryId}
-              category={category}
-              onClick={handleCategoryClick}
-            />
+          visibleCategories.map(
+            (category) => (
 
-          ))
+              <CategoryCard
+                key={
+                  category.categoryId
+                }
+                category={
+                  category
+                }
+                onClick={
+                  handleCategoryClick
+                }
+              />
+
+            )
+          )
 
         ) : (
 
@@ -220,7 +273,7 @@ function Home() {
       </div>
 
       {/* ======================================
-          Top Rated Places
+          TOP RATED PLACES
       ====================================== */}
 
       <div className="section-title">
@@ -235,19 +288,26 @@ function Home() {
 
         {places.length > 0 ? (
 
-          places.map((place, index) => (
+          places.map(
+            (place, index) => (
 
-            <PlaceCard
-              key={
-                place.businessId
-                  ? `business-${place.businessId}`
-                  : `place-${place.placeId || index}`
-              }
-              place={place}
-              onClick={handlePlaceClick}
-            />
+              <PlaceCard
+                key={
+                  place?.businessId
+                    ? `business-${place.businessId}`
+                    : `place-${
+                        place?.placeId ||
+                        index
+                      }`
+                }
+                place={place}
+                onClick={
+                  handlePlaceClick
+                }
+              />
 
-          ))
+            )
+          )
 
         ) : (
 
@@ -259,10 +319,8 @@ function Home() {
 
       </div>
 
-      
-
       {/* ======================================
-          Bottom Navigation
+          BOTTOM NAVIGATION
       ====================================== */}
 
       <BottomNavigation />
