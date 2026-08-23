@@ -845,16 +845,7 @@ function BusinessDetails() {
                 review this business.
               </p>
 
-              <button
-                className="place-action-btn review-btn"
-                onClick={handleWriteReview}
-              >
-                <FaPen />
-
-                <span>
-                  Write a Review
-                </span>
-              </button>
+              
 
             </div>
           )}

@@ -1,12 +1,25 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
 import Splash from "../pages/Splash";
+
 import Login from "../pages/Login";
+
 import Signup from "../pages/Signup";
+
+import VerifyOtp from "../pages/VerifyOtp";
+
 import Home from "../pages/Home";
+
 import PlaceDetails from "../pages/PlaceDetails";
+
 import BusinessDetails from "../pages/BusinessDetails";
+
 import MyReviews from "../pages/MyReviews";
+
 import OwnerReviews from "../pages/OwnerReviews";
 
 function AppRoutes() {
@@ -25,7 +38,7 @@ function AppRoutes() {
         />
 
         {/* ======================================
-            AUTH
+            AUTHENTICATION
         ====================================== */}
 
         <Route
@@ -39,6 +52,15 @@ function AppRoutes() {
         />
 
         {/* ======================================
+            EMAIL OTP VERIFICATION
+        ====================================== */}
+
+        <Route
+          path="/verify-otp"
+          element={<VerifyOtp />}
+        />
+
+        {/* ======================================
             HOME
         ====================================== */}
 
@@ -48,7 +70,7 @@ function AppRoutes() {
         />
 
         {/* ======================================
-            EXISTING PLACE DETAILS
+            PLACE DETAILS
         ====================================== */}
 
         <Route
@@ -57,7 +79,7 @@ function AppRoutes() {
         />
 
         {/* ======================================
-            OWNER BUSINESS DETAILS
+            BUSINESS DETAILS
         ====================================== */}
 
         <Route

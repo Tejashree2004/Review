@@ -31,6 +31,7 @@ import OwnerBusinessProfile from "./pages/OwnerBusinessProfile";
 import OwnerReviews from "./pages/OwnerReviews";
 import OwnerPhotos from "./pages/OwnerPhotos";
 import OwnerPublicProfile from "./pages/OwnerPublicProfile";
+import VerifyOtp from "./pages/VerifyOtp";
 
 // =========================
 // Admin
@@ -63,7 +64,10 @@ function App() {
         path="/signup"
         element={<Signup />}
       />
-
+  <Route
+          path="/verify-otp"
+          element={<VerifyOtp />}
+        />
       <Route
         path="/role-selection"
         element={<RoleSelection />}

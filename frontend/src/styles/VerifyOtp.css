@@ -1,0 +1,329 @@
+/* =====================================================
+   OTP PAGE
+===================================================== */
+
+.otp-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+/* =====================================================
+   OTP CARD
+===================================================== */
+
+.otp-card {
+  width: 100%;
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 38px 34px;
+  text-align: center;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* =====================================================
+   ICON
+===================================================== */
+
+.otp-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #111111;
+  color: #ffffff;
+
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.otp-icon.verified {
+  background: #111111;
+}
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.otp-card h1 {
+  margin: 0 0 12px;
+
+  font-size: 28px;
+  font-weight: 700;
+
+  color: #111111;
+}
+
+/* =====================================================
+   DESCRIPTION
+===================================================== */
+
+.otp-description {
+  margin: 0 auto 8px;
+
+  max-width: 370px;
+
+  color: #666666;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.otp-email {
+  margin: 0 0 8px;
+
+  color: #111111;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  word-break: break-word;
+}
+
+.otp-expiry {
+  margin: 0 0 28px;
+
+  color: #888888;
+
+  font-size: 13px;
+}
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.otp-form {
+  margin-top: 25px;
+}
+
+.otp-form label {
+  display: block;
+
+  margin-bottom: 10px;
+
+  text-align: left;
+
+  color: #333333;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* =====================================================
+   OTP INPUT
+===================================================== */
+
+.otp-input {
+  width: 100%;
+  box-sizing: border-box;
+
+  height: 60px;
+
+  border: 1.5px solid #dddddd;
+  border-radius: 12px;
+
+  background: #fafafa;
+
+  text-align: center;
+
+  font-size: 28px;
+  font-weight: 700;
+
+  letter-spacing: 10px;
+
+  color: #111111;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.otp-input:focus {
+  border-color: #111111;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(0, 0, 0, 0.08);
+
+  background: #ffffff;
+}
+
+.otp-input::placeholder {
+  color: #cccccc;
+  letter-spacing: 8px;
+}
+
+/* =====================================================
+   OTP DOTS
+===================================================== */
+
+.otp-dots {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+
+  margin: 14px 0 24px;
+}
+
+.otp-dots span {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #dddddd;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.otp-dots span.active {
+  background: #111111;
+
+  transform: scale(1.25);
+}
+
+/* =====================================================
+   PRIMARY BUTTON
+===================================================== */
+
+.otp-primary-button {
+  width: 100%;
+
+  height: 50px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #111111;
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.otp-primary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.otp-primary-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* =====================================================
+   RESEND
+===================================================== */
+
+.otp-resend {
+  margin-top: 22px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+
+  flex-wrap: wrap;
+
+  color: #777777;
+
+  font-size: 13px;
+}
+
+.otp-resend button {
+  border: none;
+  background: none;
+
+  padding: 0;
+
+  color: #111111;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.otp-resend button:hover {
+  text-decoration: underline;
+}
+
+.otp-resend button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.otp-timer {
+  color: #888888;
+  font-weight: 600;
+}
+
+/* =====================================================
+   SECURITY HELP
+===================================================== */
+
+.otp-help {
+  margin-top: 28px;
+  padding: 12px 14px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+
+  border-radius: 10px;
+
+  background: #f7f7f7;
+}
+
+.otp-help span {
+  font-size: 14px;
+}
+
+.otp-help p {
+  margin: 0;
+
+  color: #777777;
+
+  font-size: 12px;
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 520px) {
+  .otp-card {
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+
+  .otp-card h1 {
+    font-size: 24px;
+  }
+
+  .otp-input {
+    height: 55px;
+    font-size: 24px;
+    letter-spacing: 7px;
+  }
+}

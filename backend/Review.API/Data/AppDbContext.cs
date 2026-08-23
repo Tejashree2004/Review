@@ -35,6 +35,8 @@ public class AppDbContext : DbContext
 
     public DbSet<BusinessPhoto> BusinessPhotos => Set<BusinessPhoto>();
 
+    public DbSet<EmailOtp> EmailOtps => Set<EmailOtp>();
+
     // =====================================================
     // MODEL CONFIGURATION
     // =====================================================
@@ -162,5 +164,26 @@ public class AppDbContext : DbContext
                 x.PlaceId
             })
             .IsUnique();
+
+        // =================================================
+        // EMAIL OTP → USER
+        // =================================================
+
+        modelBuilder.Entity<EmailOtp>()
+            .HasOne(x => x.User)
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // =================================================
+        // EMAIL OTP INDEX
+        // =================================================
+
+        modelBuilder.Entity<EmailOtp>()
+            .HasIndex(x => new
+            {
+                x.UserId,
+                x.CreatedAt
+            });
     }
 }
