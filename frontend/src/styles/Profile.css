@@ -705,3 +705,57 @@ padding:16px;
 }
 
 }
+
+/* ==========================
+   Edit Profile Fields
+========================== */
+
+.profile-edit-field {
+  min-width: 0;
+  width: 100%;
+}
+
+
+.profile-edit-field span {
+  display: block;
+  color: #999999;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+
+.profile-edit-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border-radius: 9px;
+  border: 1px solid #3a3a3a;
+  background: #171717;
+  color: #ffffff;
+  font-size: 15px;
+  outline: none;
+  transition: 0.3s;
+}
+
+
+.profile-edit-field input:focus {
+  border-color: #ffffff;
+  background: #111111;
+}
+
+
+.profile-edit-field input::placeholder {
+  color: #777777;
+}
+
+
+.profile-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+.profile-action-btn:disabled:hover {
+  background: #171717;
+  color: #ffffff;
+}

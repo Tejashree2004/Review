@@ -23,6 +23,7 @@ import Reviews from "./pages/Reviews";
 import WriteReview from "./pages/WriteReview";
 import Notifications from "./pages/Notifications";
 import Categories from "./pages/Categories";
+import EditProfile from "./pages/EditProfile";
 
 // =========================
 // Business Owner
@@ -75,6 +76,10 @@ function App() {
         path="/role-selection"
         element={<RoleSelection />}
       />
+      <Route
+  path="/edit-profile"
+  element={<EditProfile />}
+/>
 
 
       {/* =====================================================

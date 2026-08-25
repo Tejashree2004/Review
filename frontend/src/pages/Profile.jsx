@@ -311,12 +311,12 @@ function Profile() {
 
         <div className="profile-actions">
 
-          <button
-            className="profile-action-btn"
-            onClick={() => alert("Edit Profile coming soon.")}
-          >
-            Edit Profile
-          </button>
+         <button
+  className="profile-action-btn"
+  onClick={() => navigate("/edit-profile")}
+>
+  Edit Profile
+</button>
 
           <button
             className="profile-action-btn logout-btn"

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Review.API.Data;
-using Review.API.Models;
 
 namespace Review.API.Controllers
 {
@@ -28,7 +27,9 @@ namespace Review.API.Controllers
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (user == null)
+            {
                 return NotFound("User not found.");
+            }
 
             return Ok(user);
         }
@@ -39,24 +40,66 @@ namespace Review.API.Controllers
         // ==========================
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProfile(int id, User model)
+        public async Task<IActionResult> UpdateProfile(
+            int id,
+            [FromBody] UpdateProfileRequest model)
         {
-            var user = await _context.Users.FindAsync(id);
+            if (model == null)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Profile data is required."
+                });
+            }
+
+            var user = await _context.Users
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (user == null)
-                return NotFound("User not found.");
+            {
+                return NotFound(new
+                {
+                    success = false,
+                    message = "User not found."
+                });
+            }
 
-            user.FullName = model.FullName;
-            user.Email = model.Email;
-            user.MobileNumber = model.MobileNumber;
+            // ==========================
+            // Update only editable fields
+            // ==========================
+
+            if (!string.IsNullOrWhiteSpace(model.FullName))
+            {
+                user.FullName = model.FullName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.Email))
+            {
+                user.Email = model.Email.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.MobileNumber))
+            {
+                user.MobileNumber = model.MobileNumber.Trim();
+            }
+
             user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                Success = true,
-                Message = "Profile updated successfully."
+                success = true,
+                message = "Profile updated successfully.",
+                data = new
+                {
+                    user.Id,
+                    user.FullName,
+                    user.Email,
+                    user.MobileNumber,
+                    user.UpdatedAt
+                }
             });
         }
 
@@ -76,5 +119,18 @@ namespace Review.API.Controllers
 
             return Ok(reviews);
         }
+    }
+
+    // ==========================
+    // Update Profile Request
+    // ==========================
+
+    public class UpdateProfileRequest
+    {
+        public string? FullName { get; set; }
+
+        public string? Email { get; set; }
+
+        public string? MobileNumber { get; set; }
     }
 }
