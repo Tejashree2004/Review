@@ -7,6 +7,7 @@ import Splash from "./pages/Splash";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RoleSelection from "./pages/RoleSelection";
+import VerifyOtp from "./pages/VerifyOtp";
 
 // =========================
 // Reviewer / Normal User
@@ -31,7 +32,7 @@ import OwnerBusinessProfile from "./pages/OwnerBusinessProfile";
 import OwnerReviews from "./pages/OwnerReviews";
 import OwnerPhotos from "./pages/OwnerPhotos";
 import OwnerPublicProfile from "./pages/OwnerPublicProfile";
-import VerifyOtp from "./pages/VerifyOtp";
+import MyBusinesses from "./pages/MyBusinesses";
 
 // =========================
 // Admin
@@ -64,10 +65,12 @@ function App() {
         path="/signup"
         element={<Signup />}
       />
-  <Route
-          path="/verify-otp"
-          element={<VerifyOtp />}
-        />
+
+      <Route
+        path="/verify-otp"
+        element={<VerifyOtp />}
+      />
+
       <Route
         path="/role-selection"
         element={<RoleSelection />}
@@ -93,81 +96,45 @@ function App() {
         element={<Categories />}
       />
 
-      {/* =====================================================
-          PLACE DETAILS
-      ===================================================== */}
-
       <Route
         path="/place/:id"
         element={<PlaceDetails />}
       />
-
-      {/* =====================================================
-          BUSINESS DETAILS
-      ===================================================== */}
 
       <Route
         path="/business/:id"
         element={<BusinessDetails />}
       />
 
-      {/* =====================================================
-          ALL BUSINESS CUSTOMER REVIEWS
-      ===================================================== */}
-
       <Route
         path="/business/:businessId/reviews"
         element={<BusinessReviews />}
       />
-
-      {/* =====================================================
-          FAVORITES
-      ===================================================== */}
 
       <Route
         path="/favorites"
         element={<Favorites />}
       />
 
-      {/* =====================================================
-          MY REVIEWS
-      ===================================================== */}
-
       <Route
         path="/reviews"
         element={<Reviews />}
       />
-
-      {/* =====================================================
-          WRITE REVIEW FOR PLACE
-      ===================================================== */}
 
       <Route
         path="/write-review/:placeId"
         element={<WriteReview />}
       />
 
-      {/* =====================================================
-          WRITE REVIEW FOR BUSINESS
-      ===================================================== */}
-
       <Route
         path="/write-review/business/:businessId"
         element={<WriteReview />}
       />
 
-      {/* =====================================================
-          NOTIFICATIONS
-      ===================================================== */}
-
       <Route
         path="/notifications"
         element={<Notifications />}
       />
-
-      {/* =====================================================
-          PROFILE
-      ===================================================== */}
 
       <Route
         path="/profile"
@@ -186,38 +153,101 @@ function App() {
         element={<OwnerDashboard />}
       />
 
-      {/* Business Information */}
+
+      {/* =====================================================
+          MY BUSINESSES
+          
+          Shows all businesses owned by logged-in owner
+          
+          URL:
+          /owner/my-businesses
+      ===================================================== */}
+
+      <Route
+        path="/owner/my-businesses"
+        element={<MyBusinesses />}
+      />
+
+
+      {/* =====================================================
+          CREATE NEW BUSINESS
+
+          URL:
+          /owner/business/new
+      ===================================================== */}
+
+      <Route
+        path="/owner/business/new"
+        element={<OwnerBusinessProfile />}
+      />
+
+
+      {/* =====================================================
+          EDIT EXISTING BUSINESS
+
+          URL:
+          /owner/business/2
+          /owner/business/3
+          etc.
+      ===================================================== */}
+
+      <Route
+        path="/owner/business/:businessId"
+        element={<OwnerBusinessProfile />}
+      />
+
+
+      {/* =====================================================
+          LEGACY BUSINESS ROUTE
+      ===================================================== */}
 
       <Route
         path="/owner/business"
         element={<OwnerBusinessProfile />}
       />
 
-      {/* Business Photos */}
+
+      {/* =====================================================
+          BUSINESS PHOTOS
+      ===================================================== */}
 
       <Route
         path="/owner/photos"
         element={<OwnerPhotos />}
       />
 
-      {/* Customer Reviews - Owner's Business */}
+      <Route
+        path="/owner/photos/:businessId"
+        element={<OwnerPhotos />}
+      />
+
+
+      {/* =====================================================
+          OWNER REVIEWS
+      ===================================================== */}
 
       <Route
         path="/owner/reviews"
         element={<OwnerReviews />}
       />
 
-      {/* Customer Reviews - Specific Business */}
-
       <Route
         path="/owner/reviews/business/:businessId"
         element={<OwnerReviews />}
       />
 
-      {/* Public Profile */}
+
+      {/* =====================================================
+          OWNER PUBLIC PROFILE
+      ===================================================== */}
 
       <Route
         path="/owner/public-profile"
+        element={<OwnerPublicProfile />}
+      />
+
+      <Route
+        path="/owner/public-profile/:businessId"
         element={<OwnerPublicProfile />}
       />
 
@@ -226,35 +256,25 @@ function App() {
           ADMIN MODULE
       ===================================================== */}
 
-      {/* Admin Dashboard */}
-
       <Route
         path="/admin-dashboard"
         element={<AdminDashboard />}
       />
-
-      {/* Manage Users */}
 
       <Route
         path="/admin/users"
         element={<AdminUsers />}
       />
 
-      {/* Manage Businesses */}
-
       <Route
         path="/admin/businesses"
         element={<AdminBusinesses />}
       />
 
-      {/* Moderate Reviews */}
-
       <Route
         path="/admin/reviews"
         element={<AdminReviews />}
       />
-
-      {/* Reports */}
 
       <Route
         path="/admin/reports"

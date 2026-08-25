@@ -365,34 +365,33 @@ public class OwnerService
         return photo;
     }
 
-    // =====================================================
-    // GET OWNER REVIEWS
-    // =====================================================
+// =====================================================
+// GET OWNER REVIEWS
+// =====================================================
 
-    public async Task<List<ReviewItem>> GetOwnerReviewsAsync(
-        int businessId,
-        int ownerId)
+public async Task<List<ReviewItem>> GetOwnerReviewsAsync(
+    int businessId,
+    int ownerId)
+{
+    var business = await _context.Businesses
+        .FirstOrDefaultAsync(x =>
+            x.BusinessId == businessId &&
+            x.OwnerId == ownerId &&
+            x.IsActive);
+
+    if (business == null)
     {
-        var business = await _context.Businesses
-            .FirstOrDefaultAsync(x =>
-                x.BusinessId == businessId &&
-                x.OwnerId == ownerId &&
-                x.IsActive);
-
-        if (business == null)
-        {
-            return new List<ReviewItem>();
-        }
-
-        return await _context.Reviews
-            .Include(x => x.User)
-            .Include(x => x.Place)
-            .Where(x =>
-                x.Place != null &&
-                x.Place.Name == business.BusinessName)
-            .OrderByDescending(x => x.CreatedAt)
-            .ToListAsync();
+        return new List<ReviewItem>();
     }
+
+    return await _context.Reviews
+        .Include(x => x.User)
+        .Include(x => x.Business)
+        .Where(x =>
+            x.BusinessId == businessId)
+        .OrderByDescending(x => x.CreatedAt)
+        .ToListAsync();
+}
 
     // =====================================================
     // REPLY TO REVIEW

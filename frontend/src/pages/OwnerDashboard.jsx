@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import axios from "axios";
 
 import {
   FaArrowLeft,
   FaBuilding,
-  FaCamera,
   FaEye,
   FaArrowRight,
   FaBars,
@@ -13,6 +14,9 @@ import {
   FaSignOutAlt,
   FaHome,
   FaUserCircle,
+  FaPlus,
+  FaEdit,
+  FaChevronRight,
 } from "react-icons/fa";
 
 import "../styles/OwnerDashboard.css";
@@ -20,20 +24,49 @@ import "../styles/OwnerDashboard.css";
 function OwnerDashboard() {
   const navigate = useNavigate();
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const API_BASE =
+    "http://localhost:5213/api";
+
+  const [menuOpen, setMenuOpen] =
+    useState(false);
+
+  const [businesses, setBusinesses] =
+    useState([]);
+
+  const [businessesLoading, setBusinessesLoading] =
+    useState(true);
+
+  // =========================================
+  // Get token
+  // =========================================
+
+  const getToken = () => {
+    return (
+      localStorage.getItem("token") ||
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("jwtToken") ||
+      localStorage.getItem("accessToken")
+    );
+  };
 
   // =========================================
   // Get logged-in user
   // =========================================
 
-  const storedUser = localStorage.getItem("user");
+  const storedUser =
+    localStorage.getItem("user");
 
   let user = {};
 
   try {
-    user = storedUser ? JSON.parse(storedUser) : {};
+    user = storedUser
+      ? JSON.parse(storedUser)
+      : {};
   } catch (error) {
-    console.error("User data error:", error);
+    console.error(
+      "User data error:",
+      error
+    );
   }
 
   // =========================================
@@ -58,26 +91,209 @@ function OwnerDashboard() {
   // Navigation
   // =========================================
 
-  const goTo = (path) => {
+  const goTo = (
+    path
+  ) => {
     setMenuOpen(false);
     navigate(path);
   };
 
   // =========================================
+  // LOAD OWNER BUSINESSES
+  // =========================================
+
+  useEffect(() => {
+    loadOwnerBusinesses();
+  }, []);
+
+  const loadOwnerBusinesses =
+    async () => {
+      try {
+        setBusinessesLoading(
+          true
+        );
+
+        const token =
+          getToken();
+
+        if (!token) {
+          setBusinesses([]);
+          return;
+        }
+
+        const response =
+          await axios.get(
+            `${API_BASE}/owner/business`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        console.log(
+          "OWNER BUSINESSES:",
+          response.data
+        );
+
+        const data =
+          response?.data?.data ??
+          response?.data?.Data ??
+          response?.data;
+
+        setBusinesses(
+          Array.isArray(data)
+            ? data
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load owner businesses:",
+          error
+        );
+
+        setBusinesses([]);
+      } finally {
+        setBusinessesLoading(
+          false
+        );
+      }
+    };
+
+  // =========================================
+  // Business ID
+  // =========================================
+
+  const getBusinessId =
+    (business) => {
+      return (
+        business?.businessId ??
+        business?.BusinessId ??
+        business?.id ??
+        business?.Id ??
+        null
+      );
+    };
+
+  // =========================================
+  // Business name
+  // =========================================
+
+  const getBusinessName =
+    (business) => {
+      return (
+        business?.businessName ??
+        business?.BusinessName ??
+        "Business"
+      );
+    };
+
+  // =========================================
+  // Business category
+  // =========================================
+
+  const getBusinessCategory =
+    (business) => {
+      return (
+        business?.category?.categoryName ??
+        business?.category?.CategoryName ??
+        business?.categoryName ??
+        business?.CategoryName ??
+        "Business"
+      );
+    };
+
+  // =========================================
+  // Business location
+  // =========================================
+
+  const getBusinessLocation =
+    (business) => {
+      const city =
+        business?.city ??
+        business?.City ??
+        "";
+
+      const address =
+        business?.address ??
+        business?.Address ??
+        "";
+
+      if (
+        city &&
+        address
+      ) {
+        return `${city}, ${address}`;
+      }
+
+      return (
+        city ||
+        address ||
+        "Location not available"
+      );
+    };
+
+  // =========================================
+  // Manage Business
+  // =========================================
+
+  const handleManageBusiness =
+    (
+      businessId
+    ) => {
+      if (!businessId) {
+        return;
+      }
+
+      navigate(
+        `/owner/business/${businessId}`
+      );
+    };
+
+  // =========================================
+  // Add New Business
+  // =========================================
+
+  const handleAddNewBusiness =
+    () => {
+      navigate(
+        "/owner/business/new"
+      );
+    };
+
+  // =========================================
   // Logout
   // =========================================
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userRole");
+  const handleLogout =
+    () => {
+      localStorage.removeItem(
+        "token"
+      );
 
-    setMenuOpen(false);
+      localStorage.removeItem(
+        "user"
+      );
 
-    navigate("/login");
-  };
+      localStorage.removeItem(
+        "userId"
+      );
+
+      localStorage.removeItem(
+        "isLoggedIn"
+      );
+
+      localStorage.removeItem(
+        "userRole"
+      );
+
+      setMenuOpen(false);
+
+      navigate(
+        "/login"
+      );
+    };
 
   return (
     <div className="owner-dashboard">
@@ -88,26 +304,28 @@ function OwnerDashboard() {
 
       <header className="owner-navbar">
 
-        {/* LEFT SIDE */}
-
         <div className="owner-navbar-left">
-
-          {/* Back */}
 
           <button
             className="owner-back-btn"
-            onClick={() => navigate("/role-selection")}
+            onClick={() =>
+              navigate(
+                "/role-selection"
+              )
+            }
             aria-label="Back to role selection"
             title="Back"
           >
             <FaArrowLeft />
           </button>
 
-          {/* Brand */}
-
           <div
             className="owner-brand"
-            onClick={() => navigate("/owner-dashboard")}
+            onClick={() =>
+              navigate(
+                "/owner-dashboard"
+              )
+            }
           >
             REVIO
           </div>
@@ -115,38 +333,41 @@ function OwnerDashboard() {
         </div>
 
 
-        {/* RIGHT SIDE */}
-
         <div className="owner-navbar-right">
-
-          {/* Owner name - desktop */}
 
           <span className="owner-name">
             {ownerName}
           </span>
 
-
-          {/* Hamburger */}
-
           <button
             className="owner-menu-btn"
-            onClick={() => setMenuOpen(true)}
+            onClick={() =>
+              setMenuOpen(true)
+            }
             aria-label="Open menu"
             title="Menu"
           >
             <FaBars />
           </button>
 
-
-          {/* Profile Avatar */}
-
           <button
             className="owner-profile"
-            onClick={() => goTo("/owner/business")}
+            onClick={() =>
+              goTo(
+                businesses.length >
+                  0
+                  ? `/owner/public-profile/${getBusinessId(
+                      businesses[0]
+                    )}`
+                  : "/owner/business"
+              )
+            }
             title={ownerName}
             aria-label="Business profile"
           >
-            {ownerInitial || <FaUserCircle />}
+            {ownerInitial || (
+              <FaUserCircle />
+            )}
           </button>
 
         </div>
@@ -161,7 +382,9 @@ function OwnerDashboard() {
       {menuOpen && (
         <div
           className="owner-menu-overlay"
-          onClick={() => setMenuOpen(false)}
+          onClick={() =>
+            setMenuOpen(false)
+          }
         />
       )}
 
@@ -172,11 +395,11 @@ function OwnerDashboard() {
 
       <aside
         className={`owner-side-menu ${
-          menuOpen ? "open" : ""
+          menuOpen
+            ? "open"
+            : ""
         }`}
       >
-
-        {/* Menu Header */}
 
         <div className="owner-menu-header">
 
@@ -187,16 +410,26 @@ function OwnerDashboard() {
             </div>
 
             <div>
-              <strong>{ownerName}</strong>
-              <span>Business Owner</span>
+
+              <strong>
+                {ownerName}
+              </strong>
+
+              <span>
+                Business Owner
+              </span>
+
             </div>
 
           </div>
 
-
           <button
             className="owner-menu-close"
-            onClick={() => setMenuOpen(false)}
+            onClick={() =>
+              setMenuOpen(
+                false
+              )
+            }
             aria-label="Close menu"
           >
             <FaTimes />
@@ -205,62 +438,113 @@ function OwnerDashboard() {
         </div>
 
 
-        {/* Menu Items */}
-
         <nav className="owner-menu-nav">
 
+          {/* Dashboard */}
+
           <button
-            onClick={() => goTo("/owner-dashboard")}
+            onClick={() =>
+              goTo(
+                "/owner-dashboard"
+              )
+            }
           >
             <FaHome />
-            <span>Dashboard</span>
+
+            <span>
+              Dashboard
+            </span>
           </button>
 
 
+          {/* Business Profile */}
+
           <button
-            onClick={() => goTo("/owner/business")}
+            onClick={() =>
+              goTo(
+                businesses.length >
+                  0
+                  ? `/owner/business/${getBusinessId(
+                      businesses[0]
+                    )}`
+                  : "/owner/business"
+              )
+            }
           >
             <FaBuilding />
-            <span>Business Profile</span>
+
+            <span>
+              Business Profile
+            </span>
           </button>
 
 
+          {/* =================================================
+              MY BUSINESSES - NEW OPTION
+          ================================================= */}
+
           <button
-            onClick={() => goTo("/owner/photos")}
+            onClick={() =>
+              goTo(
+                "/owner/my-businesses"
+              )
+            }
           >
-            <FaCamera />
-            <span>Business Photos</span>
+            <FaBuilding />
+
+            <span>
+              My Businesses
+            </span>
           </button>
 
 
-          <button
-            onClick={() => goTo("/owner/reviews")}
-          >
-            <FaStar />
-            <span>Customer Reviews</span>
-          </button>
+          {/* =================================================
+              BUSINESS PHOTOS REMOVED
+
+              Photos are now inside the Business Profile form.
+          ================================================= */}
 
 
+        
+
+
+          {/* Public Profile */}
+
           <button
-            onClick={() => goTo("/owner/public-profile")}
+            onClick={() =>
+              goTo(
+                businesses.length >
+                  0
+                  ? `/owner/public-profile/${getBusinessId(
+                      businesses[0]
+                    )}`
+                  : "/owner/public-profile"
+              )
+            }
           >
             <FaEye />
-            <span>Public Profile</span>
+
+            <span>
+              Public Profile
+            </span>
           </button>
 
         </nav>
 
 
-        {/* Logout */}
-
         <div className="owner-menu-bottom">
 
           <button
             className="owner-logout-btn"
-            onClick={handleLogout}
+            onClick={
+              handleLogout
+            }
           >
             <FaSignOutAlt />
-            <span>Logout</span>
+
+            <span>
+              Logout
+            </span>
           </button>
 
         </div>
@@ -287,9 +571,241 @@ function OwnerDashboard() {
           </h1>
 
           <p>
-            Add your business details to start appearing
-            on REVIO and reach more customers.
+            Add your business details to start
+            appearing on REVIO and reach more
+            customers.
           </p>
+
+        </section>
+
+
+        {/* =================================================
+            MY BUSINESSES
+        ================================================= */}
+
+        <section className="owner-businesses-section">
+
+          <div className="owner-businesses-heading">
+
+            <div>
+
+              <span className="owner-eyebrow">
+                YOUR BUSINESSES
+              </span>
+
+              <h2>
+                My Businesses
+              </h2>
+
+              <p>
+                Manage all your REVIO businesses
+                from one place.
+              </p>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="add-business-btn"
+              onClick={
+                handleAddNewBusiness
+              }
+            >
+              <FaPlus />
+
+              <span>
+                Add New Business
+              </span>
+            </button>
+
+          </div>
+
+
+          {businessesLoading ? (
+
+            <div className="businesses-loading">
+              Loading your businesses...
+            </div>
+
+          ) : businesses.length ===
+            0 ? (
+
+            <div className="no-owner-businesses">
+
+              <div className="no-business-icon">
+                <FaBuilding />
+              </div>
+
+              <h3>
+                No business added yet
+              </h3>
+
+              <p>
+                Create your first business
+                to start building your REVIO
+                profile.
+              </p>
+
+              <button
+                type="button"
+                className="add-business-btn"
+                onClick={
+                  handleAddNewBusiness
+                }
+              >
+                <FaPlus />
+
+                Add Your Business
+              </button>
+
+            </div>
+
+          ) : (
+
+            <div className="owner-business-list">
+
+              {businesses.map(
+                (
+                  business,
+                  index
+                ) => {
+
+                  const businessId =
+                    getBusinessId(
+                      business
+                    );
+
+                  const name =
+                    getBusinessName(
+                      business
+                    );
+
+                  const category =
+                    getBusinessCategory(
+                      business
+                    );
+
+                  const location =
+                    getBusinessLocation(
+                      business
+                    );
+
+                  const rating =
+                    Number(
+                      business?.rating ??
+                      business?.Rating ??
+                      0
+                    );
+
+                  const reviewCount =
+                    Number(
+                      business?.reviewCount ??
+                      business?.ReviewCount ??
+                      0
+                    );
+
+                  return (
+                    <article
+                      className="owner-business-item"
+                      key={
+                        businessId ??
+                        `business-${index}`
+                      }
+                    >
+
+                      <div className="owner-business-icon">
+                        <FaBuilding />
+                      </div>
+
+
+                      <div className="owner-business-info">
+
+                        <h3>
+                          {name}
+                        </h3>
+
+                        <div className="owner-business-meta">
+
+                          <span>
+                            {category}
+                          </span>
+
+                          <span>
+                            {location}
+                          </span>
+
+                        </div>
+
+
+                        <div className="owner-business-rating">
+
+                          <FaStar />
+
+                          <span>
+                            {rating >
+                            0
+                              ? rating.toFixed(
+                                  1
+                                )
+                              : "New"}
+                          </span>
+
+                          <span>
+                            ({reviewCount}{" "}
+                            {reviewCount ===
+                            1
+                              ? "Review"
+                              : "Reviews"})
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="owner-business-actions">
+
+                        <button
+                          type="button"
+                          className="business-manage-btn"
+                          onClick={() =>
+                            handleManageBusiness(
+                              businessId
+                            )
+                          }
+                        >
+                          <FaEdit />
+
+                          <span>
+                            Manage
+                          </span>
+                        </button>
+
+
+                        <button
+                          type="button"
+                          className="business-open-btn"
+                          onClick={() =>
+                            navigate(
+                              `/owner/public-profile/${businessId}`
+                            )
+                          }
+                          title="Open Public Profile"
+                        >
+                          <FaChevronRight />
+                        </button>
+
+                      </div>
+
+                    </article>
+                  );
+                }
+              )}
+
+            </div>
+
+          )}
 
         </section>
 
@@ -307,14 +823,26 @@ function OwnerDashboard() {
             </span>
 
             <strong>
-              0 / 3
+              {businesses.length >
+              0
+                ? "2 / 2"
+                : "0 / 2"}
             </strong>
 
           </div>
 
           <div className="progress-track">
 
-            <div className="progress-fill"></div>
+            <div
+              className="progress-fill"
+              style={{
+                width:
+                  businesses.length >
+                  0
+                    ? "100%"
+                    : "0%",
+              }}
+            ></div>
 
           </div>
 
@@ -327,11 +855,15 @@ function OwnerDashboard() {
 
         <section className="setup-steps">
 
-          {/* STEP 01 */}
+          {/* STEP 01 - BUSINESS */}
 
           <div
             className="setup-card active"
-            onClick={() => navigate("/owner/business")}
+            onClick={() =>
+              navigate(
+                "/owner/business/new"
+              )
+            }
           >
 
             <div className="setup-number">
@@ -349,12 +881,13 @@ function OwnerDashboard() {
               </span>
 
               <h2>
-                Add your business
+                Add or manage your business
               </h2>
 
               <p>
-                Name, category, address, contact and
-                opening hours.
+                Add business details, contact
+                information, opening hours and
+                business photos.
               </p>
 
             </div>
@@ -363,7 +896,10 @@ function OwnerDashboard() {
               className="setup-arrow"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/owner/business");
+
+                navigate(
+                  "/owner/business/new"
+                );
               }}
               aria-label="Add business"
             >
@@ -373,63 +909,32 @@ function OwnerDashboard() {
           </div>
 
 
-          {/* STEP 02 */}
+          {/* STEP 02 - PUBLIC PROFILE */}
 
           <div
             className="setup-card"
-            onClick={() => navigate("/owner/photos")}
+            onClick={() => {
+
+              if (
+                businesses.length >
+                0
+              ) {
+                navigate(
+                  `/owner/public-profile/${getBusinessId(
+                    businesses[0]
+                  )}`
+                );
+              } else {
+                navigate(
+                  "/owner/public-profile"
+                );
+              }
+
+            }}
           >
 
             <div className="setup-number">
               02
-            </div>
-
-            <div className="setup-icon">
-              <FaCamera />
-            </div>
-
-            <div className="setup-content">
-
-              <span className="setup-label">
-                BUSINESS PHOTOS
-              </span>
-
-              <h2>
-                Add photos
-              </h2>
-
-              <p>
-                Upload photos of your hotel,
-                restaurant, salon or shop.
-              </p>
-
-            </div>
-
-            <button
-              className="setup-arrow"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate("/owner/photos");
-              }}
-              aria-label="Add photos"
-            >
-              <FaArrowRight />
-            </button>
-
-          </div>
-
-
-          {/* STEP 03 */}
-
-          <div
-            className="setup-card"
-            onClick={() =>
-              navigate("/owner/public-profile")
-            }
-          >
-
-            <div className="setup-number">
-              03
             </div>
 
             <div className="setup-icon">
@@ -457,7 +962,22 @@ function OwnerDashboard() {
               className="setup-arrow"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/owner/public-profile");
+
+                if (
+                  businesses.length >
+                  0
+                ) {
+                  navigate(
+                    `/owner/public-profile/${getBusinessId(
+                      businesses[0]
+                    )}`
+                  );
+                } else {
+                  navigate(
+                    "/owner/public-profile"
+                  );
+                }
+
               }}
               aria-label="Preview profile"
             >
@@ -484,9 +1004,9 @@ function OwnerDashboard() {
             </h3>
 
             <p>
-              A complete profile helps customers find
-              your business, read reviews and learn more
-              about your services.
+              A complete profile helps customers
+              find your business, read reviews
+              and learn more about your services.
             </p>
 
           </div>
