@@ -10,12 +10,25 @@ namespace Review.API.Models
 
         public int UserId { get; set; }
 
-        public int PlaceId { get; set; }
+        // ==========================================
+        // PLACE FAVORITE
+        // ==========================================
+
+        public int? PlaceId { get; set; }
 
         [ForeignKey(nameof(UserId))]
         public User? User { get; set; }
 
         [ForeignKey(nameof(PlaceId))]
         public Place? Place { get; set; }
+
+        // ==========================================
+        // BUSINESS FAVORITE
+        // ==========================================
+
+        public int? BusinessId { get; set; }
+
+        [ForeignKey(nameof(BusinessId))]
+        public Business? Business { get; set; }
     }
 }

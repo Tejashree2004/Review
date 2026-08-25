@@ -154,7 +154,17 @@ public class AppDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         // =================================================
-        // PREVENT DUPLICATE FAVORITES
+        // FAVORITE → BUSINESS
+        // =================================================
+
+        modelBuilder.Entity<Favorite>()
+            .HasOne(x => x.Business)
+            .WithMany()
+            .HasForeignKey(x => x.BusinessId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // =================================================
+        // PREVENT DUPLICATE PLACE FAVORITES
         // =================================================
 
         modelBuilder.Entity<Favorite>()
@@ -162,6 +172,18 @@ public class AppDbContext : DbContext
             {
                 x.UserId,
                 x.PlaceId
+            })
+            .IsUnique();
+
+        // =================================================
+        // PREVENT DUPLICATE BUSINESS FAVORITES
+        // =================================================
+
+        modelBuilder.Entity<Favorite>()
+            .HasIndex(x => new
+            {
+                x.UserId,
+                x.BusinessId
             })
             .IsUnique();
 
@@ -188,9 +210,6 @@ public class AppDbContext : DbContext
 
         // =================================================
         // DEFAULT CATEGORIES
-        //
-        // Existing CategoryId 1-4 are preserved.
-        // New categories start from CategoryId 5.
         // =================================================
 
         modelBuilder.Entity<Category>().HasData(

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -6,6 +5,8 @@ import MainLayout from "../layouts/MainLayout";
 
 import {
   getBusinessDetails,
+  addBusinessFavorite,
+  removeBusinessFavorite,
   getFavorites,
 } from "../services/HomeService";
 
@@ -152,7 +153,7 @@ function BusinessDetails() {
   };
 
   // =====================================================
-  // CHECK FAVORITE
+  // CHECK BUSINESS FAVORITE
   // =====================================================
 
   const checkFavorite = async (businessId) => {
@@ -176,14 +177,18 @@ function BusinessDetails() {
       const alreadyFavorite =
         favorites.some(
           (favorite) =>
-            Number(favorite.businessId) ===
-            currentBusinessId
+            Number(
+              favorite.businessId ??
+              favorite.BusinessId ??
+              favorite.business?.businessId ??
+              favorite.Business?.BusinessId
+            ) === currentBusinessId
         );
 
       setIsFavorite(alreadyFavorite);
     } catch (error) {
       console.error(
-        "Failed to check favorite:",
+        "Failed to check business favorite:",
         error
       );
 
@@ -192,7 +197,7 @@ function BusinessDetails() {
   };
 
   // =====================================================
-  // TOGGLE FAVORITE
+  // TOGGLE BUSINESS FAVORITE
   // =====================================================
 
   const handleFavorite = async () => {
@@ -203,6 +208,7 @@ function BusinessDetails() {
         alert(
           "Please login first to add favorites."
         );
+
         return;
       }
 
@@ -210,27 +216,68 @@ function BusinessDetails() {
         return;
       }
 
+      const businessId =
+        business.businessId ||
+        business.id;
+
+      if (!businessId) {
+        console.error(
+          "Business ID not found:",
+          business
+        );
+
+        return;
+      }
+
       setFavoriteLoading(true);
 
-      /*
-        Business Favorite backend is not yet
-        connected with BusinessId.
+      // ================================================
+      // REMOVE BUSINESS FROM FAVORITES
+      // ================================================
 
-        Therefore we only update the UI here.
-      */
+      if (isFavorite) {
+        await removeBusinessFavorite(
+          userId,
+          Number(businessId)
+        );
 
-      setIsFavorite(
-        (previous) => !previous
-      );
+        setIsFavorite(false);
+      }
+
+      // ================================================
+      // ADD BUSINESS TO FAVORITES
+      // ================================================
+
+      else {
+        await addBusinessFavorite({
+          userId: userId,
+          businessId: Number(businessId),
+        });
+
+        setIsFavorite(true);
+      }
     } catch (error) {
       console.error(
         "Favorite operation failed:",
         error
       );
 
-      alert(
-        "Something went wrong. Please try again."
+      console.error(
+        "Favorite API Error:",
+        error.response?.data
       );
+
+      if (
+        error.response?.data?.message
+      ) {
+        alert(
+          error.response.data.message
+        );
+      } else {
+        alert(
+          "Something went wrong while updating favorites."
+        );
+      }
     } finally {
       setFavoriteLoading(false);
     }
@@ -273,6 +320,7 @@ function BusinessDetails() {
       alert(
         "Please login first to write a review."
       );
+
       return;
     }
 
@@ -407,23 +455,6 @@ function BusinessDetails() {
   // =====================================================
 
   const getReviewerName = (review) => {
-    /*
-      Your current API response is:
-
-      {
-        ReviewId: 13,
-        Rating: 3,
-        Comment: "good hotel",
-        User: "gauri",
-        CreatedAt: "..."
-      }
-
-      So first use User.
-
-      We also support object-style User
-      in case backend changes later.
-    */
-
     if (typeof review.User === "string") {
       return review.User;
     }
@@ -845,8 +876,6 @@ function BusinessDetails() {
                 review this business.
               </p>
 
-              
-
             </div>
           )}
 
@@ -980,4 +1009,3 @@ function BusinessDetails() {
 }
 
 export default BusinessDetails;
-

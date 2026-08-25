@@ -27,10 +27,6 @@ function Navbar() {
       path: "/search"
     },
     {
-      name: "Categories",
-      path: "/categories"
-    },
-    {
       name: "Favorites",
       path: "/favorites"
     },

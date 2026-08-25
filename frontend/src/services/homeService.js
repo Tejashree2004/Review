@@ -59,7 +59,7 @@ export const getBusinessDetails = (businessId) => {
 };
 
 // =====================================================
-// ADD FAVORITE
+// ADD PLACE FAVORITE
 // =====================================================
 
 export const addFavorite = (data) => {
@@ -70,7 +70,7 @@ export const addFavorite = (data) => {
 };
 
 // =====================================================
-// REMOVE FAVORITE
+// REMOVE PLACE FAVORITE
 // =====================================================
 
 export const removeFavorite = (
@@ -79,6 +79,30 @@ export const removeFavorite = (
 ) => {
   return axios.delete(
     `${FAVORITE_API}/${userId}/${placeId}`
+  );
+};
+
+// =====================================================
+// ADD BUSINESS FAVORITE
+// =====================================================
+
+export const addBusinessFavorite = (data) => {
+  return axios.post(
+    `${FAVORITE_API}/business`,
+    data
+  );
+};
+
+// =====================================================
+// REMOVE BUSINESS FAVORITE
+// =====================================================
+
+export const removeBusinessFavorite = (
+  userId,
+  businessId
+) => {
+  return axios.delete(
+    `${FAVORITE_API}/business/${userId}/${businessId}`
   );
 };
 
@@ -94,7 +118,6 @@ export const getFavorites = (userId) => {
 
 // =====================================================
 // MY REVIEWS
-// GET: /api/Profile/{id}/reviews
 // =====================================================
 
 export const getMyReviews = (userId) => {
