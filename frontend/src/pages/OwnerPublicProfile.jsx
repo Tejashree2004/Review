@@ -2,14 +2,11 @@ import {
   useEffect,
   useState,
 } from "react";
-
 import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-
 import axios from "axios";
-
 import {
   FaArrowLeft,
   FaMapMarkerAlt,
@@ -23,7 +20,6 @@ import {
   FaEdit,
   FaStore,
 } from "react-icons/fa";
-
 import "../styles/OwnerPublicProfile.css";
 
 const API_BASE =
@@ -58,7 +54,6 @@ const SAMPLE_PHOTOS = [
 
 function OwnerPublicProfile() {
   const navigate = useNavigate();
-
   const {
     businessId: routeBusinessId,
   } = useParams();
@@ -329,28 +324,87 @@ function OwnerPublicProfile() {
             const reviewResponse =
               await axios.get(
                 `${API_BASE}/Review/business/${businessId}`,
-                config
+                {
+                  ...config,
+
+                  // Public profile only needs
+                  // the first 3 reviews.
+                  params: {
+                    page: 1,
+                    pageSize: 3,
+                  },
+                }
               );
+
+            console.log(
+              "BUSINESS REVIEWS API RESPONSE:",
+              reviewResponse.data
+            );
 
             const reviewData =
               getResponseData(
                 reviewResponse
               );
 
-            const reviewList =
+            // =============================================
+            // FIX:
+            // Backend may return:
+            //
+            // data: [...]
+            // data: { reviews: [...] }
+            // data: { Reviews: [...] }
+            // data: { items: [...] }
+            // data: { Items: [...] }
+            // =============================================
+
+            let reviewList = [];
+
+            if (
               Array.isArray(
                 reviewData
               )
-                ? reviewData
-                : [];
+            ) {
+              reviewList =
+                reviewData;
+            } else if (
+              Array.isArray(
+                reviewData?.reviews
+              )
+            ) {
+              reviewList =
+                reviewData.reviews;
+            } else if (
+              Array.isArray(
+                reviewData?.Reviews
+              )
+            ) {
+              reviewList =
+                reviewData.Reviews;
+            } else if (
+              Array.isArray(
+                reviewData?.items
+              )
+            ) {
+              reviewList =
+                reviewData.items;
+            } else if (
+              Array.isArray(
+                reviewData?.Items
+              )
+            ) {
+              reviewList =
+                reviewData.Items;
+            }
 
             console.log(
               "BUSINESS REVIEWS:",
               reviewList
             );
 
+            // Only 3 reviews are displayed
+            // on the public profile.
             setReviews(
-              reviewList
+              reviewList.slice(0, 3)
             );
           } catch (reviewError) {
             console.error(
@@ -491,10 +545,14 @@ function OwnerPublicProfile() {
         0
     );
 
+  // IMPORTANT:
+  // The profile can display only 3 reviews,
+  // but the business's actual review count
+  // should remain the backend total.
   const reviewCount =
-    reviews.length > 0
-      ? reviews.length
-      : backendReviewCount;
+    backendReviewCount > 0
+      ? backendReviewCount
+      : reviews.length;
 
   // =====================================================
   // PHOTO URL
@@ -896,7 +954,6 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-business-info">
-
           <div className="public-title-row">
 
             <div className="public-business-title">
@@ -932,7 +989,6 @@ function OwnerPublicProfile() {
                 </strong>
               )}
             </div>
-
           </div>
 
           {(address || city) && (
@@ -1003,7 +1059,6 @@ function OwnerPublicProfile() {
               />
             </a>
           )}
-
         </section>
 
         {/* =====================================================
@@ -1025,9 +1080,7 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-section public-photos-section">
-
           <div className="public-section-title">
-
             <h3>
               Photos
             </h3>
@@ -1036,11 +1089,9 @@ function OwnerPublicProfile() {
               {displayPhotos.length}{" "}
               Photos
             </span>
-
           </div>
 
           <div className="public-photo-grid">
-
             {displayPhotos.map(
               (photo, index) => (
                 <div
@@ -1064,9 +1115,7 @@ function OwnerPublicProfile() {
                 </div>
               )
             )}
-
           </div>
-
         </section>
 
         {/* =====================================================
@@ -1074,9 +1123,7 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-section public-reviews-section">
-
           <div className="public-section-title">
-
             <div>
               <h3>
                 Customer Reviews
@@ -1101,7 +1148,6 @@ function OwnerPublicProfile() {
             >
               View All
             </button>
-
           </div>
 
           {/* =====================================================
@@ -1117,7 +1163,6 @@ function OwnerPublicProfile() {
               </p>
             </div>
           ) : reviews.length > 0 ? (
-
             <div className="public-review-list">
 
               {/* Only preview first 3 reviews here.
@@ -1130,7 +1175,6 @@ function OwnerPublicProfile() {
                     review,
                     index
                   ) => {
-
                     const reviewRating =
                       getReviewRating(
                         review
@@ -1159,9 +1203,10 @@ function OwnerPublicProfile() {
                     return (
                       <article
                         className="public-review-card"
-                        key={reviewId}
+                        key={
+                          reviewId
+                        }
                       >
-
                         <div className="public-review-top">
 
                           <div className="public-review-avatar">
@@ -1175,7 +1220,6 @@ function OwnerPublicProfile() {
                           </div>
 
                           <div className="public-review-user">
-
                             <strong>
                               {userName}
                             </strong>
@@ -1187,7 +1231,6 @@ function OwnerPublicProfile() {
                                 )}
                               </span>
                             )}
-
                           </div>
 
                           <div className="public-review-rating">
@@ -1195,10 +1238,10 @@ function OwnerPublicProfile() {
                               reviewRating
                             )}
                           </div>
-
                         </div>
 
                         {/* Actual submitted rating */}
+
                         {reviewRating > 0 && (
                           <div
                             style={{
@@ -1217,23 +1260,19 @@ function OwnerPublicProfile() {
                         )}
 
                         {/* Actual submitted comment */}
+
                         {comment && (
                           <p className="public-review-comment">
                             "{comment}"
                           </p>
                         )}
-
                       </article>
                     );
                   }
                 )}
-
             </div>
-
           ) : (
-
             <div className="public-review-empty">
-
               <FaStar />
 
               <p>
@@ -1247,11 +1286,8 @@ function OwnerPublicProfile() {
                 ratings and comments
                 will appear here.
               </span>
-
             </div>
-
           )}
-
         </section>
 
         {/* =====================================================
@@ -1259,14 +1295,12 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <div className="public-preview-note">
-
           <FaLock />
 
           <span>
             You are seeing this as a
             public user
           </span>
-
         </div>
 
         {/* =====================================================

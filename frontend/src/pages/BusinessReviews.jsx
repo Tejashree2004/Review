@@ -31,6 +31,15 @@ function BusinessReviews() {
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
   // =====================================================
+  // PAGINATION
+  // =====================================================
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+
+  // =====================================================
   // LOAD BUSINESS + REVIEWS
   // =====================================================
 
@@ -71,61 +80,12 @@ function BusinessReviews() {
       setBusiness(businessData);
 
       // =================================================
-      // LOAD ALL BUSINESS REVIEWS
+      // LOAD FIRST REVIEW PAGE
       // =================================================
 
-      const reviewResponse =
-        await getBusinessReviews(businessId);
-
-      console.log(
-        "VIEW ALL BUSINESS REVIEWS API:",
-        reviewResponse.data
-      );
-
-      /*
-        Backend response:
-
-        {
-          Success: true,
-          Message: "...",
-          Data: [...]
-        }
-
-        Also supports:
-
-        {
-          success: true,
-          data: [...]
-        }
-
-        or direct array.
-      */
-
-      let reviewData = [];
-
-      if (Array.isArray(reviewResponse.data)) {
-        reviewData = reviewResponse.data;
-      } else if (
-        Array.isArray(reviewResponse.data?.data)
-      ) {
-        reviewData =
-          reviewResponse.data.data;
-      } else if (
-        Array.isArray(reviewResponse.data?.Data)
-      ) {
-        reviewData =
-          reviewResponse.data.Data;
-      }
-
-      console.log(
-        "FINAL ALL BUSINESS REVIEWS:",
-        reviewData
-      );
-
-      setReviews(
-        Array.isArray(reviewData)
-          ? reviewData
-          : []
+      await loadReviews(
+        1,
+        false
       );
 
     } catch (error) {
@@ -144,14 +104,184 @@ function BusinessReviews() {
   };
 
   // =====================================================
+  // LOAD REVIEWS
+  // =====================================================
+
+  const loadReviews = async (
+    page = 1,
+    append = false
+  ) => {
+    try {
+      setReviewsLoading(true);
+
+      const reviewResponse =
+        await getBusinessReviews(
+          businessId,
+          page,
+          pageSize
+        );
+
+      console.log(
+        "VIEW ALL BUSINESS REVIEWS API:",
+        reviewResponse.data
+      );
+
+      /*
+        Backend response:
+
+        {
+          success: true,
+          data: {
+            reviews: [],
+            totalReviews: 20,
+            page: 1,
+            pageSize: 10,
+            totalPages: 2,
+            hasMore: true,
+            averageRating: 4.5,
+            ...
+          }
+        }
+      */
+
+      const responseData =
+        reviewResponse.data?.data ??
+        reviewResponse.data?.Data ??
+        reviewResponse.data;
+
+      let reviewData = [];
+      let total = 0;
+      let more = false;
+
+      // =================================================
+      // PAGINATED RESPONSE
+      // =================================================
+
+      if (
+        responseData &&
+        !Array.isArray(responseData)
+      ) {
+        reviewData =
+          responseData.reviews ??
+          responseData.Reviews ??
+          [];
+
+        total =
+          Number(
+            responseData.totalReviews ??
+            responseData.TotalReviews ??
+            0
+          );
+
+        more =
+          Boolean(
+            responseData.hasMore ??
+            responseData.HasMore ??
+            false
+          );
+      }
+
+      // =================================================
+      // DIRECT ARRAY SUPPORT
+      // =================================================
+
+      else if (
+        Array.isArray(responseData)
+      ) {
+        reviewData = responseData;
+        total = responseData.length;
+        more = false;
+      }
+
+      const finalReviews =
+        Array.isArray(reviewData)
+          ? reviewData
+          : [];
+
+      console.log(
+        "FINAL ALL BUSINESS REVIEWS:",
+        finalReviews
+      );
+
+      // =================================================
+      // APPEND REVIEWS
+      // =================================================
+
+      if (append) {
+        setReviews((previous) => [
+          ...previous,
+          ...finalReviews,
+        ]);
+      } else {
+        setReviews(finalReviews);
+      }
+
+      setTotalReviews(total);
+
+      setCurrentPage(page);
+
+      setHasMore(more);
+
+    } catch (error) {
+      console.error(
+        "Failed to load business reviews:",
+        error
+      );
+
+      if (!append) {
+        setReviews([]);
+        setTotalReviews(0);
+      }
+
+      setHasMore(false);
+
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  // =====================================================
+  // LOAD MORE
+  // =====================================================
+
+  const handleLoadMore = async () => {
+    if (
+      reviewsLoading ||
+      !hasMore
+    ) {
+      return;
+    }
+
+    const nextPage =
+      currentPage + 1;
+
+    await loadReviews(
+      nextPage,
+      true
+    );
+  };
+
+  // =====================================================
   // GET REVIEWER NAME
   // =====================================================
 
   const getReviewerName = (review) => {
 
-    // Current backend response:
-    //
-    // User: "gauri"
+    // =================================================
+    // ReviewItemDto
+    // =================================================
+
+    if (review.UserName) {
+      return review.UserName;
+    }
+
+    if (review.userName) {
+      return review.userName;
+    }
+
+    // =================================================
+    // EXISTING USER OBJECT SUPPORT
+    // =================================================
 
     if (
       typeof review.User === "string"
@@ -165,8 +295,6 @@ function BusinessReviews() {
       return review.user;
     }
 
-    // Future/object response support
-
     if (
       review.User?.FullName
     ) {
@@ -178,6 +306,10 @@ function BusinessReviews() {
     ) {
       return review.user.fullName;
     }
+
+    // =================================================
+    // OTHER RESPONSE SUPPORT
+    // =================================================
 
     if (review.FullName) {
       return review.FullName;
@@ -230,7 +362,10 @@ function BusinessReviews() {
   // GET REVIEW ID
   // =====================================================
 
-  const getReviewId = (review, index) => {
+  const getReviewId = (
+    review,
+    index
+  ) => {
     return (
       review.ReviewId ??
       review.reviewId ??
@@ -359,6 +494,15 @@ function BusinessReviews() {
     if (!reviews.length) {
       return Number(
         business?.rating ?? 0
+      ).toFixed(1);
+    }
+
+    if (
+      business?.rating !== undefined &&
+      business?.rating !== null
+    ) {
+      return Number(
+        business.rating
       ).toFixed(1);
     }
 
@@ -519,7 +663,7 @@ function BusinessReviews() {
               </strong>
 
               <span>
-                ({reviews.length} Reviews)
+                ({totalReviews || reviews.length} Reviews)
               </span>
 
             </div>
@@ -548,7 +692,7 @@ function BusinessReviews() {
           </div>
 
           <strong>
-            {reviews.length} Reviews
+            {totalReviews || reviews.length} Reviews
           </strong>
 
         </div>
@@ -557,11 +701,12 @@ function BusinessReviews() {
             LOADING REVIEWS
         ================================================= */}
 
-        {reviewsLoading && (
-          <div className="all-reviews-loading">
-            Loading reviews...
-          </div>
-        )}
+        {reviewsLoading &&
+          reviews.length === 0 && (
+            <div className="all-reviews-loading">
+              Loading reviews...
+            </div>
+          )}
 
         {/* =================================================
             NO REVIEWS
@@ -590,113 +735,146 @@ function BusinessReviews() {
             ALL REVIEWS
         ================================================= */}
 
-        {!reviewsLoading &&
-          reviews.length > 0 && (
+        {reviews.length > 0 && (
 
-            <div className="all-reviews-list">
+          <div className="all-reviews-list">
 
-              {reviews.map(
-                (review, index) => {
+            {reviews.map(
+              (review, index) => {
 
-                  const reviewerName =
-                    getReviewerName(
-                      review
-                    );
+                const reviewerName =
+                  getReviewerName(
+                    review
+                  );
 
-                  const rating =
-                    getRating(
-                      review
-                    );
+                const rating =
+                  getRating(
+                    review
+                  );
 
-                  const comment =
-                    getComment(
-                      review
-                    );
+                const comment =
+                  getComment(
+                    review
+                  );
 
-                  const createdAt =
-                    getDate(
-                      review
-                    );
+                const createdAt =
+                  getDate(
+                    review
+                  );
 
-                  const reviewId =
-                    getReviewId(
-                      review,
-                      index
-                    );
+                const reviewId =
+                  getReviewId(
+                    review,
+                    index
+                  );
 
-                  return (
-                    <div
-                      className="all-review-card"
-                      key={reviewId}
-                    >
+                return (
+                  <div
+                    className="all-review-card"
+                    key={reviewId}
+                  >
 
-                      {/* REVIEW TOP */}
+                    {/* REVIEW TOP */}
 
-                      <div className="all-review-top">
+                    <div className="all-review-top">
 
-                        <div className="all-review-user">
+                      <div className="all-review-user">
 
-                          <div className="all-review-avatar">
+                        <div className="all-review-avatar">
 
-                            {reviewerName
-                              .charAt(0)
-                              .toUpperCase()}
-
-                          </div>
-
-                          <div>
-
-                            <h3>
-                              {reviewerName}
-                            </h3>
-
-                            <span>
-                              {getRelativeDate(
-                                createdAt
-                              )}
-                            </span>
-
-                          </div>
+                          {reviewerName
+                            .charAt(0)
+                            .toUpperCase()}
 
                         </div>
 
-                        {renderStars(
-                          rating
-                        )}
+                        <div>
+
+                          <h3>
+                            {reviewerName}
+                          </h3>
+
+                          <span>
+                            {getRelativeDate(
+                              createdAt
+                            )}
+                          </span>
+
+                        </div>
 
                       </div>
 
-                      {/* COMMENT */}
-
-                      <p className="all-review-comment">
-                        "{comment}"
-                      </p>
-
-                      {/* OWNER REPLY */}
-
-                      {(review.OwnerReply ||
-                        review.ownerReply) && (
-
-                        <div className="all-review-owner-reply">
-
-                          <strong>
-                            Business Owner Reply
-                          </strong>
-
-                          <p>
-                            {review.OwnerReply ||
-                              review.ownerReply}
-                          </p>
-
-                        </div>
-
+                      {renderStars(
+                        rating
                       )}
 
                     </div>
-                  );
-                }
-              )}
 
+                    {/* COMMENT */}
+
+                    <p className="all-review-comment">
+                      "{comment}"
+                    </p>
+
+                    {/* OWNER REPLY */}
+
+                    {(review.OwnerReply ||
+                      review.ownerReply) && (
+
+                      <div className="all-review-owner-reply">
+
+                        <strong>
+                          Business Owner Reply
+                        </strong>
+
+                        <p>
+                          {review.OwnerReply ||
+                            review.ownerReply}
+                        </p>
+
+                      </div>
+
+                    )}
+
+                  </div>
+                );
+              }
+            )}
+
+          </div>
+        )}
+
+        {/* =================================================
+            SINGLE PAGINATION BUTTON
+        ================================================= */}
+
+        {!reviewsLoading &&
+          hasMore && (
+
+            <div className="view-all-reviews-wrapper">
+
+              <button
+                className="view-all-reviews-btn"
+                onClick={handleLoadMore}
+                disabled={reviewsLoading}
+              >
+                {reviewsLoading
+                  ? "Loading..."
+                  : "Load More Reviews"}
+              </button>
+
+            </div>
+          )}
+
+        {/* =================================================
+            LOADING MORE
+        ================================================= */}
+
+        {reviewsLoading &&
+          reviews.length > 0 && (
+
+            <div className="all-reviews-loading">
+              Loading more reviews...
             </div>
           )}
 

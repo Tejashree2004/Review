@@ -6,9 +6,23 @@ const API_BASE = "http://localhost:5213/api";
 // GET BUSINESS REVIEWS
 // =====================================================
 
-export const getBusinessReviews = (businessId) => {
+export const getBusinessReviews = (
+  businessId,
+  page = 1,
+  pageSize = 10,
+  rating = null
+) => {
   return axios.get(
-    `${API_BASE}/Review/business/${businessId}`
+    `${API_BASE}/Review/business/${businessId}`,
+    {
+      params: {
+        page,
+        pageSize,
+        ...(rating
+          ? { rating }
+          : {}),
+      },
+    }
   );
 };
 
@@ -16,9 +30,23 @@ export const getBusinessReviews = (businessId) => {
 // GET PLACE REVIEWS
 // =====================================================
 
-export const getPlaceReviews = (placeId) => {
+export const getPlaceReviews = (
+  placeId,
+  page = 1,
+  pageSize = 10,
+  rating = null
+) => {
   return axios.get(
-    `${API_BASE}/Review/place/${placeId}`
+    `${API_BASE}/Review/place/${placeId}`,
+    {
+      params: {
+        page,
+        pageSize,
+        ...(rating
+          ? { rating }
+          : {}),
+      },
+    }
   );
 };
 
@@ -26,7 +54,9 @@ export const getPlaceReviews = (placeId) => {
 // ADD REVIEW
 // =====================================================
 
-export const addReview = (reviewData) => {
+export const addReview = (
+  reviewData
+) => {
   return axios.post(
     `${API_BASE}/Review`,
     reviewData
@@ -37,7 +67,9 @@ export const addReview = (reviewData) => {
 // DELETE REVIEW
 // =====================================================
 
-export const deleteReview = (reviewId) => {
+export const deleteReview = (
+  reviewId
+) => {
   return axios.delete(
     `${API_BASE}/Review/${reviewId}`
   );

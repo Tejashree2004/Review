@@ -52,7 +52,9 @@ export const getPlaceDetails = (id) => {
 // GET: /api/Business/{id}
 // =====================================================
 
-export const getBusinessDetails = (businessId) => {
+export const getBusinessDetails = (
+  businessId
+) => {
   return axios.get(
     `${BUSINESS_API}/${businessId}`
   );
@@ -86,7 +88,9 @@ export const removeFavorite = (
 // ADD BUSINESS FAVORITE
 // =====================================================
 
-export const addBusinessFavorite = (data) => {
+export const addBusinessFavorite = (
+  data
+) => {
   return axios.post(
     `${FAVORITE_API}/business`,
     data
@@ -118,10 +122,24 @@ export const getFavorites = (userId) => {
 
 // =====================================================
 // MY REVIEWS
+// PAGINATED
+//
+// GET:
+// /api/Review/my/{userId}?page=1&pageSize=10
 // =====================================================
 
-export const getMyReviews = (userId) => {
+export const getMyReviews = (
+  userId,
+  page = 1,
+  pageSize = 10
+) => {
   return axios.get(
-    `${PROFILE_API}/${userId}/reviews`
+    `${API_BASE}/Review/my/${userId}`,
+    {
+      params: {
+        page,
+        pageSize,
+      },
+    }
   );
 };

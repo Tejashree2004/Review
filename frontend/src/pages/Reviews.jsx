@@ -1,5 +1,12 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
 
 import {
   FaArrowLeft,
@@ -18,12 +25,28 @@ import {
 
 import "../styles/Reviews.css";
 
+const PAGE_SIZE = 10;
+
 function Reviews() {
   const navigate = useNavigate();
 
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [reviews, setReviews] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [loadingMore, setLoadingMore] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [page, setPage] =
+    useState(1);
+
+  const [hasMore, setHasMore] =
+    useState(true);
 
   // =====================================================
   // GET LOGGED-IN USER ID
@@ -34,53 +57,193 @@ function Reviews() {
       localStorage.getItem("userId") ||
       localStorage.getItem("UserId");
 
-    return userId ? Number(userId) : null;
+    return userId
+      ? Number(userId)
+      : null;
   };
 
   // =====================================================
   // GET BUSINESS DETAILS
   // =====================================================
 
-  const getBusinessInfo = async (businessId) => {
-    try {
-      if (!businessId) {
+  const getBusinessInfo =
+    async (businessId) => {
+      try {
+        if (!businessId) {
+          return null;
+        }
+
+        const response =
+          await getBusinessDetails(
+            businessId
+          );
+
+        console.log(
+          `Business Details for ${businessId}:`,
+          response.data
+        );
+
+        const businessData =
+          response.data?.data ||
+          response.data;
+
+        return businessData || null;
+      } catch (error) {
+        console.error(
+          `Failed to load business ${businessId}:`,
+          error
+        );
+
         return null;
       }
+    };
 
-      const response =
-        await getBusinessDetails(businessId);
+  // =====================================================
+  // GET REVIEW ID
+  // =====================================================
 
-      console.log(
-        `Business Details for ${businessId}:`,
-        response.data
-      );
+  const getReviewId = (
+    review,
+    index = 0
+  ) => {
+    return (
+      review?.reviewId ??
+      review?.ReviewId ??
+      review?.id ??
+      review?.Id ??
+      `review-${index}`
+    );
+  };
 
-      const businessData =
-        response.data?.data ||
-        response.data;
+  // =====================================================
+  // GET PAGINATION INFORMATION
+  // =====================================================
 
-      return businessData || null;
-    } catch (error) {
-      console.error(
-        `Failed to load business ${businessId}:`,
-        error
-      );
+  const getHasMore = (
+    responseData,
+    currentPage,
+    receivedCount
+  ) => {
+    // -------------------------------------------------
+    // Direct hasMore
+    // -------------------------------------------------
 
-      return null;
+    const directHasMore =
+      responseData?.hasMore ??
+      responseData?.HasMore;
+
+    if (
+      typeof directHasMore ===
+      "boolean"
+    ) {
+      return directHasMore;
     }
+
+    // -------------------------------------------------
+    // Pagination object
+    // -------------------------------------------------
+
+    const pagination =
+      responseData?.pagination ??
+      responseData?.Pagination;
+
+    if (pagination) {
+      const paginationHasMore =
+        pagination?.hasMore ??
+        pagination?.HasMore;
+
+      if (
+        typeof paginationHasMore ===
+        "boolean"
+      ) {
+        return paginationHasMore;
+      }
+
+      const responsePage =
+        Number(
+          pagination?.page ??
+          pagination?.Page ??
+          currentPage
+        );
+
+      const responsePageSize =
+        Number(
+          pagination?.pageSize ??
+          pagination?.PageSize ??
+          PAGE_SIZE
+        );
+
+      const total =
+        Number(
+          pagination?.totalReviews ??
+          pagination?.TotalReviews ??
+          pagination?.totalCount ??
+          pagination?.TotalCount ??
+          0
+        );
+
+      if (total > 0) {
+        return (
+          responsePage *
+            responsePageSize <
+          total
+        );
+      }
+    }
+
+    // -------------------------------------------------
+    // Root-level total
+    // -------------------------------------------------
+
+    const total =
+      Number(
+        responseData?.totalReviews ??
+        responseData?.TotalReviews ??
+        responseData?.totalCount ??
+        responseData?.TotalCount ??
+        0
+      );
+
+    if (total > 0) {
+      return (
+        currentPage *
+          PAGE_SIZE <
+        total
+      );
+    }
+
+    // -------------------------------------------------
+    // Fallback
+    //
+    // If backend returns a full page, assume another
+    // page may exist.
+    // -------------------------------------------------
+
+    return (
+      receivedCount >=
+      PAGE_SIZE
+    );
   };
 
   // =====================================================
   // LOAD MY REVIEWS
   // =====================================================
 
-  useEffect(() => {
-    const loadMyReviews = async () => {
+  const loadMyReviews =
+    async ({
+      targetPage = 1,
+      append = false,
+    } = {}) => {
       try {
-        setLoading(true);
-        setError("");
+        if (append) {
+          setLoadingMore(true);
+        } else {
+          setLoading(true);
+          setError("");
+        }
 
-        const userId = getUserId();
+        const userId =
+          getUserId();
 
         if (!userId) {
           setError(
@@ -91,7 +254,11 @@ function Reviews() {
         }
 
         const response =
-          await getMyReviews(userId);
+          await getMyReviews(
+            userId,
+            targetPage,
+            PAGE_SIZE
+          );
 
         console.log(
           "My Reviews API Response:",
@@ -99,25 +266,85 @@ function Reviews() {
         );
 
         // =================================================
-        // SUPPORT DIFFERENT RESPONSE FORMATS
+        // RESPONSE DATA
+        // =================================================
+
+        let responseData =
+          response.data;
+
+        if (
+          responseData?.data !==
+          undefined
+        ) {
+          responseData =
+            responseData.data;
+        } else if (
+          responseData?.Data !==
+          undefined
+        ) {
+          responseData =
+            responseData.Data;
+        }
+
+        // =================================================
+        // SUPPORT DIFFERENT PAGINATED RESPONSE FORMATS
         // =================================================
 
         let data = [];
 
-        if (Array.isArray(response.data)) {
-          data = response.data;
-        } else if (
-          Array.isArray(response.data?.data)
+        if (
+          Array.isArray(
+            responseData
+          )
         ) {
-          data = response.data.data;
+          data =
+            responseData;
         } else if (
-          Array.isArray(response.data?.Data)
+          Array.isArray(
+            responseData?.reviews
+          )
         ) {
-          data = response.data.Data;
+          data =
+            responseData.reviews;
+        } else if (
+          Array.isArray(
+            responseData?.Reviews
+          )
+        ) {
+          data =
+            responseData.Reviews;
+        } else if (
+          Array.isArray(
+            responseData?.items
+          )
+        ) {
+          data =
+            responseData.items;
+        } else if (
+          Array.isArray(
+            responseData?.Items
+          )
+        ) {
+          data =
+            responseData.Items;
+        } else if (
+          Array.isArray(
+            responseData?.results
+          )
+        ) {
+          data =
+            responseData.results;
+        } else if (
+          Array.isArray(
+            responseData?.Results
+          )
+        ) {
+          data =
+            responseData.Results;
         }
 
         console.log(
-          "My Reviews Data:",
+          "My Reviews Page Data:",
           data
         );
 
@@ -129,101 +356,187 @@ function Reviews() {
 
         const reviewsWithBusiness =
           await Promise.all(
-            data.map(async (review) => {
-              const businessId =
-                review.businessId ??
-                review.BusinessId ??
-                null;
-
-              const placeId =
-                review.placeId ??
-                review.PlaceId ??
-                null;
-
-              // Only fetch details for BUSINESS reviews
-              if (
-                businessId &&
-                !placeId
-              ) {
-                // -----------------------------------------
-                // First try Business object from API
-                // -----------------------------------------
-
-                const existingBusiness =
-                  review.business ||
-                  review.Business ||
+            data.map(
+              async (review) => {
+                const businessId =
+                  review.businessId ??
+                  review.BusinessId ??
                   null;
 
-                const existingBusinessName =
-                  existingBusiness?.businessName ||
-                  existingBusiness?.BusinessName ||
-                  existingBusiness?.name ||
-                  existingBusiness?.Name ||
+                const placeId =
+                  review.placeId ??
+                  review.PlaceId ??
                   null;
 
-                // -----------------------------------------
-                // If name already exists, don't call API
-                // -----------------------------------------
+                // -------------------------------------------------
+                // Only fetch details for BUSINESS reviews
+                // -------------------------------------------------
 
                 if (
-                  existingBusiness &&
-                  existingBusinessName
+                  businessId &&
+                  !placeId
                 ) {
-                  return review;
+                  // -----------------------------------------------
+                  // First try Business object from API
+                  // -----------------------------------------------
+
+                  const existingBusiness =
+                    review.business ||
+                    review.Business ||
+                    null;
+
+                  const existingBusinessName =
+                    existingBusiness?.businessName ||
+                    existingBusiness?.BusinessName ||
+                    existingBusiness?.name ||
+                    existingBusiness?.Name ||
+                    null;
+
+                  // -----------------------------------------------
+                  // If name already exists, don't call API
+                  // -----------------------------------------------
+
+                  if (
+                    existingBusiness &&
+                    existingBusinessName
+                  ) {
+                    return review;
+                  }
+
+                  // -----------------------------------------------
+                  // Check cache
+                  // -----------------------------------------------
+
+                  if (
+                    businessCache[
+                      businessId
+                    ]
+                  ) {
+                    return {
+                      ...review,
+                      business:
+                        businessCache[
+                          businessId
+                        ],
+                      Business:
+                        businessCache[
+                          businessId
+                        ],
+                    };
+                  }
+
+                  // -----------------------------------------------
+                  // Fetch actual business details
+                  // -----------------------------------------------
+
+                  const business =
+                    await getBusinessInfo(
+                      businessId
+                    );
+
+                  if (business) {
+                    businessCache[
+                      businessId
+                    ] = business;
+
+                    return {
+                      ...review,
+                      business,
+                      Business:
+                        business,
+                    };
+                  }
                 }
 
-                // -----------------------------------------
-                // Check cache
-                // -----------------------------------------
-
-                if (
-                  businessCache[businessId]
-                ) {
-                  return {
-                    ...review,
-                    business:
-                      businessCache[businessId],
-                    Business:
-                      businessCache[businessId],
-                  };
-                }
-
-                // -----------------------------------------
-                // Fetch actual business details
-                // -----------------------------------------
-
-                const business =
-                  await getBusinessInfo(
-                    businessId
-                  );
-
-                if (business) {
-                  businessCache[businessId] =
-                    business;
-
-                  return {
-                    ...review,
-                    business,
-                    Business: business,
-                  };
-                }
+                return review;
               }
-
-              return review;
-            })
+            )
           );
 
         console.log(
-          "Final My Reviews:",
+          "Final My Reviews Page:",
           reviewsWithBusiness
         );
 
+        // =================================================
+        // UPDATE REVIEWS
+        // =================================================
+
         setReviews(
-          Array.isArray(
-            reviewsWithBusiness
+          (previousReviews) => {
+            // ---------------------------------------------
+            // PAGE 1 = fresh data
+            // ---------------------------------------------
+
+            if (!append) {
+              return Array.isArray(
+                reviewsWithBusiness
+              )
+                ? reviewsWithBusiness
+                : [];
+            }
+
+            // ---------------------------------------------
+            // LOAD MORE = append without duplicates
+            // ---------------------------------------------
+
+            const existingIds =
+              new Set(
+                previousReviews.map(
+                  (
+                    review,
+                    index
+                  ) =>
+                    String(
+                      getReviewId(
+                        review,
+                        index
+                      )
+                    )
+                )
+              );
+
+            const newReviews =
+              reviewsWithBusiness.filter(
+                (
+                  review,
+                  index
+                ) =>
+                  !existingIds.has(
+                    String(
+                      getReviewId(
+                        review,
+                        index
+                      )
+                    )
+                  )
+              );
+
+            return [
+              ...previousReviews,
+              ...newReviews,
+            ];
+          }
+        );
+
+        // =================================================
+        // UPDATE PAGE
+        // =================================================
+
+        setPage(
+          targetPage
+        );
+
+        // =================================================
+        // UPDATE HAS MORE
+        // =================================================
+
+        setHasMore(
+          getHasMore(
+            responseData,
+            targetPage,
+            reviewsWithBusiness.length
           )
-            ? reviewsWithBusiness
-            : []
         );
       } catch (error) {
         console.error(
@@ -231,22 +544,81 @@ function Reviews() {
           error
         );
 
-        setError(
-          "Unable to load your reviews. Please try again."
-        );
+        if (!append) {
+          setReviews([]);
+        }
+
+        if (
+          error.response?.status ===
+          401
+        ) {
+          setError(
+            "Your session has expired. Please login again."
+          );
+        } else if (
+          error.response?.status ===
+          404
+        ) {
+          setError(
+            "No reviews found."
+          );
+        } else {
+          setError(
+            append
+              ? "Unable to load more reviews. Please try again."
+              : "Unable to load your reviews. Please try again."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (append) {
+          setLoadingMore(false);
+        } else {
+          setLoading(false);
+        }
       }
     };
 
-    loadMyReviews();
+  // =====================================================
+  // INITIAL LOAD
+  // =====================================================
+
+  useEffect(() => {
+    loadMyReviews({
+      targetPage: 1,
+      append: false,
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // =====================================================
+  // LOAD MORE REVIEWS
+  // =====================================================
+
+  const handleLoadMore =
+    async () => {
+      if (
+        loading ||
+        loadingMore ||
+        !hasMore
+      ) {
+        return;
+      }
+
+      await loadMyReviews({
+        targetPage:
+          page + 1,
+        append: true,
+      });
+    };
 
   // =====================================================
   // FORMAT DATE
   // =====================================================
 
-  const formatDate = (date) => {
+  const formatDate = (
+    date
+  ) => {
     if (!date) {
       return "";
     }
@@ -276,7 +648,9 @@ function Reviews() {
   // RENDER STARS
   // =====================================================
 
-  const renderStars = (rating) => {
+  const renderStars = (
+    rating
+  ) => {
     const numericRating =
       Number(rating) || 0;
 
@@ -286,7 +660,8 @@ function Reviews() {
         <FaStar
           key={index}
           className={
-            index < numericRating
+            index <
+            numericRating
               ? "review-star active"
               : "review-star"
           }
@@ -307,7 +682,9 @@ function Reviews() {
 
           <button
             className="reviews-back-btn"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate(-1)
+            }
             title="Go Back"
           >
             <FaArrowLeft />
@@ -346,7 +723,9 @@ function Reviews() {
 
           <button
             className="reviews-back-btn"
-            onClick={() => navigate(-1)}
+            onClick={() =>
+              navigate(-1)
+            }
             title="Go Back"
           >
             <FaArrowLeft />
@@ -429,7 +808,10 @@ function Reviews() {
             <div className="my-reviews-list">
 
               {reviews.map(
-                (review, index) => {
+                (
+                  review,
+                  index
+                ) => {
 
                   // =================================================
                   // PLACE
@@ -561,14 +943,17 @@ function Reviews() {
                   // =================================================
 
                   const reviewId =
-                    review.reviewId ??
-                    review.ReviewId ??
-                    `review-${index}`;
+                    getReviewId(
+                      review,
+                      index
+                    );
 
                   return (
                     <div
                       className="my-review-card"
-                      key={reviewId}
+                      key={
+                        reviewId
+                      }
                     >
 
                       {/* ==========================================
@@ -723,6 +1108,32 @@ function Reviews() {
             </div>
           )}
 
+        {/* =================================================
+            LOAD MORE REVIEWS
+        ================================================= */}
+
+        {!error &&
+          reviews.length > 0 &&
+          hasMore && (
+            <div className="load-more-reviews-container">
+
+              <button
+                className="load-more-reviews-btn"
+                onClick={
+                  handleLoadMore
+                }
+                disabled={
+                  loadingMore
+                }
+              >
+                {loadingMore
+                  ? "Loading Reviews..."
+                  : "Load More Reviews"}
+              </button>
+
+            </div>
+          )}
+
       </div>
 
     </MainLayout>
@@ -730,3 +1141,4 @@ function Reviews() {
 }
 
 export default Reviews;
+

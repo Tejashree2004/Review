@@ -10,7 +10,8 @@ namespace Review.API.Controllers
     {
         private readonly ReviewService _reviewService;
 
-        public ReviewController(ReviewService reviewService)
+        public ReviewController(
+            ReviewService reviewService)
         {
             _reviewService = reviewService;
         }
@@ -21,15 +22,56 @@ namespace Review.API.Controllers
 
         [HttpGet("business/{businessId}")]
         public async Task<IActionResult> GetBusinessReviews(
-            int businessId)
+            int businessId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int? rating = null)
         {
             try
             {
-                var reviews =
-                    await _reviewService.GetBusinessReviewsAsync(
-                        businessId);
+                if (businessId <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid business ID."
+                    });
+                }
 
-                return Ok(reviews);
+                if (page < 1)
+                    page = 1;
+
+                if (pageSize < 1)
+                    pageSize = 10;
+
+                if (pageSize > 50)
+                    pageSize = 50;
+
+                if (rating.HasValue &&
+                    (rating.Value < 1 ||
+                     rating.Value > 5))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message =
+                            "Rating must be between 1 and 5."
+                    });
+                }
+
+                var result =
+                    await _reviewService
+                        .GetBusinessReviewsAsync(
+                            businessId,
+                            page,
+                            pageSize,
+                            rating);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result
+                });
             }
             catch (Exception ex)
             {
@@ -38,7 +80,8 @@ namespace Review.API.Controllers
                     new
                     {
                         success = false,
-                        message = "Failed to load business reviews.",
+                        message =
+                            "Failed to load business reviews.",
                         error = ex.Message
                     });
             }
@@ -50,15 +93,56 @@ namespace Review.API.Controllers
 
         [HttpGet("place/{placeId}")]
         public async Task<IActionResult> GetPlaceReviews(
-            int placeId)
+            int placeId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int? rating = null)
         {
             try
             {
-                var reviews =
-                    await _reviewService.GetReviewsAsync(
-                        placeId);
+                if (placeId <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid place ID."
+                    });
+                }
 
-                return Ok(reviews);
+                if (page < 1)
+                    page = 1;
+
+                if (pageSize < 1)
+                    pageSize = 10;
+
+                if (pageSize > 50)
+                    pageSize = 50;
+
+                if (rating.HasValue &&
+                    (rating.Value < 1 ||
+                     rating.Value > 5))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message =
+                            "Rating must be between 1 and 5."
+                    });
+                }
+
+                var result =
+                    await _reviewService
+                        .GetReviewsAsync(
+                            placeId,
+                            page,
+                            pageSize,
+                            rating);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result
+                });
             }
             catch (Exception ex)
             {
@@ -67,7 +151,65 @@ namespace Review.API.Controllers
                     new
                     {
                         success = false,
-                        message = "Failed to load place reviews.",
+                        message =
+                            "Failed to load place reviews.",
+                        error = ex.Message
+                    });
+            }
+        }
+
+        // =====================================================
+        // GET MY REVIEWS - PAGINATED
+        // =====================================================
+
+        [HttpGet("my/{userId}")]
+        public async Task<IActionResult> GetMyReviews(
+            int userId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                if (userId <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid user ID."
+                    });
+                }
+
+                if (page < 1)
+                    page = 1;
+
+                if (pageSize < 1)
+                    pageSize = 10;
+
+                if (pageSize > 50)
+                    pageSize = 50;
+
+                var result =
+                    await _reviewService
+                        .GetMyReviewsAsync(
+                            userId,
+                            page,
+                            pageSize);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Failed to load your reviews.",
                         error = ex.Message
                     });
             }
@@ -92,12 +234,14 @@ namespace Review.API.Controllers
                     });
                 }
 
-                if (review.Rating < 1 || review.Rating > 5)
+                if (review.Rating < 1 ||
+                    review.Rating > 5)
                 {
                     return BadRequest(new
                     {
                         success = false,
-                        message = "Rating must be between 1 and 5."
+                        message =
+                            "Rating must be between 1 and 5."
                     });
                 }
 
@@ -113,12 +257,14 @@ namespace Review.API.Controllers
                 }
 
                 var result =
-                    await _reviewService.AddReviewAsync(review);
+                    await _reviewService
+                        .AddReviewAsync(review);
 
                 return Ok(new
                 {
                     success = true,
-                    message = "Review added successfully.",
+                    message =
+                        "Review added successfully.",
                     data = result
                 });
             }
@@ -129,7 +275,8 @@ namespace Review.API.Controllers
                     new
                     {
                         success = false,
-                        message = "Failed to add review.",
+                        message =
+                            "Failed to add review.",
                         error = ex.Message
                     });
             }
@@ -146,22 +293,25 @@ namespace Review.API.Controllers
             try
             {
                 var deleted =
-                    await _reviewService.DeleteReviewAsync(
-                        reviewId);
+                    await _reviewService
+                        .DeleteReviewAsync(
+                            reviewId);
 
                 if (!deleted)
                 {
                     return NotFound(new
                     {
                         success = false,
-                        message = "Review not found."
+                        message =
+                            "Review not found."
                     });
                 }
 
                 return Ok(new
                 {
                     success = true,
-                    message = "Review deleted successfully."
+                    message =
+                        "Review deleted successfully."
                 });
             }
             catch (Exception ex)
@@ -171,7 +321,8 @@ namespace Review.API.Controllers
                     new
                     {
                         success = false,
-                        message = "Failed to delete review.",
+                        message =
+                            "Failed to delete review.",
                         error = ex.Message
                     });
             }

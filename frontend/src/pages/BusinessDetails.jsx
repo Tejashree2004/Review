@@ -45,6 +45,15 @@ function BusinessDetails() {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   // =====================================================
+  // REVIEW PAGINATION
+  // =====================================================
+
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [currentReviewPage, setCurrentReviewPage] = useState(1);
+  const [reviewPageSize] = useState(10);
+  const [hasMoreReviews, setHasMoreReviews] = useState(false);
+
+  // =====================================================
   // GET USER ID
   // =====================================================
 
@@ -92,7 +101,11 @@ function BusinessDetails() {
 
       if (businessId) {
         await Promise.all([
-          loadBusinessReviews(businessId),
+          loadBusinessReviews(
+            businessId,
+            1,
+            false
+          ),
           checkFavorite(businessId),
         ]);
       }
@@ -112,22 +125,92 @@ function BusinessDetails() {
   // LOAD BUSINESS REVIEWS
   // =====================================================
 
-  const loadBusinessReviews = async (businessId) => {
+  const loadBusinessReviews = async (
+    businessId,
+    page = 1,
+    append = false
+  ) => {
     try {
       setReviewsLoading(true);
 
       const response =
-        await getBusinessReviews(businessId);
+        await getBusinessReviews(
+          businessId,
+          page,
+          reviewPageSize
+        );
 
       console.log(
         "Business Reviews:",
         response.data
       );
 
-      const reviewData =
-        response.data?.data ||
-        response.data ||
-        [];
+      /*
+        Backend:
+
+        {
+          success: true,
+          data: {
+            reviews: [],
+            totalReviews: 20,
+            page: 1,
+            pageSize: 10,
+            totalPages: 2,
+            hasMore: true,
+            averageRating: 4.5,
+            ...
+          }
+        }
+      */
+
+      const responseData =
+        response.data?.data ??
+        response.data?.Data ??
+        response.data;
+
+      let reviewData = [];
+      let total = 0;
+      let hasMore = false;
+
+      // ================================================
+      // PAGINATED OBJECT RESPONSE
+      // ================================================
+
+      if (
+        responseData &&
+        !Array.isArray(responseData)
+      ) {
+        reviewData =
+          responseData.reviews ??
+          responseData.Reviews ??
+          [];
+
+        total =
+          Number(
+            responseData.totalReviews ??
+            responseData.TotalReviews ??
+            0
+          );
+
+        hasMore =
+          Boolean(
+            responseData.hasMore ??
+            responseData.HasMore ??
+            false
+          );
+      }
+
+      // ================================================
+      // DIRECT ARRAY SUPPORT
+      // ================================================
+
+      else if (
+        Array.isArray(responseData)
+      ) {
+        reviewData = responseData;
+        total = responseData.length;
+        hasMore = false;
+      }
 
       const finalReviews =
         Array.isArray(reviewData)
@@ -139,17 +222,68 @@ function BusinessDetails() {
         finalReviews
       );
 
-      setReviews(finalReviews);
+      // ================================================
+      // APPEND / REPLACE
+      // ================================================
+
+      if (append) {
+        setReviews((previous) => [
+          ...previous,
+          ...finalReviews,
+        ]);
+      } else {
+        setReviews(finalReviews);
+      }
+
+      setTotalReviews(total);
+
+      setCurrentReviewPage(page);
+
+      setHasMoreReviews(hasMore);
+
     } catch (error) {
       console.error(
         "Failed to load business reviews:",
         error
       );
 
-      setReviews([]);
+      if (!append) {
+        setReviews([]);
+        setTotalReviews(0);
+      }
+
+      setHasMoreReviews(false);
+
     } finally {
       setReviewsLoading(false);
     }
+  };
+
+  // =====================================================
+  // LOAD MORE REVIEWS
+  // =====================================================
+
+  const handleLoadMoreReviews = async () => {
+    const businessId =
+      business?.businessId ||
+      business?.id;
+
+    if (
+      !businessId ||
+      reviewsLoading ||
+      !hasMoreReviews
+    ) {
+      return;
+    }
+
+    const nextPage =
+      currentReviewPage + 1;
+
+    await loadBusinessReviews(
+      businessId,
+      nextPage,
+      true
+    );
   };
 
   // =====================================================
@@ -169,12 +303,15 @@ function BusinessDetails() {
         await getFavorites(userId);
 
       const favorites =
-        response.data || [];
+        response.data?.data ||
+        response.data ||
+        [];
 
       const currentBusinessId =
         Number(businessId);
 
       const alreadyFavorite =
+        Array.isArray(favorites) &&
         favorites.some(
           (favorite) =>
             Number(
@@ -186,6 +323,7 @@ function BusinessDetails() {
         );
 
       setIsFavorite(alreadyFavorite);
+
     } catch (error) {
       console.error(
         "Failed to check business favorite:",
@@ -256,6 +394,7 @@ function BusinessDetails() {
 
         setIsFavorite(true);
       }
+
     } catch (error) {
       console.error(
         "Favorite operation failed:",
@@ -278,6 +417,7 @@ function BusinessDetails() {
           "Something went wrong while updating favorites."
         );
       }
+
     } finally {
       setFavoriteLoading(false);
     }
@@ -455,11 +595,24 @@ function BusinessDetails() {
   // =====================================================
 
   const getReviewerName = (review) => {
-    if (typeof review.User === "string") {
+    // ReviewItemDto response
+    if (review.UserName) {
+      return review.UserName;
+    }
+
+    if (review.userName) {
+      return review.userName;
+    }
+
+    if (
+      typeof review.User === "string"
+    ) {
       return review.User;
     }
 
-    if (typeof review.user === "string") {
+    if (
+      typeof review.user === "string"
+    ) {
       return review.user;
     }
 
@@ -522,10 +675,14 @@ function BusinessDetails() {
   // GET REVIEW ID
   // =====================================================
 
-  const getReviewId = (review) => {
+  const getReviewId = (
+    review,
+    index
+  ) => {
     return (
       review.ReviewId ??
-      review.reviewId
+      review.reviewId ??
+      `review-${index}`
     );
   };
 
@@ -534,9 +691,28 @@ function BusinessDetails() {
   // =====================================================
 
   const calculateAverageRating = () => {
+    // Backend total review summary can be used
+    // through business rating when available.
+
     if (!reviews.length) {
       return Number(
         business?.rating ?? 0
+      ).toFixed(1);
+    }
+
+    /*
+      Do NOT calculate using only the first
+      10 reviews when pagination has more pages.
+      The business rating from backend remains
+      the fallback for the complete business.
+    */
+
+    if (
+      business?.rating !== undefined &&
+      business?.rating !== null
+    ) {
+      return Number(
+        business.rating
       ).toFixed(1);
     }
 
@@ -611,8 +787,9 @@ function BusinessDetails() {
     calculateAverageRating();
 
   const reviewCount =
-    reviews.length ||
+    totalReviews ||
     business.reviewCount ||
+    reviews.length ||
     0;
 
   const isOpen =
@@ -854,11 +1031,12 @@ function BusinessDetails() {
 
         {/* REVIEWS LOADING */}
 
-        {reviewsLoading && (
-          <div className="reviews-loading">
-            Loading reviews...
-          </div>
-        )}
+        {reviewsLoading &&
+          reviews.length === 0 && (
+            <div className="reviews-loading">
+              Loading reviews...
+            </div>
+          )}
 
         {/* NO REVIEWS */}
 
@@ -890,7 +1068,7 @@ function BusinessDetails() {
 
               {reviews
                 .slice(0, 3)
-                .map((review) => {
+                .map((review, index) => {
 
                   const reviewerName =
                     getReviewerName(review);
@@ -905,7 +1083,10 @@ function BusinessDetails() {
                     getReviewDate(review);
 
                   const reviewId =
-                    getReviewId(review);
+                    getReviewId(
+                      review,
+                      index
+                    );
 
                   return (
                     <div
@@ -986,7 +1167,7 @@ function BusinessDetails() {
         {/* VIEW ALL */}
 
         {!reviewsLoading &&
-          reviews.length > 3 && (
+          totalReviews > 3 && (
 
             <div className="view-all-reviews-wrapper">
 

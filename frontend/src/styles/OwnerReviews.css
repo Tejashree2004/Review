@@ -879,3 +879,102 @@
   }
 
 }
+
+/* =====================================================
+   LOAD MORE REVIEWS
+===================================================== */
+
+.load-more-reviews-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 28px 0 40px;
+}
+
+.load-more-reviews-btn {
+  min-width: 190px;
+  min-height: 44px;
+  padding: 11px 24px;
+
+  border: 1px solid #111111;
+  border-radius: 8px;
+
+  background: #111111;
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.load-more-reviews-btn:hover:not(:disabled) {
+  background: #ffffff;
+  color: #111111;
+  border-color: #111111;
+  transform: translateY(-1px);
+}
+
+.load-more-reviews-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.load-more-reviews-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.load-more-spinner {
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+
+  border-radius: 50%;
+
+  display: inline-block;
+
+  animation: ownerReviewsSpinner 0.7s linear infinite;
+}
+
+@keyframes ownerReviewsSpinner {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+  .load-more-reviews-container {
+    margin: 24px 0 32px;
+    padding: 0 16px;
+  }
+
+  .load-more-reviews-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    font-size: 14px;
+  }
+}
