@@ -21,6 +21,8 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/MyBusinesses.css";
 
 const API_BASE =
@@ -34,6 +36,53 @@ function MyBusinesses() {
 
   const [loading, setLoading] =
     useState(true);
+
+  // =====================================================
+  // DIALOG
+  // =====================================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "REVIO",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    onConfirm: null,
+  });
+
+  const showDialog = ({
+    title = "REVIO",
+    message,
+    type = "info",
+    confirmText = "OK",
+    onConfirm = null,
+  }) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      onConfirm,
+    });
+  };
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  const handleDialogConfirm = () => {
+    const callback = dialog.onConfirm;
+
+    closeDialog();
+
+    if (callback) {
+      callback();
+    }
+  };
 
   // =====================================================
   // TOKEN
@@ -68,7 +117,18 @@ function MyBusinesses() {
     const token = getToken();
 
     if (!token) {
-      navigate("/login");
+      setLoading(false);
+
+      showDialog({
+        title: "Login Required",
+        message:
+          "Please login first to view your businesses.",
+        type: "warning",
+        onConfirm: () => {
+          navigate("/login");
+        },
+      });
+
       return;
     }
 
@@ -98,7 +158,6 @@ function MyBusinesses() {
           ? data
           : []
       );
-
     } catch (error) {
       console.error(
         "Failed to load businesses:",
@@ -109,20 +168,29 @@ function MyBusinesses() {
         error.response?.status ===
         401
       ) {
-        alert(
-          "Your login session has expired. Please login again."
-        );
+        showDialog({
+          title: "Session Expired",
+          message:
+            "Your login session has expired. Please login again.",
+          type: "warning",
+          onConfirm: () => {
+            navigate("/login");
+          },
+        });
 
-        navigate("/login");
         return;
       }
 
-      alert(
-        "Unable to load your businesses."
-      );
+      showDialog({
+        title: "Unable to Load",
+        message:
+          error.response?.data?.message ||
+          error.response?.data?.Message ||
+          "Unable to load your businesses. Please try again.",
+        type: "error",
+      });
 
       setBusinesses([]);
-
     } finally {
       setLoading(false);
     }
@@ -294,9 +362,13 @@ function MyBusinesses() {
         );
 
       if (!businessId) {
-        alert(
-          "Business ID not found."
-        );
+        showDialog({
+          title: "Business Error",
+          message:
+            "Business ID not found.",
+          type: "error",
+        });
+
         return;
       }
 
@@ -317,9 +389,13 @@ function MyBusinesses() {
         );
 
       if (!businessId) {
-        alert(
-          "Business ID not found."
-        );
+        showDialog({
+          title: "Business Error",
+          message:
+            "Business ID not found.",
+          type: "error",
+        });
+
         return;
       }
 
@@ -388,6 +464,15 @@ function MyBusinesses() {
           </div>
 
         </main>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          onConfirm={handleDialogConfirm}
+        />
 
       </div>
     );
@@ -629,9 +714,7 @@ function MyBusinesses() {
                     }
                   >
 
-                    {/* =========================
-                        IMAGE
-                    ========================= */}
+                    {/* IMAGE */}
 
                     <div className="my-business-card-image">
 
@@ -659,9 +742,7 @@ function MyBusinesses() {
                     </div>
 
 
-                    {/* =========================
-                        CONTENT
-                    ========================= */}
+                    {/* CONTENT */}
 
                     <div className="my-business-card-content">
 
@@ -823,6 +904,20 @@ function MyBusinesses() {
         </span>
 
       </footer>
+
+
+      {/* =================================================
+          STANDARD DIALOG
+      ================================================= */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        onConfirm={handleDialogConfirm}
+      />
 
     </div>
   );

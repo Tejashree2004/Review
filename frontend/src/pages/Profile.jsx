@@ -13,6 +13,8 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/Profile.css";
 
 function Profile() {
@@ -20,6 +22,64 @@ function Profile() {
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // ==========================================
+  // DIALOG STATE
+  // ==========================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    action: null,
+  });
+
+  // ==========================================
+  // SHOW DIALOG
+  // ==========================================
+
+  const showDialog = (
+    title,
+    message,
+    type = "info",
+    action = null
+  ) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText: "OK",
+      action,
+    });
+  };
+
+  // ==========================================
+  // CLOSE DIALOG
+  // ==========================================
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  // ==========================================
+  // HANDLE DIALOG CONFIRM
+  // ==========================================
+
+  const handleDialogConfirm = () => {
+    const action = dialog.action;
+
+    closeDialog();
+
+    if (action) {
+      action();
+    }
+  };
 
   // ==========================================
   // Get User ID
@@ -46,27 +106,64 @@ function Profile() {
       const userId = getUserId();
 
       if (!userId) {
-        alert("Please login first.");
-        navigate("/login");
+        showDialog(
+          "Login Required",
+          "Please login first.",
+          "warning",
+          () => navigate("/login")
+        );
+
+        setLoading(false);
+
         return;
       }
 
       const response = await getProfile(userId);
 
-      console.log("Profile Data:", response.data);
+      console.log(
+        "Profile Data:",
+        response.data
+      );
 
       setProfile(response.data);
     } catch (error) {
-      console.error("Failed to load profile:", error);
+      console.error(
+        "Failed to load profile:",
+        error
+      );
 
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
+      if (
+        error.response?.data?.message
+      ) {
+        showDialog(
+          "Error",
+          error.response.data.message,
+          "error"
+        );
       } else {
-        alert("Failed to load profile.");
+        showDialog(
+          "Error",
+          "Failed to load profile.",
+          "error"
+        );
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  // ==========================================
+  // Logout
+  // ==========================================
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("UserId");
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
+
+    navigate("/login");
   };
 
   // ==========================================
@@ -79,6 +176,15 @@ function Profile() {
         <div className="profile-loading">
           Loading Profile...
         </div>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          onConfirm={handleDialogConfirm}
+        />
       </MainLayout>
     );
   }
@@ -90,16 +196,33 @@ function Profile() {
   if (!profile) {
     return (
       <MainLayout>
+
         <div className="profile-not-found">
-          <h2>Profile Not Found</h2>
+
+          <h2>
+            Profile Not Found
+          </h2>
 
           <button
             className="profile-back-btn"
-            onClick={() => navigate("/home")}
+            onClick={() =>
+              navigate("/home")
+            }
           >
             Go Back
           </button>
+
         </div>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          onConfirm={handleDialogConfirm}
+        />
+
       </MainLayout>
     );
   }
@@ -111,9 +234,7 @@ function Profile() {
   return (
     <MainLayout>
 
-      {/* ==========================
-          Back Button
-      ========================== */}
+      {/* Back Button */}
 
       <button
         className="profile-back-icon"
@@ -124,9 +245,7 @@ function Profile() {
       </button>
 
 
-      {/* ==========================
-          Profile Header
-      ========================== */}
+      {/* Profile Header */}
 
       <div className="profile-container">
 
@@ -148,8 +267,11 @@ function Profile() {
 
             {profile.isEmailVerified && (
               <span className="verified-badge">
+
                 <FaCheckCircle />
+
                 Email Verified
+
               </span>
             )}
 
@@ -158,9 +280,7 @@ function Profile() {
         </div>
 
 
-        {/* ==========================
-            Personal Information
-        ========================== */}
+        {/* Personal Information */}
 
         <div className="profile-card">
 
@@ -169,6 +289,7 @@ function Profile() {
           </h2>
 
           <div className="profile-info-grid">
+
 
             {/* Full Name */}
 
@@ -179,6 +300,7 @@ function Profile() {
               </div>
 
               <div>
+
                 <span>
                   Full Name
                 </span>
@@ -186,6 +308,7 @@ function Profile() {
                 <strong>
                   {profile.fullName}
                 </strong>
+
               </div>
 
             </div>
@@ -200,6 +323,7 @@ function Profile() {
               </div>
 
               <div>
+
                 <span>
                   Email
                 </span>
@@ -207,6 +331,7 @@ function Profile() {
                 <strong>
                   {profile.email}
                 </strong>
+
               </div>
 
             </div>
@@ -221,6 +346,7 @@ function Profile() {
               </div>
 
               <div>
+
                 <span>
                   Mobile Number
                 </span>
@@ -228,6 +354,7 @@ function Profile() {
                 <strong>
                   {profile.mobileNumber}
                 </strong>
+
               </div>
 
             </div>
@@ -242,6 +369,7 @@ function Profile() {
               </div>
 
               <div>
+
                 <span>
                   Member Since
                 </span>
@@ -251,6 +379,7 @@ function Profile() {
                     profile.createdAt
                   ).toLocaleDateString()}
                 </strong>
+
               </div>
 
             </div>
@@ -260,9 +389,7 @@ function Profile() {
         </div>
 
 
-        {/* ==========================
-            Account Status
-        ========================== */}
+        {/* Account Status */}
 
         <div className="profile-card">
 
@@ -273,6 +400,7 @@ function Profile() {
           <div className="account-status">
 
             <div>
+
               <span>
                 Account
               </span>
@@ -280,9 +408,12 @@ function Profile() {
               <strong>
                 Active
               </strong>
+
             </div>
 
+
             <div>
+
               <span>
                 Email Verification
               </span>
@@ -298,6 +429,7 @@ function Profile() {
                   ? "Verified"
                   : "Not Verified"}
               </strong>
+
             </div>
 
           </div>
@@ -305,29 +437,30 @@ function Profile() {
         </div>
 
 
-        {/* ==========================
-            Future Actions
-        ========================== */}
+        {/* Actions */}
 
         <div className="profile-actions">
 
-         <button
-  className="profile-action-btn"
-  onClick={() => navigate("/edit-profile")}
->
-  Edit Profile
-</button>
+          <button
+            className="profile-action-btn"
+            onClick={() =>
+              navigate("/edit-profile")
+            }
+          >
+            Edit Profile
+          </button>
+
 
           <button
             className="profile-action-btn logout-btn"
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("userId");
-              localStorage.removeItem("user");
-              localStorage.removeItem("isLoggedIn");
-
-              navigate("/login");
-            }}
+            onClick={() =>
+              showDialog(
+                "Logout",
+                "Are you sure you want to logout?",
+                "warning",
+                handleLogout
+              )
+            }
           >
             Logout
           </button>
@@ -335,6 +468,18 @@ function Profile() {
         </div>
 
       </div>
+
+
+      {/* DIALOG */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        onConfirm={handleDialogConfirm}
+      />
 
     </MainLayout>
   );

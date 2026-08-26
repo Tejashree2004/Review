@@ -1,0 +1,244 @@
+/* =====================================================
+   DIALOG OVERLAY
+===================================================== */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.75);
+
+  backdrop-filter: blur(4px);
+}
+
+
+/* =====================================================
+   DIALOG BOX
+===================================================== */
+
+.dialog-box {
+  width: 100%;
+  max-width: 430px;
+
+  background: #111;
+  color: #fff;
+
+  border: 1px solid #333;
+  border-radius: 14px;
+
+  padding: 28px 24px 24px;
+
+  text-align: center;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.6);
+
+  animation: dialogFadeIn 0.2s ease-out;
+}
+
+
+/* =====================================================
+   ICON
+===================================================== */
+
+.dialog-icon {
+  width: 58px;
+  height: 58px;
+
+  margin: 0 auto 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-size: 25px;
+
+  background: #222;
+  color: #fff;
+}
+
+
+/* =====================================================
+   CONTENT
+===================================================== */
+
+.dialog-content h2 {
+  margin: 0 0 10px;
+
+  font-size: 21px;
+  font-weight: 600;
+
+  color: #fff;
+}
+
+.dialog-content p {
+  margin: 0;
+
+  color: #bbb;
+
+  font-size: 15px;
+  line-height: 1.6;
+
+  word-break: break-word;
+}
+
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.dialog-actions {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 10px;
+
+  margin-top: 24px;
+}
+
+
+/* =====================================================
+   BUTTON
+===================================================== */
+
+.dialog-btn {
+  min-width: 100px;
+
+  padding: 11px 20px;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dialog-btn:hover {
+  transform: translateY(-1px);
+}
+
+
+/* =====================================================
+   CONFIRM BUTTON
+===================================================== */
+
+.dialog-confirm-btn {
+  background: #fff;
+  color: #000;
+
+  border: 1px solid #fff;
+}
+
+.dialog-confirm-btn:hover {
+  background: #ddd;
+  border-color: #ddd;
+}
+
+
+/* =====================================================
+   CANCEL BUTTON
+===================================================== */
+
+.dialog-cancel-btn {
+  background: #222;
+  color: #fff;
+
+  border: 1px solid #444;
+}
+
+.dialog-cancel-btn:hover {
+  background: #333;
+  border-color: #555;
+}
+
+
+/* =====================================================
+   TYPES
+===================================================== */
+
+.dialog-success .dialog-icon {
+  color: #fff;
+}
+
+.dialog-error .dialog-icon {
+  color: #fff;
+}
+
+.dialog-info .dialog-icon {
+  color: #fff;
+}
+
+
+/* =====================================================
+   ANIMATION
+===================================================== */
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+  .dialog-overlay {
+    padding: 16px;
+  }
+
+  .dialog-box {
+    max-width: 100%;
+
+    padding: 24px 18px 20px;
+
+    border-radius: 12px;
+  }
+
+  .dialog-icon {
+    width: 52px;
+    height: 52px;
+
+    font-size: 22px;
+  }
+
+  .dialog-content h2 {
+    font-size: 19px;
+  }
+
+  .dialog-content p {
+    font-size: 14px;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dialog-btn {
+    width: 100%;
+  }
+}

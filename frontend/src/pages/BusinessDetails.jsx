@@ -25,6 +25,8 @@ import {
   FaPen,
 } from "react-icons/fa";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/PlaceDetails.css";
 
 function BusinessDetails() {
@@ -36,6 +38,53 @@ function BusinessDetails() {
 
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  // =====================================================
+  // DIALOG
+  // =====================================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "REVIO",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    onConfirm: null,
+  });
+
+  const showDialog = ({
+    title = "REVIO",
+    message,
+    type = "info",
+    confirmText = "OK",
+    onConfirm = null,
+  }) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      onConfirm,
+    });
+  };
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  const handleDialogConfirm = () => {
+    const callback = dialog.onConfirm;
+
+    closeDialog();
+
+    if (callback) {
+      callback();
+    }
+  };
 
   // =====================================================
   // FAVORITE
@@ -145,24 +194,6 @@ function BusinessDetails() {
         response.data
       );
 
-      /*
-        Backend:
-
-        {
-          success: true,
-          data: {
-            reviews: [],
-            totalReviews: 20,
-            page: 1,
-            pageSize: 10,
-            totalPages: 2,
-            hasMore: true,
-            averageRating: 4.5,
-            ...
-          }
-        }
-      */
-
       const responseData =
         response.data?.data ??
         response.data?.Data ??
@@ -171,10 +202,6 @@ function BusinessDetails() {
       let reviewData = [];
       let total = 0;
       let hasMore = false;
-
-      // ================================================
-      // PAGINATED OBJECT RESPONSE
-      // ================================================
 
       if (
         responseData &&
@@ -198,13 +225,7 @@ function BusinessDetails() {
             responseData.HasMore ??
             false
           );
-      }
-
-      // ================================================
-      // DIRECT ARRAY SUPPORT
-      // ================================================
-
-      else if (
+      } else if (
         Array.isArray(responseData)
       ) {
         reviewData = responseData;
@@ -222,10 +243,6 @@ function BusinessDetails() {
         finalReviews
       );
 
-      // ================================================
-      // APPEND / REPLACE
-      // ================================================
-
       if (append) {
         setReviews((previous) => [
           ...previous,
@@ -236,9 +253,7 @@ function BusinessDetails() {
       }
 
       setTotalReviews(total);
-
       setCurrentReviewPage(page);
-
       setHasMoreReviews(hasMore);
 
     } catch (error) {
@@ -343,9 +358,15 @@ function BusinessDetails() {
       const userId = getUserId();
 
       if (!userId) {
-        alert(
-          "Please login first to add favorites."
-        );
+        showDialog({
+          title: "Login Required",
+          message:
+            "Please login first to add favorites.",
+          type: "warning",
+          onConfirm: () => {
+            navigate("/login");
+          },
+        });
 
         return;
       }
@@ -369,10 +390,6 @@ function BusinessDetails() {
 
       setFavoriteLoading(true);
 
-      // ================================================
-      // REMOVE BUSINESS FROM FAVORITES
-      // ================================================
-
       if (isFavorite) {
         await removeBusinessFavorite(
           userId,
@@ -380,13 +397,7 @@ function BusinessDetails() {
         );
 
         setIsFavorite(false);
-      }
-
-      // ================================================
-      // ADD BUSINESS TO FAVORITES
-      // ================================================
-
-      else {
+      } else {
         await addBusinessFavorite({
           userId: userId,
           businessId: Number(businessId),
@@ -409,13 +420,19 @@ function BusinessDetails() {
       if (
         error.response?.data?.message
       ) {
-        alert(
-          error.response.data.message
-        );
+        showDialog({
+          title: "Favorite Error",
+          message:
+            error.response.data.message,
+          type: "error",
+        });
       } else {
-        alert(
-          "Something went wrong while updating favorites."
-        );
+        showDialog({
+          title: "Something Went Wrong",
+          message:
+            "Something went wrong while updating favorites.",
+          type: "error",
+        });
       }
 
     } finally {
@@ -457,9 +474,15 @@ function BusinessDetails() {
     const userId = getUserId();
 
     if (!userId) {
-      alert(
-        "Please login first to write a review."
-      );
+      showDialog({
+        title: "Login Required",
+        message:
+          "Please login first to write a review.",
+        type: "warning",
+        onConfirm: () => {
+          navigate("/login");
+        },
+      });
 
       return;
     }
@@ -595,7 +618,6 @@ function BusinessDetails() {
   // =====================================================
 
   const getReviewerName = (review) => {
-    // ReviewItemDto response
     if (review.UserName) {
       return review.UserName;
     }
@@ -691,21 +713,11 @@ function BusinessDetails() {
   // =====================================================
 
   const calculateAverageRating = () => {
-    // Backend total review summary can be used
-    // through business rating when available.
-
     if (!reviews.length) {
       return Number(
         business?.rating ?? 0
       ).toFixed(1);
     }
-
-    /*
-      Do NOT calculate using only the first
-      10 reviews when pagination has more pages.
-      The business rating from backend remains
-      the fallback for the complete business.
-    */
 
     if (
       business?.rating !== undefined &&
@@ -739,6 +751,15 @@ function BusinessDetails() {
         <h2 style={{ color: "#fff" }}>
           Loading...
         </h2>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          onConfirm={handleDialogConfirm}
+        />
       </MainLayout>
     );
   }
@@ -750,6 +771,7 @@ function BusinessDetails() {
   if (!business) {
     return (
       <MainLayout>
+
         <button
           className="back-btn"
           onClick={() => navigate(-1)}
@@ -761,6 +783,16 @@ function BusinessDetails() {
         <h2 style={{ color: "#fff" }}>
           Business Not Found
         </h2>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          onConfirm={handleDialogConfirm}
+        />
+
       </MainLayout>
     );
   }
@@ -809,9 +841,7 @@ function BusinessDetails() {
   return (
     <MainLayout>
 
-      {/* =================================================
-          BACK BUTTON
-      ================================================= */}
+      {/* BACK BUTTON */}
 
       <button
         className="back-btn"
@@ -821,9 +851,8 @@ function BusinessDetails() {
         <FaArrowLeft />
       </button>
 
-      {/* =================================================
-          BUSINESS DETAILS
-      ================================================= */}
+
+      {/* BUSINESS DETAILS */}
 
       <div className="place-details">
 
@@ -859,6 +888,7 @@ function BusinessDetails() {
 
         </div>
 
+
         {/* DETAILS */}
 
         <div className="details-card">
@@ -866,6 +896,7 @@ function BusinessDetails() {
           <h1>
             {businessName}
           </h1>
+
 
           {/* RATING */}
 
@@ -883,6 +914,7 @@ function BusinessDetails() {
 
           </div>
 
+
           {/* LOCATION */}
 
           <div className="info-row">
@@ -899,6 +931,7 @@ function BusinessDetails() {
             </span>
 
           </div>
+
 
           {/* CATEGORY */}
 
@@ -919,6 +952,7 @@ function BusinessDetails() {
 
           </div>
 
+
           {/* REVIEWS */}
 
           <div className="info-row">
@@ -934,6 +968,7 @@ function BusinessDetails() {
             </strong>
 
           </div>
+
 
           {/* STATUS */}
 
@@ -956,6 +991,7 @@ function BusinessDetails() {
             </strong>
 
           </div>
+
 
           {/* ACTION BUTTONS */}
 
@@ -989,9 +1025,8 @@ function BusinessDetails() {
 
       </div>
 
-      {/* =================================================
-          ABOUT
-      ================================================= */}
+
+      {/* ABOUT */}
 
       <div className="info-card">
 
@@ -1005,13 +1040,10 @@ function BusinessDetails() {
 
       </div>
 
-      {/* =================================================
-          CUSTOMER REVIEWS
-      ================================================= */}
+
+      {/* CUSTOMER REVIEWS */}
 
       <div className="customer-reviews-card">
-
-        {/* HEADER */}
 
         <div className="customer-reviews-header">
 
@@ -1029,6 +1061,7 @@ function BusinessDetails() {
 
         </div>
 
+
         {/* REVIEWS LOADING */}
 
         {reviewsLoading &&
@@ -1037,6 +1070,7 @@ function BusinessDetails() {
               Loading reviews...
             </div>
           )}
+
 
         {/* NO REVIEWS */}
 
@@ -1057,9 +1091,8 @@ function BusinessDetails() {
             </div>
           )}
 
-        {/* =================================================
-            REVIEW LIST
-        ================================================= */}
+
+        {/* REVIEW LIST */}
 
         {!reviewsLoading &&
           reviews.length > 0 && (
@@ -1094,8 +1127,6 @@ function BusinessDetails() {
                       key={reviewId}
                     >
 
-                      {/* REVIEW HEADER */}
-
                       <div className="customer-review-top">
 
                         <div className="reviewer-info">
@@ -1124,21 +1155,17 @@ function BusinessDetails() {
 
                         </div>
 
-                        {/* STARS */}
-
                         {renderStars(
                           reviewRating
                         )}
 
                       </div>
 
-                      {/* COMMENT */}
 
                       <p className="customer-review-comment">
                         "{reviewComment}"
                       </p>
 
-                      {/* OWNER REPLY */}
 
                       {(review.OwnerReply ||
                         review.ownerReply) && (
@@ -1164,6 +1191,7 @@ function BusinessDetails() {
             </div>
           )}
 
+
         {/* VIEW ALL */}
 
         {!reviewsLoading &&
@@ -1184,6 +1212,20 @@ function BusinessDetails() {
           )}
 
       </div>
+
+
+      {/* =================================================
+          STANDARD DIALOG
+      ================================================= */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        onConfirm={handleDialogConfirm}
+      />
 
     </MainLayout>
   );

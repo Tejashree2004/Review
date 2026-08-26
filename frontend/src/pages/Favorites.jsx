@@ -18,6 +18,8 @@ import {
   FaThLarge,
 } from "react-icons/fa";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/Favorites.css";
 
 function Favorites() {
@@ -25,6 +27,72 @@ function Favorites() {
 
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // =====================================================
+  // DIALOG
+  // =====================================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "REVIO",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    showCancel: false,
+    onConfirm: null,
+    onCancel: null,
+  });
+
+  const showDialog = ({
+    title = "REVIO",
+    message,
+    type = "info",
+    confirmText = "OK",
+    cancelText = "Cancel",
+    showCancel = false,
+    onConfirm = null,
+    onCancel = null,
+  }) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      showCancel,
+      onConfirm,
+      onCancel,
+    });
+  };
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  const handleDialogConfirm = () => {
+    const callback = dialog.onConfirm;
+
+    closeDialog();
+
+    if (callback) {
+      callback();
+    }
+  };
+
+  const handleDialogCancel = () => {
+    const callback = dialog.onCancel;
+
+    closeDialog();
+
+    if (callback) {
+      callback();
+    }
+  };
 
   // =====================================================
   // GET USER ID
@@ -55,8 +123,16 @@ function Favorites() {
       const userId = getUserId();
 
       if (!userId) {
-        alert("Please login first.");
-        navigate("/login");
+        showDialog({
+          title: "Login Required",
+          message:
+            "Please login first.",
+          type: "warning",
+          onConfirm: () => {
+            navigate("/login");
+          },
+        });
+
         return;
       }
 
@@ -82,6 +158,14 @@ function Favorites() {
       );
 
       setFavorites([]);
+
+      showDialog({
+        title: "Favorites Error",
+        message:
+          error.response?.data?.message ||
+          "Failed to load favorites. Please try again.",
+        type: "error",
+      });
 
     } finally {
       setLoading(false);
@@ -163,73 +247,148 @@ function Favorites() {
   };
 
   // =====================================================
+  // GET FAVORITE ID
+  // =====================================================
+
+  const getFavoriteId = (favorite) => {
+    return (
+      favorite.favoriteId ??
+      favorite.FavoriteId
+    );
+  };
+
+  // =====================================================
   // REMOVE FAVORITE
   // =====================================================
 
-  const handleRemoveFavorite = async (
+  const removeFavoriteFromBackend =
+    async (favorite) => {
+      try {
+        const userId = getUserId();
+
+        if (!userId) {
+          return;
+        }
+
+        const placeId =
+          getPlaceId(favorite);
+
+        const businessId =
+          getBusinessId(favorite);
+
+        // ==========================================
+        // REMOVE PLACE
+        // ==========================================
+
+        if (
+          isPlaceFavorite(favorite) &&
+          placeId
+        ) {
+          await removeFavorite(
+            userId,
+            placeId
+          );
+        }
+
+        // ==========================================
+        // REMOVE BUSINESS
+        // ==========================================
+
+        else if (
+          isBusinessFavorite(favorite) &&
+          businessId
+        ) {
+          await removeBusinessFavorite(
+            userId,
+            businessId
+          );
+        }
+
+        // ==========================================
+        // REMOVE FROM UI
+        // ==========================================
+
+        const favoriteId =
+          getFavoriteId(favorite);
+
+        setFavorites(
+          (previous) =>
+            previous.filter(
+              (item) => {
+                const itemId =
+                  getFavoriteId(item);
+
+                if (
+                  favoriteId != null &&
+                  itemId != null
+                ) {
+                  return (
+                    itemId !==
+                    favoriteId
+                  );
+                }
+
+                return item !== favorite;
+              }
+            )
+        );
+
+      } catch (error) {
+        console.error(
+          "Failed to remove favorite:",
+          error
+        );
+
+        showDialog({
+          title: "Remove Failed",
+          message:
+            error.response?.data?.message ||
+            "Failed to remove favorite. Please try again.",
+          type: "error",
+        });
+      }
+    };
+
+  // =====================================================
+  // REMOVE CONFIRMATION
+  // =====================================================
+
+  const handleRemoveFavorite = (
     favorite
   ) => {
-    try {
-      const userId = getUserId();
+    const place =
+      getPlace(favorite);
 
-      if (!userId) {
-        return;
-      }
+    const business =
+      getBusiness(favorite);
 
-      const placeId =
-        getPlaceId(favorite);
-
-      const businessId =
-        getBusinessId(favorite);
-
-      // ==========================================
-      // REMOVE PLACE
-      // ==========================================
-
-      if (
-        isPlaceFavorite(favorite) &&
-        placeId
-      ) {
-        await removeFavorite(
-          userId,
-          placeId
-        );
-      }
-
-      // ==========================================
-      // REMOVE BUSINESS
-      // ==========================================
-
-      else if (
-        isBusinessFavorite(favorite) &&
-        businessId
-      ) {
-        await removeBusinessFavorite(
-          userId,
-          businessId
-        );
-      }
-
-      // Remove immediately from UI
-      setFavorites(
-        (previous) =>
-          previous.filter(
-            (item) =>
-              item.favoriteId !==
-              favorite.favoriteId
+    const name =
+      isBusinessFavorite(favorite)
+        ? (
+            business?.businessName ??
+            business?.BusinessName ??
+            "this business"
           )
-      );
+        : (
+            place?.name ??
+            place?.Name ??
+            "this place"
+          );
 
-    } catch (error) {
-      console.error(
-        "Failed to remove favorite:",
-        error
-      );
-
-      alert(
-        "Failed to remove favorite."
-      );
-    }
+    showDialog({
+      title: "Remove Favorite?",
+      message:
+        `Are you sure you want to remove "${name}" from your favorites?`,
+      type: "warning",
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      showCancel: true,
+      onConfirm: () => {
+        removeFavoriteFromBackend(
+          favorite
+        );
+      },
+    });
   };
 
   // =====================================================
@@ -282,6 +441,22 @@ function Favorites() {
 
         </div>
 
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={dialog.confirmText}
+          cancelText={dialog.cancelText}
+          showCancel={dialog.showCancel}
+          onConfirm={
+            handleDialogConfirm
+          }
+          onCancel={
+            handleDialogCancel
+          }
+        />
+
       </MainLayout>
     );
   }
@@ -295,9 +470,7 @@ function Favorites() {
 
       <div className="favorites-page">
 
-        {/* ==========================================
-            HEADER
-        ========================================== */}
+        {/* HEADER */}
 
         <div className="favorites-header">
 
@@ -327,9 +500,7 @@ function Favorites() {
 
         </div>
 
-        {/* ==========================================
-            EMPTY
-        ========================================== */}
+        {/* EMPTY */}
 
         {favorites.length === 0 ? (
 
@@ -463,13 +634,18 @@ function Favorites() {
                         ""
                       );
 
+                const favoriteId =
+                  getFavoriteId(
+                    favorite
+                  );
+
                 return (
 
                   <div
                     className="favorite-card"
                     key={
-                      favorite.favoriteId ??
-                      favorite.FavoriteId
+                      favoriteId ??
+                      `${businessFavorite ? "business" : "place"}-${getBusinessId(favorite) ?? getPlaceId(favorite)}`
                     }
                     onClick={() =>
                       handleFavoriteClick(
@@ -478,9 +654,7 @@ function Favorites() {
                     }
                   >
 
-                    {/* ==================================
-                        IMAGE
-                    ================================== */}
+                    {/* IMAGE */}
 
                     <div className="favorite-image-wrapper">
 
@@ -518,9 +692,7 @@ function Favorites() {
 
                     </div>
 
-                    {/* ==================================
-                        CONTENT
-                    ================================== */}
+                    {/* CONTENT */}
 
                     <div className="favorite-content">
 
@@ -573,7 +745,6 @@ function Favorites() {
                     </div>
 
                   </div>
-
                 );
               }
             )}
@@ -583,6 +754,24 @@ function Favorites() {
         )}
 
       </div>
+
+      {/* STANDARD DIALOG */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        cancelText={dialog.cancelText}
+        showCancel={dialog.showCancel}
+        onConfirm={
+          handleDialogConfirm
+        }
+        onCancel={
+          handleDialogCancel
+        }
+      />
 
     </MainLayout>
   );

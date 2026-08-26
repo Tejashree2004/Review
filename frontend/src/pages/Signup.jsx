@@ -5,6 +5,7 @@ import AuthLayout from "../layouts/AuthLayout";
 import Input from "../components/Input";
 import PasswordInput from "../components/PasswordInput";
 import Button from "../components/Button";
+import DialogBox from "../components/DialogBox";
 
 import { signupUser } from "../api/auth";
 
@@ -20,7 +21,61 @@ function Signup() {
     terms: false,
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
+
+  // ==========================================
+  // DIALOG STATE
+  // ==========================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    action: null,
+  });
+
+  // ==========================================
+  // SHOW DIALOG
+  // ==========================================
+
+  const showDialog = (
+    title,
+    message,
+    type = "info",
+    action = null
+  ) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      action,
+    });
+  };
+
+  // ==========================================
+  // CLOSE DIALOG
+  // ==========================================
+
+  const closeDialog = () => {
+    const action = dialog.action;
+
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+      action: null,
+    }));
+
+    if (action) {
+      action();
+    }
+  };
+
+  // ==========================================
+  // HANDLE CHANGE
+  // ==========================================
 
   const handleChange = (e) => {
     const {
@@ -39,6 +94,10 @@ function Signup() {
     }));
   };
 
+  // ==========================================
+  // HANDLE SUBMIT
+  // ==========================================
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -47,23 +106,37 @@ function Signup() {
     }
 
     if (!formData.fullName.trim()) {
-      alert("Please enter your full name.");
+      showDialog(
+        "Required Field",
+        "Please enter your full name.",
+        "warning"
+      );
       return;
     }
 
     if (!formData.email.trim()) {
-      alert("Please enter your email.");
+      showDialog(
+        "Required Field",
+        "Please enter your email.",
+        "warning"
+      );
       return;
     }
 
     if (!formData.mobileNumber.trim()) {
-      alert("Please enter your mobile number.");
+      showDialog(
+        "Required Field",
+        "Please enter your mobile number.",
+        "warning"
+      );
       return;
     }
 
     if (formData.password.length < 6) {
-      alert(
-        "Password must contain at least 6 characters."
+      showDialog(
+        "Invalid Password",
+        "Password must contain at least 6 characters.",
+        "warning"
       );
       return;
     }
@@ -72,13 +145,19 @@ function Signup() {
       formData.password !==
       formData.confirmPassword
     ) {
-      alert("Passwords do not match.");
+      showDialog(
+        "Password Mismatch",
+        "Passwords do not match.",
+        "warning"
+      );
       return;
     }
 
     if (!formData.terms) {
-      alert(
-        "Please accept Terms & Conditions."
+      showDialog(
+        "Terms & Conditions",
+        "Please accept Terms & Conditions.",
+        "warning"
       );
       return;
     }
@@ -87,11 +166,14 @@ function Signup() {
       setLoading(true);
 
       const response = await signupUser({
-        fullName: formData.fullName.trim(),
-        email: formData.email.trim(),
+        fullName:
+          formData.fullName.trim(),
+        email:
+          formData.email.trim(),
         mobileNumber:
           formData.mobileNumber.trim(),
-        password: formData.password,
+        password:
+          formData.password,
         confirmPassword:
           formData.confirmPassword,
       });
@@ -114,9 +196,12 @@ function Signup() {
         formData.email;
 
       if (!userId) {
-        alert(
-          "Account created, but user information was not returned."
+        showDialog(
+          "Signup Completed",
+          "Account created, but user information was not returned.",
+          "warning"
         );
+
         return;
       }
 
@@ -125,16 +210,19 @@ function Signup() {
         "true"
       );
 
-      alert(
-        "Account created successfully! An OTP has been sent to your email."
+      showDialog(
+        "Account Created",
+        "Account created successfully! An OTP has been sent to your email.",
+        "success",
+        () => {
+          navigate("/verify-otp", {
+            state: {
+              userId,
+              email,
+            },
+          });
+        }
       );
-
-      navigate("/verify-otp", {
-        state: {
-          userId,
-          email,
-        },
-      });
     } catch (error) {
       console.error(
         "Signup Error:",
@@ -152,14 +240,22 @@ function Signup() {
           error.response.data?.Message ||
           "Signup failed.";
 
-        alert(message);
+        showDialog(
+          "Signup Failed",
+          message,
+          "error"
+        );
       } else if (error.request) {
-        alert(
-          "Backend server is not responding. Please make sure the backend is running."
+        showDialog(
+          "Server Error",
+          "Backend server is not responding. Please make sure the backend is running.",
+          "error"
         );
       } else {
-        alert(
-          "Signup failed. Please try again."
+        showDialog(
+          "Signup Failed",
+          "Signup failed. Please try again.",
+          "error"
         );
       }
     } finally {
@@ -169,9 +265,11 @@ function Signup() {
 
   return (
     <AuthLayout>
+
       <div className="signup-container">
 
         <div className="signup-heading">
+
           <h1 className="auth-title">
             Create Account
           </h1>
@@ -180,12 +278,14 @@ function Signup() {
             Join REVIO and start sharing
             trusted reviews.
           </p>
+
         </div>
 
         <form
           onSubmit={handleSubmit}
           className="signup-form"
         >
+
           <Input
             label="Full Name"
             placeholder="Enter your full name"
@@ -223,7 +323,9 @@ function Signup() {
           <PasswordInput
             label="Confirm Password"
             placeholder="Confirm your password"
-            value={formData.confirmPassword}
+            value={
+              formData.confirmPassword
+            }
             onChange={handleChange}
             name="confirmPassword"
           />
@@ -231,22 +333,29 @@ function Signup() {
           <label
             className="terms-checkbox"
           >
+
             <input
               type="checkbox"
               name="terms"
-              checked={formData.terms}
-              onChange={handleChange}
+              checked={
+                formData.terms
+              }
+              onChange={
+                handleChange
+              }
             />
 
             <span>
-              I agree to the{" "}
+              I agree to{" "}
               <strong>
                 Terms & Conditions
               </strong>
             </span>
+
           </label>
 
           <div className="signup-button-wrapper">
+
             <Button
               text={
                 loading
@@ -256,11 +365,15 @@ function Signup() {
               type="submit"
               disabled={loading}
             />
+
           </div>
+
         </form>
 
         <div className="signup-divider">
-          <span>Already registered?</span>
+          <span>
+            Already registered?
+          </span>
         </div>
 
         <p className="bottom-link">
@@ -271,6 +384,17 @@ function Signup() {
         </p>
 
       </div>
+
+      {/* DIALOG */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        onClose={closeDialog}
+      />
+
     </AuthLayout>
   );
 }

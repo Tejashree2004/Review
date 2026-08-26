@@ -11,6 +11,8 @@ import {
   verifyEmailOtp,
 } from "../api/auth";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/VerifyOtp.css";
 
 function VerifyOtp() {
@@ -36,13 +38,58 @@ function VerifyOtp() {
   const [resendTimer, setResendTimer] =
     useState(0);
 
-  // =====================================================
+  // ==========================================
+  // DIALOG STATE
+  // ==========================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    action: null,
+  });
+
+  // ==========================================
+  // SHOW DIALOG
+  // ==========================================
+
+  const showDialog = (
+    title,
+    message,
+    type = "info",
+    action = null
+  ) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      action,
+    });
+  };
+
+  // ==========================================
+  // CLOSE DIALOG
+  // ==========================================
+
+  const closeDialog = () => {
+    const action = dialog.action;
+
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+      action: null,
+    }));
+
+    if (action) {
+      action();
+    }
+  };
+
+  // ==========================================
   // PAGE LOAD
-  //
-  // IMPORTANT:
-  // Register API already sends the first OTP.
-  // Therefore DO NOT send OTP automatically here.
-  // =====================================================
+  // ==========================================
 
   useEffect(() => {
     if (!userId || !email) {
@@ -68,9 +115,9 @@ function VerifyOtp() {
     );
   }, [userId, email]);
 
-  // =====================================================
+  // ==========================================
   // RESEND TIMER
-  // =====================================================
+  // ==========================================
 
   useEffect(() => {
     if (resendTimer <= 0) {
@@ -91,9 +138,9 @@ function VerifyOtp() {
     };
   }, [resendTimer]);
 
-  // =====================================================
+  // ==========================================
   // OTP INPUT
-  // =====================================================
+  // ==========================================
 
   const handleOtpChange = (e) => {
     const value =
@@ -107,30 +154,29 @@ function VerifyOtp() {
     }
   };
 
-  // =====================================================
+  // ==========================================
   // VERIFY OTP
-  // =====================================================
+  // ==========================================
 
   const handleVerify = async (e) => {
     e.preventDefault();
 
-    // -------------------------------------------------
-    // BASIC VALIDATION
-    // -------------------------------------------------
-
     if (!userId || !email) {
-      alert(
-        "Verification information is missing. Please signup again."
+      showDialog(
+        "Verification Information Missing",
+        "Verification information is missing. Please signup again.",
+        "warning",
+        () => navigate("/signup")
       );
-
-      navigate("/signup");
 
       return;
     }
 
     if (otp.length !== 6) {
-      alert(
-        "Please enter the complete 6-digit OTP."
+      showDialog(
+        "Invalid OTP",
+        "Please enter the complete 6-digit OTP.",
+        "warning"
       );
 
       return;
@@ -161,10 +207,6 @@ function VerifyOtp() {
         "======================================"
       );
 
-      // -------------------------------------------------
-      // VERIFY OTP API
-      // -------------------------------------------------
-
       const response =
         await verifyEmailOtp({
           userId: Number(userId),
@@ -175,10 +217,6 @@ function VerifyOtp() {
         "Verify OTP Response:",
         response.data
       );
-
-      // -------------------------------------------------
-      // SUCCESS
-      // -------------------------------------------------
 
       const success =
         response.data?.success ??
@@ -191,7 +229,11 @@ function VerifyOtp() {
           response.data?.Message ||
           "OTP verification failed.";
 
-        alert(message);
+        showDialog(
+          "Verification Failed",
+          message,
+          "error"
+        );
 
         return;
       }
@@ -202,8 +244,10 @@ function VerifyOtp() {
 
       setResendTimer(0);
 
-      alert(
-        "Email verified successfully!"
+      showDialog(
+        "Email Verified",
+        "Email verified successfully!",
+        "success"
       );
     } catch (error) {
       console.error(
@@ -238,20 +282,26 @@ function VerifyOtp() {
         error.response?.data?.Message ||
         "Invalid or expired OTP. Please try again.";
 
-      alert(message);
+      showDialog(
+        "Verification Failed",
+        message,
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // =====================================================
+  // ==========================================
   // RESEND OTP
-  // =====================================================
+  // ==========================================
 
   const handleResendOtp = async () => {
     if (!userId || !email) {
-      alert(
-        "Verification information is missing."
+      showDialog(
+        "Information Missing",
+        "Verification information is missing.",
+        "warning"
       );
 
       return;
@@ -290,19 +340,23 @@ function VerifyOtp() {
           response.data?.Message ||
           "Failed to send OTP.";
 
-        alert(message);
+        showDialog(
+          "Resend Failed",
+          message,
+          "error"
+        );
 
         return;
       }
 
-      // Clear old entered OTP
       setOtp("");
 
-      // Start 60-second resend timer
       setResendTimer(60);
 
-      alert(
-        "A new OTP has been sent to your email."
+      showDialog(
+        "OTP Sent",
+        "A new OTP has been sent to your email.",
+        "success"
       );
     } catch (error) {
       console.error(
@@ -320,23 +374,27 @@ function VerifyOtp() {
         error.response?.data?.Message ||
         "Unable to send a new OTP.";
 
-      alert(message);
+      showDialog(
+        "Resend Failed",
+        message,
+        "error"
+      );
     } finally {
       setSendingOtp(false);
     }
   };
 
-  // =====================================================
+  // ==========================================
   // CONTINUE TO LOGIN
-  // =====================================================
+  // ==========================================
 
   const handleContinue = () => {
     navigate("/login");
   };
 
-  // =====================================================
+  // ==========================================
   // MISSING INFORMATION UI
-  // =====================================================
+  // ==========================================
 
   if (!userId || !email) {
     return (
@@ -374,13 +432,21 @@ function VerifyOtp() {
 
         </div>
 
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          onClose={closeDialog}
+        />
+
       </AuthLayout>
     );
   }
 
-  // =====================================================
+  // ==========================================
   // VERIFIED UI
-  // =====================================================
+  // ==========================================
 
   if (verified) {
     return (
@@ -415,7 +481,9 @@ function VerifyOtp() {
             <button
               className="otp-primary-button"
               type="button"
-              onClick={handleContinue}
+              onClick={
+                handleContinue
+              }
             >
               Continue to Login
             </button>
@@ -424,13 +492,21 @@ function VerifyOtp() {
 
         </div>
 
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          onClose={closeDialog}
+        />
+
       </AuthLayout>
     );
   }
 
-  // =====================================================
+  // ==========================================
   // MAIN OTP UI
-  // =====================================================
+  // ==========================================
 
   return (
     <AuthLayout>
@@ -439,25 +515,19 @@ function VerifyOtp() {
 
         <div className="otp-card">
 
-          {/* =================================================
-              ICON
-          ================================================= */}
+          {/* ICON */}
 
           <div className="otp-icon">
             ✉
           </div>
 
-          {/* =================================================
-              TITLE
-          ================================================= */}
+          {/* TITLE */}
 
           <h1>
             Verify Your Email
           </h1>
 
-          {/* =================================================
-              DESCRIPTION
-          ================================================= */}
+          {/* DESCRIPTION */}
 
           <p className="otp-description">
             We've sent a 6-digit
@@ -475,9 +545,7 @@ function VerifyOtp() {
             </strong>
           </p>
 
-          {/* =================================================
-              VERIFY FORM
-          ================================================= */}
+          {/* VERIFY FORM */}
 
           <form
             onSubmit={handleVerify}
@@ -504,9 +572,7 @@ function VerifyOtp() {
               autoFocus
             />
 
-            {/* =================================================
-                OTP DOTS
-            ================================================= */}
+            {/* OTP DOTS */}
 
             <div className="otp-dots">
 
@@ -515,8 +581,7 @@ function VerifyOtp() {
                   <span
                     key={index}
                     className={
-                      index <
-                      otp.length
+                      index < otp.length
                         ? "active"
                         : ""
                     }
@@ -526,9 +591,7 @@ function VerifyOtp() {
 
             </div>
 
-            {/* =================================================
-                VERIFY BUTTON
-            ================================================= */}
+            {/* VERIFY BUTTON */}
 
             <button
               className="otp-primary-button"
@@ -545,9 +608,7 @@ function VerifyOtp() {
 
           </form>
 
-          {/* =================================================
-              RESEND OTP
-          ================================================= */}
+          {/* RESEND OTP */}
 
           <div className="otp-resend">
 
@@ -583,9 +644,7 @@ function VerifyOtp() {
 
           </div>
 
-          {/* =================================================
-              SECURITY MESSAGE
-          ================================================= */}
+          {/* SECURITY MESSAGE */}
 
           <div className="otp-help">
 
@@ -603,6 +662,16 @@ function VerifyOtp() {
         </div>
 
       </div>
+
+      {/* DIALOG */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        onClose={closeDialog}
+      />
 
     </AuthLayout>
   );

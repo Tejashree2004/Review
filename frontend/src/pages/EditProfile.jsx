@@ -17,6 +17,8 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/Profile.css";
 
 function EditProfile() {
@@ -34,7 +36,54 @@ function EditProfile() {
   const [saving, setSaving] = useState(false);
 
   // ==========================================
-  // Get User ID
+  // DIALOG
+  // ==========================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "REVIO",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    onConfirm: null,
+  });
+
+  const showDialog = ({
+    title = "REVIO",
+    message,
+    type = "info",
+    confirmText = "OK",
+    onConfirm = null,
+  }) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      onConfirm,
+    });
+  };
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  const handleDialogConfirm = () => {
+    const callback = dialog.onConfirm;
+
+    closeDialog();
+
+    if (callback) {
+      callback();
+    }
+  };
+
+  // ==========================================
+  // GET USER ID
   // ==========================================
 
   const getUserId = () => {
@@ -42,11 +91,13 @@ function EditProfile() {
       localStorage.getItem("userId") ||
       localStorage.getItem("UserId");
 
-    return userId ? Number(userId) : null;
+    return userId
+      ? Number(userId)
+      : null;
   };
 
   // ==========================================
-  // Load Profile
+  // LOAD PROFILE
   // ==========================================
 
   useEffect(() => {
@@ -60,25 +111,30 @@ function EditProfile() {
       const userId = getUserId();
 
       if (!userId) {
-        alert("Please login first.");
-        navigate("/login");
+        showDialog({
+          title: "Login Required",
+          message: "Please login first.",
+          type: "warning",
+          onConfirm: () => {
+            navigate("/login");
+          },
+        });
+
         return;
       }
 
-      const response = await getProfile(userId);
+      const response =
+        await getProfile(userId);
 
       console.log(
         "Edit Profile Data:",
         response.data
       );
 
-      const profileData = response.data;
+      const profileData =
+        response.data;
 
       setProfile(profileData);
-
-      // ========================================
-      // Pre-fill form
-      // ========================================
 
       setFormData({
         fullName:
@@ -90,33 +146,45 @@ function EditProfile() {
         mobileNumber:
           profileData.mobileNumber || "",
       });
+
     } catch (error) {
       console.error(
         "Failed to load profile:",
         error
       );
 
-      if (error.response?.data?.message) {
-        alert(
-          error.response.data.message
-        );
+      if (
+        error.response?.data?.message
+      ) {
+        showDialog({
+          title: "Profile Error",
+          message:
+            error.response.data.message,
+          type: "error",
+        });
       } else {
-        alert(
-          "Failed to load profile."
-        );
+        showDialog({
+          title: "Profile Error",
+          message:
+            "Failed to load profile.",
+          type: "error",
+        });
       }
+
     } finally {
       setLoading(false);
     }
   };
 
   // ==========================================
-  // Handle Input Change
+  // HANDLE INPUT CHANGE
   // ==========================================
 
   const handleChange = (event) => {
-    const { name, value } =
-      event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
     setFormData((previous) => ({
       ...previous,
@@ -125,39 +193,70 @@ function EditProfile() {
   };
 
   // ==========================================
-  // Save Profile
+  // SAVE PROFILE
   // ==========================================
 
   const handleSave = async (event) => {
-    event.preventDefault();
+    if (event) {
+      event.preventDefault();
+    }
+
+    if (saving) {
+      return;
+    }
 
     try {
       const userId = getUserId();
 
       if (!userId) {
-        alert("Please login first.");
-        navigate("/login");
+        showDialog({
+          title: "Login Required",
+          message: "Please login first.",
+          type: "warning",
+          onConfirm: () => {
+            navigate("/login");
+          },
+        });
+
         return;
       }
 
       // ======================================
-      // Basic Validation
+      // BASIC VALIDATION
       // ======================================
 
       if (!formData.fullName.trim()) {
-        alert("Full name is required.");
+        showDialog({
+          title: "Validation Error",
+          message:
+            "Full name is required.",
+          type: "warning",
+        });
+
         return;
       }
 
       if (!formData.email.trim()) {
-        alert("Email is required.");
+        showDialog({
+          title: "Validation Error",
+          message:
+            "Email is required.",
+          type: "warning",
+        });
+
         return;
       }
 
-      if (!formData.mobileNumber.trim()) {
-        alert(
-          "Mobile number is required."
-        );
+      if (
+        !formData.mobileNumber.trim()
+      ) {
+        showDialog({
+          title: "Validation Error",
+          message:
+            "Mobile number is required.",
+          type: "warning",
+        });
+
         return;
       }
 
@@ -188,16 +287,17 @@ function EditProfile() {
         response.data
       );
 
-      alert(
-        response.data?.message ||
-          "Profile updated successfully."
-      );
+      showDialog({
+        title: "Profile Updated",
+        message:
+          response.data?.message ||
+          "Profile updated successfully.",
+        type: "success",
+        onConfirm: () => {
+          navigate("/profile");
+        },
+      });
 
-      // ======================================
-      // Go back to Profile
-      // ======================================
-
-      navigate("/profile");
     } catch (error) {
       console.error(
         "Failed to update profile:",
@@ -212,21 +312,28 @@ function EditProfile() {
       if (
         error.response?.data?.message
       ) {
-        alert(
-          error.response.data.message
-        );
+        showDialog({
+          title: "Update Failed",
+          message:
+            error.response.data.message,
+          type: "error",
+        });
       } else {
-        alert(
-          "Failed to update profile."
-        );
+        showDialog({
+          title: "Update Failed",
+          message:
+            "Failed to update profile.",
+          type: "error",
+        });
       }
+
     } finally {
       setSaving(false);
     }
   };
 
   // ==========================================
-  // Cancel
+  // CANCEL
   // ==========================================
 
   const handleCancel = () => {
@@ -234,21 +341,36 @@ function EditProfile() {
   };
 
   // ==========================================
-  // Loading
+  // LOADING
   // ==========================================
 
   if (loading) {
     return (
       <MainLayout>
+
         <div className="profile-loading">
           Loading Profile...
         </div>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
+        />
+
       </MainLayout>
     );
   }
 
   // ==========================================
-  // Profile Not Found
+  // PROFILE NOT FOUND
   // ==========================================
 
   if (!profile) {
@@ -272,6 +394,19 @@ function EditProfile() {
 
         </div>
 
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
+        />
+
       </MainLayout>
     );
   }
@@ -283,9 +418,9 @@ function EditProfile() {
   return (
     <MainLayout>
 
-      {/* ==========================
-          Back Button
-      ========================== */}
+      {/* ==========================================
+          BACK BUTTON
+      ========================================== */}
 
       <button
         className="profile-back-icon"
@@ -297,17 +432,15 @@ function EditProfile() {
         <FaArrowLeft />
       </button>
 
-
-      {/* ==========================
-          Profile Container
-      ========================== */}
+      {/* ==========================================
+          PROFILE CONTAINER
+      ========================================== */}
 
       <div className="profile-container">
 
-
-        {/* ==========================
-            Profile Header
-        ========================== */}
+        {/* ==========================================
+            PROFILE HEADER
+        ========================================== */}
 
         <div className="profile-header">
 
@@ -339,10 +472,9 @@ function EditProfile() {
 
         </div>
 
-
-        {/* =================================================
+        {/* ==========================================
             PERSONAL INFORMATION
-        ================================================= */}
+        ========================================== */}
 
         <div className="profile-card">
 
@@ -354,10 +486,7 @@ function EditProfile() {
 
             <div className="profile-info-grid">
 
-
-              {/* ========================
-                  Full Name
-              ======================== */}
+              {/* FULL NAME */}
 
               <div className="profile-info-item">
 
@@ -381,16 +510,14 @@ function EditProfile() {
                       handleChange
                     }
                     placeholder="Enter full name"
+                    disabled={saving}
                   />
 
                 </div>
 
               </div>
 
-
-              {/* ========================
-                  Email
-              ======================== */}
+              {/* EMAIL */}
 
               <div className="profile-info-item">
 
@@ -414,16 +541,14 @@ function EditProfile() {
                       handleChange
                     }
                     placeholder="Enter email"
+                    disabled={saving}
                   />
 
                 </div>
 
               </div>
 
-
-              {/* ========================
-                  Mobile Number
-              ======================== */}
+              {/* MOBILE NUMBER */}
 
               <div className="profile-info-item">
 
@@ -447,16 +572,14 @@ function EditProfile() {
                       handleChange
                     }
                     placeholder="Enter mobile number"
+                    disabled={saving}
                   />
 
                 </div>
 
               </div>
 
-
-              {/* ========================
-                  Member Since
-              ======================== */}
+              {/* MEMBER SINCE */}
 
               <div className="profile-info-item">
 
@@ -486,10 +609,9 @@ function EditProfile() {
 
         </div>
 
-
-        {/* =================================================
+        {/* ==========================================
             ACCOUNT STATUS
-        ================================================= */}
+        ========================================== */}
 
         <div className="profile-card">
 
@@ -498,11 +620,6 @@ function EditProfile() {
           </h2>
 
           <div className="account-status">
-
-
-            {/* ========================
-                Account
-            ======================== */}
 
             <div>
 
@@ -515,11 +632,6 @@ function EditProfile() {
               </strong>
 
             </div>
-
-
-            {/* ========================
-                Email Verification
-            ======================== */}
 
             <div>
 
@@ -534,11 +646,9 @@ function EditProfile() {
                     : "status-pending"
                 }
               >
-
                 {profile.isEmailVerified
                   ? "Verified"
                   : "Not Verified"}
-
               </strong>
 
             </div>
@@ -547,10 +657,9 @@ function EditProfile() {
 
         </div>
 
-
-        {/* =================================================
+        {/* ==========================================
             PROFILE INFORMATION
-        ================================================= */}
+        ========================================== */}
 
         <div className="profile-card">
 
@@ -559,11 +668,6 @@ function EditProfile() {
           </h2>
 
           <div className="account-status">
-
-
-            {/* ========================
-                Profile Status
-            ======================== */}
 
             <div>
 
@@ -576,11 +680,6 @@ function EditProfile() {
               </strong>
 
             </div>
-
-
-            {/* ========================
-                Member Since
-            ======================== */}
 
             <div>
 
@@ -600,16 +699,15 @@ function EditProfile() {
 
         </div>
 
-
-        {/* =================================================
+        {/* ==========================================
             SAVE / CANCEL
-            EXACTLY BELOW PROFILE INFORMATION
-        ================================================= */}
+            ALWAYS AT THE BOTTOM
+        ========================================== */}
 
         <div
           className="profile-actions"
           style={{
-            marginTop: "10px",
+            marginTop: "25px",
             marginBottom: "30px",
           }}
         >
@@ -625,11 +723,12 @@ function EditProfile() {
               : "Save Changes"}
           </button>
 
-
           <button
             type="button"
             className="profile-action-btn"
-            onClick={handleCancel}
+            onClick={
+              handleCancel
+            }
             disabled={saving}
           >
             Cancel
@@ -637,8 +736,24 @@ function EditProfile() {
 
         </div>
 
-
       </div>
+
+      {/* ==========================================
+          STANDARD DIALOG
+      ========================================== */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={
+          dialog.confirmText
+        }
+        onConfirm={
+          handleDialogConfirm
+        }
+      />
 
     </MainLayout>
   );

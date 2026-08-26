@@ -10,6 +10,8 @@ import {
 import MainLayout from "../layouts/MainLayout";
 import { addReview } from "../services/ReviewService";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/WriteReview.css";
 
 function WriteReview() {
@@ -18,78 +20,136 @@ function WriteReview() {
   const navigate = useNavigate();
 
   const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [hoverRating, setHoverRating] =
+    useState(0);
+  const [comment, setComment] =
+    useState("");
+  const [loading, setLoading] =
+    useState(false);
 
-  // =========================
+  // ==========================================
+  // DIALOG STATE
+  // ==========================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    action: null,
+  });
+
+  // ==========================================
+  // SHOW DIALOG
+  // ==========================================
+
+  const showDialog = (
+    title,
+    message,
+    type = "info",
+    action = null
+  ) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      action,
+    });
+  };
+
+  // ==========================================
+  // CLOSE DIALOG
+  // ==========================================
+
+  const closeDialog = () => {
+    const action = dialog.action;
+
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+      action: null,
+    }));
+
+    if (action) {
+      action();
+    }
+  };
+
+  // ==========================================
   // Determine Review Type
-  // =========================
+  // ==========================================
 
-  const isBusinessReview = Boolean(businessId);
+  const isBusinessReview =
+    Boolean(businessId);
 
-  // =========================
+  // ==========================================
   // Get User ID
-  // =========================
+  // ==========================================
 
   const getUserId = () => {
     const userId =
       localStorage.getItem("userId") ||
       localStorage.getItem("UserId");
 
-    return userId ? Number(userId) : null;
+    return userId
+      ? Number(userId)
+      : null;
   };
 
-  // =========================
+  // ==========================================
   // Submit Review
-  // =========================
+  // ==========================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const userId = getUserId();
 
-    // =========================
     // Login Check
-    // =========================
 
     if (!userId) {
-      alert(
-        "Please login first to write a review."
+      showDialog(
+        "Login Required",
+        "Please login first to write a review.",
+        "warning",
+        () => navigate("/login")
       );
 
-      navigate("/login");
-
       return;
     }
 
-    // =========================
     // Rating Check
-    // =========================
 
     if (rating === 0) {
-      alert("Please select a rating.");
+      showDialog(
+        "Rating Required",
+        "Please select a rating.",
+        "warning"
+      );
 
       return;
     }
 
-    // =========================
     // Comment Check
-    // =========================
 
     if (!comment.trim()) {
-      alert("Please write your review.");
+      showDialog(
+        "Review Required",
+        "Please write your review.",
+        "warning"
+      );
 
       return;
     }
 
-    // =========================
     // ID Check
-    // =========================
 
     if (!placeId && !businessId) {
-      alert(
-        "Unable to identify the place or business."
+      showDialog(
+        "Unable to Submit",
+        "Unable to identify the place or business.",
+        "error"
       );
 
       return;
@@ -98,9 +158,7 @@ function WriteReview() {
     try {
       setLoading(true);
 
-      // =========================
       // REVIEW DATA
-      // =========================
 
       const reviewData = {
         userId: userId,
@@ -109,12 +167,10 @@ function WriteReview() {
 
         comment: comment.trim(),
 
-        // Existing Place Review
         ...(placeId && {
           placeId: Number(placeId),
         }),
 
-        // New Business Review
         ...(businessId && {
           businessId: Number(businessId),
         }),
@@ -125,34 +181,28 @@ function WriteReview() {
         reviewData
       );
 
-      // =========================
       // SAVE REVIEW
-      // =========================
 
       await addReview(reviewData);
 
-      // =========================
       // SUCCESS
-      // =========================
 
-      alert(
-        "Review added successfully!"
+      showDialog(
+        "Review Added",
+        "Review added successfully!",
+        "success",
+        () => {
+          if (isBusinessReview) {
+            navigate(
+              `/business/${businessId}`
+            );
+          } else {
+            navigate(
+              `/place/${placeId}`
+            );
+          }
+        }
       );
-
-      // =========================
-      // NAVIGATE BACK
-      // =========================
-
-      if (isBusinessReview) {
-        navigate(
-          `/business/${businessId}`
-        );
-      } else {
-        navigate(
-          `/place/${placeId}`
-        );
-      }
-
     } catch (error) {
       console.error(
         "Failed to add review:",
@@ -162,15 +212,18 @@ function WriteReview() {
       if (
         error.response?.data?.message
       ) {
-        alert(
-          error.response.data.message
+        showDialog(
+          "Review Failed",
+          error.response.data.message,
+          "error"
         );
       } else {
-        alert(
-          "Failed to add review. Please try again."
+        showDialog(
+          "Review Failed",
+          "Failed to add review. Please try again.",
+          "error"
         );
       }
-
     } finally {
       setLoading(false);
     }
@@ -179,9 +232,7 @@ function WriteReview() {
   return (
     <MainLayout>
 
-      {/* =========================
-          Back Button
-      ========================= */}
+      {/* Back Button */}
 
       <button
         className="back-btn"
@@ -191,9 +242,7 @@ function WriteReview() {
         <FaArrowLeft />
       </button>
 
-      {/* =========================
-          Write Review Card
-      ========================= */}
+      {/* Write Review Card */}
 
       <div className="write-review-page">
 
@@ -210,9 +259,7 @@ function WriteReview() {
               : "place"}
           </p>
 
-          {/* =========================
-              Rating
-          ========================= */}
+          {/* Rating */}
 
           <div className="rating-section">
 
@@ -242,8 +289,10 @@ function WriteReview() {
                     <FaStar
                       className={
                         star <=
-                        (hoverRating ||
-                          rating)
+                        (
+                          hoverRating ||
+                          rating
+                        )
                           ? "star-active"
                           : "star-inactive"
                       }
@@ -262,9 +311,7 @@ function WriteReview() {
 
           </div>
 
-          {/* =========================
-              Comment
-          ========================= */}
+          {/* Comment */}
 
           <form onSubmit={handleSubmit}>
 
@@ -293,9 +340,7 @@ function WriteReview() {
 
             </div>
 
-            {/* =========================
-                Submit
-            ========================= */}
+            {/* Submit */}
 
             <button
               type="submit"
@@ -317,6 +362,17 @@ function WriteReview() {
         </div>
 
       </div>
+
+      {/* DIALOG */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        onConfirm={closeDialog}
+        onCancel={closeDialog}
+      />
 
     </MainLayout>
   );

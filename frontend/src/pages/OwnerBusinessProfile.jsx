@@ -30,6 +30,8 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/OwnerBusinessProfile.css";
 
 const API_BASE =
@@ -164,6 +166,68 @@ function OwnerBusinessProfile() {
 
   const [pendingPhotoFiles, setPendingPhotoFiles] =
     useState([]);
+
+  // =====================================================
+  // DIALOG STATE
+  // =====================================================
+
+  const [dialog, setDialog] =
+    useState({
+      isOpen: false,
+      title: "Message",
+      message: "",
+      type: "info",
+      confirmText: "OK",
+      cancelText: "Cancel",
+      showCancel: false,
+      onConfirm: null,
+      onCancel: null,
+    });
+
+  // =====================================================
+  // DIALOG HELPERS
+  // =====================================================
+
+  const closeDialog = () => {
+    setDialog({
+      isOpen: false,
+      title: "Message",
+      message: "",
+      type: "info",
+      confirmText: "OK",
+      cancelText: "Cancel",
+      showCancel: false,
+      onConfirm: null,
+      onCancel: null,
+    });
+  };
+
+  const showDialog = ({
+    title = "Message",
+    message = "",
+    type = "info",
+    confirmText = "OK",
+    cancelText = "Cancel",
+    showCancel = false,
+    onConfirm = null,
+    onCancel = null,
+  }) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      cancelText,
+      showCancel,
+      onConfirm:
+        onConfirm ||
+        closeDialog,
+      onCancel:
+        onCancel ||
+        closeDialog,
+    });
+  };
 
   // =====================================================
   // TOKEN
@@ -479,9 +543,20 @@ function OwnerBusinessProfile() {
         if (!token) {
           setLoading(false);
 
-          navigate(
-            "/login"
-          );
+          showDialog({
+            title: "Login Required",
+            message:
+              "Please login to continue.",
+            type: "error",
+            confirmText: "Login",
+            onConfirm: () => {
+              closeDialog();
+
+              navigate(
+                "/login"
+              );
+            },
+          });
 
           return;
         }
@@ -544,13 +619,20 @@ function OwnerBusinessProfile() {
               );
 
             if (!business) {
-              alert(
-                "Business not found."
-              );
+              showDialog({
+                title: "Business Not Found",
+                message:
+                  "The requested business could not be found.",
+                type: "error",
+                confirmText: "OK",
+                onConfirm: () => {
+                  closeDialog();
 
-              navigate(
-                "/owner-dashboard"
-              );
+                  navigate(
+                    "/owner-dashboard"
+                  );
+                },
+              });
 
               return;
             }
@@ -650,13 +732,20 @@ function OwnerBusinessProfile() {
             error.response?.status ===
             401
           ) {
-            alert(
-              "Your login session has expired. Please login again."
-            );
+            showDialog({
+              title: "Session Expired",
+              message:
+                "Your login session has expired. Please login again.",
+              type: "error",
+              confirmText: "Login",
+              onConfirm: () => {
+                closeDialog();
 
-            navigate(
-              "/login"
-            );
+                navigate(
+                  "/login"
+                );
+              },
+            });
 
             return;
           }
@@ -665,16 +754,31 @@ function OwnerBusinessProfile() {
             error.response?.status ===
             404
           ) {
-            alert(
-              "Business not found."
-            );
+            showDialog({
+              title: "Business Not Found",
+              message:
+                "The requested business could not be found.",
+              type: "error",
+              confirmText: "OK",
+              onConfirm: () => {
+                closeDialog();
 
-            navigate(
-              "/owner-dashboard"
-            );
+                navigate(
+                  "/owner-dashboard"
+                );
+              },
+            });
 
             return;
           }
+
+          showDialog({
+            title: "Loading Failed",
+            message:
+              "Something went wrong while loading business information.",
+            type: "error",
+            confirmText: "OK",
+          });
         } finally {
           if (!cancelled) {
             setLoading(false);
@@ -972,9 +1076,13 @@ function OwnerBusinessProfile() {
         imageFiles.length ===
         0
       ) {
-        alert(
-          "Please select JPG, PNG or WEBP image files only."
-        );
+        showDialog({
+          title: "Invalid Image",
+          message:
+            "Please select JPG, PNG or WEBP image files only.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return [];
       }
@@ -988,9 +1096,13 @@ function OwnerBusinessProfile() {
           imageFiles.length >
         12
       ) {
-        alert(
-          `You can upload maximum 12 business photos.`
-        );
+        showDialog({
+          title: "Photo Limit Reached",
+          message:
+            "You can upload maximum 12 business photos.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return [];
       }
@@ -1005,9 +1117,13 @@ function OwnerBusinessProfile() {
         );
 
       if (oversizedFile) {
-        alert(
-          "Each image must be smaller than 5 MB."
-        );
+        showDialog({
+          title: "Image Too Large",
+          message:
+            "Each image must be smaller than 5 MB.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return [];
       }
@@ -1193,16 +1309,24 @@ function OwnerBusinessProfile() {
           uploadedPhotos.length ===
           1
         ) {
-          alert(
-            "Photo uploaded successfully!"
-          );
+          showDialog({
+            title: "Upload Successful",
+            message:
+              "Photo uploaded successfully!",
+            type: "success",
+            confirmText: "OK",
+          });
         } else if (
           uploadedPhotos.length >
           1
         ) {
-          alert(
-            `${uploadedPhotos.length} photos uploaded successfully!`
-          );
+          showDialog({
+            title: "Upload Successful",
+            message:
+              `${uploadedPhotos.length} photos uploaded successfully!`,
+            type: "success",
+            confirmText: "OK",
+          });
         }
       } catch (error) {
         console.error(
@@ -1221,10 +1345,14 @@ function OwnerBusinessProfile() {
               ?.Message ??
             "";
 
-          alert(
-            message ||
-              "Invalid photo data. The backend rejected the image."
-          );
+          showDialog({
+            title: "Upload Failed",
+            message:
+              message ||
+              "Invalid photo data. The backend rejected the image.",
+            type: "error",
+            confirmText: "OK",
+          });
 
           return;
         }
@@ -1233,21 +1361,32 @@ function OwnerBusinessProfile() {
           error.response?.status ===
           401
         ) {
-          alert(
-            "Your login session has expired. Please login again."
-          );
+          showDialog({
+            title: "Session Expired",
+            message:
+              "Your login session has expired. Please login again.",
+            type: "error",
+            confirmText: "Login",
+            onConfirm: () => {
+              closeDialog();
 
-          navigate(
-            "/login"
-          );
+              navigate(
+                "/login"
+              );
+            },
+          });
 
           return;
         }
 
-        alert(
-          error.message ||
-            "Something went wrong while uploading the photo."
-        );
+        showDialog({
+          title: "Photo Upload Failed",
+          message:
+            error.message ||
+            "Something went wrong while uploading the photo.",
+          type: "error",
+          confirmText: "OK",
+        });
       } finally {
         setUploading(false);
       }
@@ -1334,69 +1473,119 @@ function OwnerBusinessProfile() {
         );
 
       if (!photoId) {
-        alert(
-          "Photo ID not found."
-        );
+        showDialog({
+          title: "Delete Failed",
+          message:
+            "Photo ID not found.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return;
       }
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to delete this photo?"
-        );
+      showDialog({
+        title: "Delete Photo",
+        message:
+          "Are you sure you want to delete this photo?",
+        type: "error",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        showCancel: true,
 
-      if (!confirmed) {
-        return;
-      }
+        onCancel:
+          closeDialog,
 
-      const token =
-        getToken();
+        onConfirm:
+          async () => {
+            closeDialog();
 
-      if (!token) {
-        alert(
-          "Please login again."
-        );
+            const token =
+              getToken();
 
-        navigate(
-          "/login"
-        );
+            if (!token) {
+              showDialog({
+                title: "Login Required",
+                message:
+                  "Please login again.",
+                type: "error",
+                confirmText: "Login",
+                onConfirm: () => {
+                  closeDialog();
 
-        return;
-      }
+                  navigate(
+                    "/login"
+                  );
+                },
+              });
 
-      try {
-        setUploading(true);
+              return;
+            }
 
-        await axios.delete(
-          `${API_BASE}/owner/photos/${photoId}`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          }
-        );
+            try {
+              setUploading(true);
 
-        await loadBusinessPhotos(
-          businessId
-        );
+              await axios.delete(
+                `${API_BASE}/owner/photos/${photoId}`,
+                {
+                  headers: {
+                    Authorization:
+                      `Bearer ${token}`,
+                  },
+                }
+              );
 
-        alert(
-          "Photo deleted successfully."
-        );
-      } catch (error) {
-        console.error(
-          "Delete photo error:",
-          error
-        );
+              await loadBusinessPhotos(
+                businessId
+              );
 
-        alert(
-          "Unable to delete photo."
-        );
-      } finally {
-        setUploading(false);
-      }
+              showDialog({
+                title: "Photo Deleted",
+                message:
+                  "Photo deleted successfully.",
+                type: "success",
+                confirmText: "OK",
+              });
+            } catch (error) {
+              console.error(
+                "Delete photo error:",
+                error
+              );
+
+              if (
+                error.response?.status ===
+                401
+              ) {
+                showDialog({
+                  title: "Session Expired",
+                  message:
+                    "Your login session has expired. Please login again.",
+                  type: "error",
+                  confirmText: "Login",
+                  onConfirm: () => {
+                    closeDialog();
+
+                    navigate(
+                      "/login"
+                    );
+                  },
+                });
+
+                return;
+              }
+
+              showDialog({
+                title: "Delete Failed",
+                message:
+                  "Unable to delete photo.",
+                type: "error",
+                confirmText: "OK",
+              });
+            } finally {
+              setUploading(false);
+            }
+          },
+      });
     };
 
   // =====================================================
@@ -1411,9 +1600,13 @@ function OwnerBusinessProfile() {
         is not available yet.
       */
 
-      alert(
-        "Primary photo is selected automatically when the first photo is uploaded. To change the primary photo, the backend needs a SetPrimaryPhoto endpoint."
-      );
+      showDialog({
+        title: "Primary Photo",
+        message:
+          "Primary photo is selected automatically when the first photo is uploaded. To change the primary photo, the backend needs a SetPrimaryPhoto endpoint.",
+        type: "info",
+        confirmText: "OK",
+      });
     };
 
   // =====================================================
@@ -1546,9 +1739,13 @@ function OwnerBusinessProfile() {
       if (
         !formData.businessName.trim()
       ) {
-        alert(
-          "Please enter your business name."
-        );
+        showDialog({
+          title: "Business Name Required",
+          message:
+            "Please enter your business name.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return;
       }
@@ -1556,9 +1753,13 @@ function OwnerBusinessProfile() {
       if (
         !formData.businessType
       ) {
-        alert(
-          "Please select your business type."
-        );
+        showDialog({
+          title: "Business Type Required",
+          message:
+            "Please select your business type.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return;
       }
@@ -1566,9 +1767,13 @@ function OwnerBusinessProfile() {
       if (
         !formData.address.trim()
       ) {
-        alert(
-          "Please enter your business address."
-        );
+        showDialog({
+          title: "Address Required",
+          message:
+            "Please enter your business address.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return;
       }
@@ -1576,9 +1781,13 @@ function OwnerBusinessProfile() {
       if (
         !formData.city.trim()
       ) {
-        alert(
-          "Please enter your city."
-        );
+        showDialog({
+          title: "City Required",
+          message:
+            "Please enter your city.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return;
       }
@@ -1586,9 +1795,13 @@ function OwnerBusinessProfile() {
       if (
         !formData.phone.trim()
       ) {
-        alert(
-          "Please enter your contact number."
-        );
+        showDialog({
+          title: "Contact Number Required",
+          message:
+            "Please enter your contact number.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return;
       }
@@ -1601,13 +1814,20 @@ function OwnerBusinessProfile() {
         getToken();
 
       if (!token) {
-        alert(
-          "Please login again before saving your business."
-        );
+        showDialog({
+          title: "Login Required",
+          message:
+            "Please login again before saving your business.",
+          type: "error",
+          confirmText: "Login",
+          onConfirm: () => {
+            closeDialog();
 
-        navigate(
-          "/login"
-        );
+            navigate(
+              "/login"
+            );
+          },
+        });
 
         return;
       }
@@ -1620,9 +1840,13 @@ function OwnerBusinessProfile() {
         getSelectedCategoryId();
 
       if (!categoryId) {
-        alert(
-          "Selected business category was not found. Please refresh the page and try again."
-        );
+        showDialog({
+          title: "Category Not Found",
+          message:
+            "Selected business category was not found. Please refresh the page and try again.",
+          type: "error",
+          confirmText: "OK",
+        });
 
         return;
       }
@@ -1715,9 +1939,13 @@ function OwnerBusinessProfile() {
 
         else {
           if (!businessId) {
-            alert(
-              "Business ID is missing. Please open the business again."
-            );
+            showDialog({
+              title: "Business ID Missing",
+              message:
+                "Business ID is missing. Please open the business again.",
+              type: "error",
+              confirmText: "OK",
+            });
 
             return;
           }
@@ -1772,9 +2000,13 @@ function OwnerBusinessProfile() {
             0
         ) {
           if (!finalBusinessId) {
-            alert(
-              "Business was created, but the Business ID was not returned. Photos could not be uploaded."
-            );
+            showDialog({
+              title: "Photo Upload Failed",
+              message:
+                "Business was created, but the Business ID was not returned. Photos could not be uploaded.",
+              type: "error",
+              confirmText: "OK",
+            });
           } else {
             try {
               setUploading(true);
@@ -1788,9 +2020,13 @@ function OwnerBusinessProfile() {
                 photoError
               );
 
-              alert(
-                "Business was created successfully, but some photos could not be uploaded."
-              );
+              showDialog({
+                title: "Photo Upload Failed",
+                message:
+                  "Business was created successfully, but some photos could not be uploaded.",
+                type: "error",
+                confirmText: "OK",
+              });
             } finally {
               setUploading(false);
             }
@@ -1911,25 +2147,52 @@ function OwnerBusinessProfile() {
         if (
           isCreateMode
         ) {
-          alert(
-            "New business created successfully!"
-          );
+          showDialog({
+            title: "Business Created",
+            message:
+              "New business created successfully!",
+            type: "success",
+            confirmText: "Go to Dashboard",
+            onConfirm: () => {
+              closeDialog();
+
+              navigate(
+                "/owner-dashboard",
+                {
+                  replace: true,
+                }
+              );
+            },
+          });
         } else {
-          alert(
-            "Business information updated successfully!"
-          );
+          showDialog({
+            title: "Business Updated",
+            message:
+              "Business information updated successfully!",
+            type: "success",
+            confirmText: "Go to Dashboard",
+            onConfirm: () => {
+              closeDialog();
+
+              navigate(
+                "/owner-dashboard",
+                {
+                  replace: true,
+                }
+              );
+            },
+          });
         }
 
         // =================================================
         // GO DASHBOARD
         // =================================================
 
-        navigate(
-          "/owner-dashboard",
-          {
-            replace: true,
-          }
-        );
+        /*
+          Navigation is now handled from the
+          DialogBox confirmation button so that
+          the success message remains visible.
+        */
       } catch (error) {
         console.error(
           "Business save error:",
@@ -1940,13 +2203,20 @@ function OwnerBusinessProfile() {
           error.response?.status ===
           401
         ) {
-          alert(
-            "Your login session has expired. Please login again."
-          );
+          showDialog({
+            title: "Session Expired",
+            message:
+              "Your login session has expired. Please login again.",
+            type: "error",
+            confirmText: "Login",
+            onConfirm: () => {
+              closeDialog();
 
-          navigate(
-            "/login"
-          );
+              navigate(
+                "/login"
+              );
+            },
+          });
 
           return;
         }
@@ -1960,9 +2230,12 @@ function OwnerBusinessProfile() {
             error.response?.data?.Message ??
             "Please check the business information and try again.";
 
-          alert(
-            message
-          );
+          showDialog({
+            title: "Invalid Information",
+            message,
+            type: "error",
+            confirmText: "OK",
+          });
 
           return;
         }
@@ -1971,16 +2244,24 @@ function OwnerBusinessProfile() {
           error.response?.status ===
           404
         ) {
-          alert(
-            "Business endpoint was not found. Please check the backend route."
-          );
+          showDialog({
+            title: "Endpoint Not Found",
+            message:
+              "Business endpoint was not found. Please check the backend route.",
+            type: "error",
+            confirmText: "OK",
+          });
 
           return;
         }
 
-        alert(
-          "Something went wrong while saving the business. Please try again."
-        );
+        showDialog({
+          title: "Save Failed",
+          message:
+            "Something went wrong while saving the business. Please try again.",
+          type: "error",
+          confirmText: "OK",
+        });
       } finally {
         setSaving(false);
       }
@@ -1992,38 +2273,70 @@ function OwnerBusinessProfile() {
 
   if (loading) {
     return (
-      <div className="owner-business-page">
-        <div
-          style={{
-            minHeight:
-              "100vh",
+      <>
+        <div className="owner-business-page">
+          <div
+            style={{
+              minHeight:
+                "100vh",
 
-            display:
-              "flex",
+              display:
+                "flex",
 
-            alignItems:
-              "center",
+              alignItems:
+                "center",
 
-            justifyContent:
-              "center",
+              justifyContent:
+                "center",
 
-            flexDirection:
-              "column",
+              flexDirection:
+                "column",
 
-            gap:
-              "12px",
-          }}
-        >
-          <FaSpinner
-            className="fa-spin"
-            size={28}
-          />
+              gap:
+                "12px",
+            }}
+          >
+            <FaSpinner
+              className="fa-spin"
+              size={28}
+            />
 
-          <span>
-            Loading business information...
-          </span>
+            <span>
+              Loading business information...
+            </span>
+          </div>
         </div>
-      </div>
+
+        <DialogBox
+          isOpen={
+            dialog.isOpen
+          }
+          title={
+            dialog.title
+          }
+          message={
+            dialog.message
+          }
+          type={
+            dialog.type
+          }
+          confirmText={
+            dialog.confirmText
+          }
+          cancelText={
+            dialog.cancelText
+          }
+          showCancel={
+            dialog.showCancel
+          }
+          onConfirm={
+            dialog.onConfirm
+          }
+          onCancel={
+            dialog.onCancel
+          }
+        />
+      </>
     );
   }
 
@@ -3137,6 +3450,41 @@ function OwnerBusinessProfile() {
         </form>
 
       </main>
+
+
+      {/* =====================================================
+          DIALOG BOX
+      ===================================================== */}
+
+      <DialogBox
+        isOpen={
+          dialog.isOpen
+        }
+        title={
+          dialog.title
+        }
+        message={
+          dialog.message
+        }
+        type={
+          dialog.type
+        }
+        confirmText={
+          dialog.confirmText
+        }
+        cancelText={
+          dialog.cancelText
+        }
+        showCancel={
+          dialog.showCancel
+        }
+        onConfirm={
+          dialog.onConfirm
+        }
+        onCancel={
+          dialog.onCancel
+        }
+      />
 
     </div>
   );

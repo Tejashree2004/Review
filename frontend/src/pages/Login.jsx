@@ -5,6 +5,7 @@ import AuthLayout from "../layouts/AuthLayout";
 import Input from "../components/Input";
 import PasswordInput from "../components/PasswordInput";
 import Button from "../components/Button";
+import DialogBox from "../components/DialogBox";
 
 import { loginUser } from "../api/auth";
 
@@ -19,70 +20,132 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
 
-  // =========================
-  // Handle Input Change
-  // =========================
+  // =====================================================
+  // DIALOG
+  // =====================================================
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "REVIO",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    onConfirm: null,
+  });
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
+  const showDialog = ({
+    title = "REVIO",
+    message,
+    type = "info",
+    confirmText = "OK",
+    onConfirm = null,
+  }) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      onConfirm,
+    });
+  };
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
     }));
   };
 
-  // =========================
-  // Login
-  // =========================
+  const handleDialogConfirm = () => {
+    const callback = dialog.onConfirm;
+
+    closeDialog();
+
+    if (callback) {
+      callback();
+    }
+  };
+
+  // =====================================================
+  // HANDLE INPUT CHANGE
+  // =====================================================
+
+  const handleChange = (e) => {
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
+
+    setFormData((previous) => ({
+      ...previous,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : value,
+    }));
+  };
+
+  // =====================================================
+  // LOGIN
+  // =====================================================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // =========================
-    // Validation
-    // =========================
+    // =================================================
+    // VALIDATION
+    // =================================================
 
     if (!formData.emailOrMobile.trim()) {
-      alert("Please enter your email or mobile number.");
+      showDialog({
+        title: "Required Field",
+        message:
+          "Please enter your email or mobile number.",
+        type: "warning",
+      });
+
       return;
     }
 
     if (!formData.password.trim()) {
-      alert("Please enter your password.");
-      return;
-    }
+      showDialog({
+        title: "Required Field",
+        message:
+          "Please enter your password.",
+        type: "warning",
+      });
 
-    // =========================
-    // Temporary Signup Check
-    // =========================
-
-    const isRegistered = localStorage.getItem("registered");
-
-    if (!isRegistered) {
-      alert("Please Sign Up first to continue.");
-      navigate("/signup");
       return;
     }
 
     try {
       setLoading(true);
 
-      console.log("Login Data:", formData);
+      console.log(
+        "Login Data:",
+        formData
+      );
 
-      // =========================
-      // Backend Login
-      // =========================
+      // =================================================
+      // BACKEND LOGIN
+      // =================================================
 
-      const response = await loginUser(formData);
+      const response =
+        await loginUser(formData);
 
-      console.log("Backend Response:", response.data);
+      console.log(
+        "Backend Response:",
+        response.data
+      );
 
-      const data = response.data;
+      const data = response.data || {};
 
-      // =========================
-      // Store Token
-      // =========================
+      // =================================================
+      // STORE TOKEN
+      // =================================================
 
       const token =
         data.token ||
@@ -90,21 +153,24 @@ function Login() {
         "";
 
       if (token) {
-        localStorage.setItem("token", token);
+        localStorage.setItem(
+          "token",
+          token
+        );
       }
 
-      // =========================
-      // Store User
-      // =========================
+      // =================================================
+      // STORE USER
+      // =================================================
 
       localStorage.setItem(
         "user",
         JSON.stringify(data)
       );
 
-      // =========================
-      // Store User ID
-      // =========================
+      // =================================================
+      // STORE USER ID
+      // =================================================
 
       const userId =
         data.userId ||
@@ -124,18 +190,18 @@ function Login() {
         );
       }
 
-      // =========================
-      // Login Status
-      // =========================
+      // =================================================
+      // LOGIN STATUS
+      // =================================================
 
       localStorage.setItem(
         "isLoggedIn",
         "true"
       );
 
-      // =========================
-      // Remember Me
-      // =========================
+      // =================================================
+      // REMEMBER ME
+      // =================================================
 
       if (formData.remember) {
         localStorage.setItem(
@@ -148,19 +214,29 @@ function Login() {
         );
       }
 
-      // =========================
-      // IMPORTANT
-      // LOGIN → ROLE SELECTION
-      // =========================
+      // =================================================
+      // CLEAR GUEST STATUS
+      // =================================================
 
-      
+      localStorage.removeItem(
+        "isGuest"
+      );
+
+      localStorage.removeItem(
+        "userRole"
+      );
+
+      // =================================================
+      // LOGIN → ROLE SELECTION
+      // =================================================
 
       navigate("/role-selection");
 
     } catch (error) {
       console.error(
         "Login Error:",
-        error.response?.data || error
+        error.response?.data ||
+          error
       );
 
       const message =
@@ -168,16 +244,20 @@ function Login() {
         error.response?.data?.Message ||
         "Login failed. Please check your email/mobile and password.";
 
-      alert(message);
+      showDialog({
+        title: "Login Failed",
+        message,
+        type: "error",
+      });
 
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================
-  // Guest Login
-  // =========================
+  // =====================================================
+  // GUEST LOGIN
+  // =====================================================
 
   const handleGuestLogin = () => {
     localStorage.setItem(
@@ -190,15 +270,49 @@ function Login() {
       "true"
     );
 
+    localStorage.removeItem(
+      "isLoggedIn"
+    );
+
     navigate("/home");
   };
+
+  // =====================================================
+  // FORGOT PASSWORD
+  // =====================================================
+
+  const handleForgotPassword = () => {
+    showDialog({
+      title: "Forgot Password",
+      message:
+        "Forgot Password functionality will be added soon.",
+      type: "info",
+    });
+  };
+
+  // =====================================================
+  // GOOGLE LOGIN
+  // =====================================================
+
+  const handleGoogleLogin = () => {
+    showDialog({
+      title: "Google Login",
+      message:
+        "Google Login will be added soon.",
+      type: "info",
+    });
+  };
+
+  // =====================================================
+  // UI
+  // =====================================================
 
   return (
     <AuthLayout>
 
-      {/* =========================
-          Heading
-      ========================= */}
+      {/* =================================================
+          HEADING
+      ================================================= */}
 
       <h1 className="auth-title">
         Welcome Back 👋
@@ -208,9 +322,9 @@ function Login() {
         Login to continue using REVIO.
       </p>
 
-      {/* =========================
-          Login Form
-      ========================= */}
+      {/* =================================================
+          LOGIN FORM
+      ================================================= */}
 
       <form onSubmit={handleSubmit}>
 
@@ -230,9 +344,9 @@ function Login() {
           name="password"
         />
 
-        {/* =========================
-            Remember / Forgot
-        ========================= */}
+        {/* =================================================
+            REMEMBER / FORGOT
+        ================================================= */}
 
         <div
           style={{
@@ -259,7 +373,9 @@ function Login() {
             <input
               type="checkbox"
               name="remember"
-              checked={formData.remember}
+              checked={
+                formData.remember
+              }
               onChange={handleChange}
             />
 
@@ -273,10 +389,8 @@ function Login() {
               color: "#cccccc",
               cursor: "pointer",
             }}
-            onClick={() =>
-              alert(
-                "Forgot Password functionality will be added soon."
-              )
+            onClick={
+              handleForgotPassword
             }
           >
             Forgot Password?
@@ -284,9 +398,9 @@ function Login() {
 
         </div>
 
-        {/* =========================
-            Login Button
-        ========================= */}
+        {/* =================================================
+            LOGIN BUTTON
+        ================================================= */}
 
         <Button
           text={
@@ -300,9 +414,9 @@ function Login() {
 
       </form>
 
-      {/* =========================
-          OR Divider
-      ========================= */}
+      {/* =================================================
+          OR DIVIDER
+      ================================================= */}
 
       <div
         style={{
@@ -340,25 +454,23 @@ function Login() {
 
       </div>
 
-      {/* =========================
-          Google Login
-      ========================= */}
+      {/* =================================================
+          GOOGLE LOGIN
+      ================================================= */}
 
       <button
         type="button"
         className="google-btn"
-        onClick={() =>
-          alert(
-            "Google Login will be added soon."
-          )
+        onClick={
+          handleGoogleLogin
         }
       >
         Continue with Google
       </button>
 
-      {/* =========================
-          Guest Login
-      ========================= */}
+      {/* =================================================
+          GUEST LOGIN
+      ================================================= */}
 
       <button
         type="button"
@@ -369,26 +481,45 @@ function Login() {
           color: "#fff",
           border: "1px solid #333",
         }}
-        onClick={handleGuestLogin}
+        onClick={
+          handleGuestLogin
+        }
       >
         Continue as Guest
       </button>
 
-      {/* =========================
-          Signup
-      ========================= */}
+      {/* =================================================
+          SIGNUP
+      ================================================= */}
 
       <p className="bottom-link">
 
         Don't have an account?{" "}
 
         <Link to="/signup">
+
           <span>
             Sign Up
           </span>
+
         </Link>
 
       </p>
+
+      {/* =================================================
+          STANDARD DIALOG
+      ================================================= */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={dialog.confirmText}
+        onConfirm={
+          handleDialogConfirm
+        }
+      />
 
     </AuthLayout>
   );

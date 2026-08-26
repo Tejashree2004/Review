@@ -24,6 +24,8 @@ import {
 
 import MainLayout from "../layouts/MainLayout";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/OwnerPhotos.css";
 
 const API_BASE =
@@ -60,6 +62,73 @@ function OwnerPhotos() {
 
   const [isDragging, setIsDragging] =
     useState(false);
+
+  // =====================================================
+  // DIALOG STATE
+  // =====================================================
+
+  const [dialog, setDialog] =
+    useState({
+      isOpen: false,
+      title: "",
+      message: "",
+      type: "info",
+      confirmText: "OK",
+      cancelText: "Cancel",
+      showCancel: false,
+      action: null,
+    });
+
+  // =====================================================
+  // SHOW DIALOG
+  // =====================================================
+
+  const showDialog = (
+    title,
+    message,
+    type = "info",
+    action = null,
+    options = {}
+  ) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText:
+        options.confirmText || "OK",
+      cancelText:
+        options.cancelText || "Cancel",
+      showCancel:
+        options.showCancel || false,
+      action,
+    });
+  };
+
+  // =====================================================
+  // CLOSE DIALOG
+  // =====================================================
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  // =====================================================
+  // HANDLE DIALOG CONFIRM
+  // =====================================================
+
+  const handleDialogConfirm = () => {
+    const action = dialog.action;
+
+    closeDialog();
+
+    if (action) {
+      action();
+    }
+  };
 
   // =====================================================
   // TOKEN
@@ -135,11 +204,13 @@ function OwnerPhotos() {
         getToken();
 
       if (!token) {
-        alert(
-          "Your login session has expired. Please login again."
+        showDialog(
+          "Login Required",
+          "Your login session has expired. Please login again.",
+          "warning",
+          () => navigate("/login")
         );
 
-        navigate("/login");
         return;
       }
 
@@ -207,12 +278,14 @@ function OwnerPhotos() {
           setBusinessId(null);
           setPhotos([]);
 
-          alert(
-            "Please add your business information before uploading photos."
-          );
-
-          navigate(
-            "/owner/business/new"
+          showDialog(
+            "Business Information Required",
+            "Please add your business information before uploading photos.",
+            "warning",
+            () =>
+              navigate(
+                "/owner/business/new"
+              )
           );
 
           return;
@@ -229,8 +302,10 @@ function OwnerPhotos() {
 
         if (!id) {
 
-          alert(
-            "Business ID was not found. Please save your business information again."
+          showDialog(
+            "Business ID Missing",
+            "Business ID was not found. Please save your business information again.",
+            "error"
           );
 
           return;
@@ -267,11 +342,12 @@ function OwnerPhotos() {
           401
         ) {
 
-          alert(
-            "Your login session has expired. Please login again."
+          showDialog(
+            "Session Expired",
+            "Your login session has expired. Please login again.",
+            "warning",
+            () => navigate("/login")
           );
-
-          navigate("/login");
 
           return;
         }
@@ -281,15 +357,19 @@ function OwnerPhotos() {
           404
         ) {
 
-          alert(
-            "Business or photo endpoint was not found. Please check the backend routes."
+          showDialog(
+            "Endpoint Not Found",
+            "Business or photo endpoint was not found. Please check the backend routes.",
+            "error"
           );
 
           return;
         }
 
-        alert(
-          "Unable to load business photos."
+        showDialog(
+          "Error",
+          "Unable to load business photos.",
+          "error"
         );
 
       } finally {
@@ -597,8 +677,10 @@ function OwnerPhotos() {
         imageFiles.length ===
         0
       ) {
-        alert(
-          "Please select JPG, PNG or WEBP image files only."
+        showDialog(
+          "Invalid File",
+          "Please select JPG, PNG or WEBP image files only.",
+          "warning"
         );
 
         return;
@@ -609,8 +691,10 @@ function OwnerPhotos() {
           imageFiles.length >
         12
       ) {
-        alert(
-          `You can upload maximum 12 business photos. You currently have ${photos.length} photos.`
+        showDialog(
+          "Photo Limit Reached",
+          `You can upload maximum 12 business photos. You currently have ${photos.length} photos.`,
+          "warning"
         );
 
         return;
@@ -626,8 +710,10 @@ function OwnerPhotos() {
         );
 
       if (oversizedFile) {
-        alert(
-          "Each image must be smaller than 5 MB."
+        showDialog(
+          "File Too Large",
+          "Each image must be smaller than 5 MB.",
+          "warning"
         );
 
         return;
@@ -685,11 +771,13 @@ function OwnerPhotos() {
 
         await loadBusinessPhotosOnly();
 
-        alert(
+        showDialog(
+          "Upload Successful",
           uploadedPhotos.length ===
             1
             ? "Photo uploaded successfully!"
-            : `${uploadedPhotos.length} photos uploaded successfully!`
+            : `${uploadedPhotos.length} photos uploaded successfully!`,
+          "success"
         );
 
       } catch (error) {
@@ -711,9 +799,11 @@ function OwnerPhotos() {
               ?.Message ??
             "";
 
-          alert(
+          showDialog(
+            "Upload Failed",
             message ||
-              "Invalid photo data. The backend rejected the image."
+              "Invalid photo data. The backend rejected the image.",
+            "error"
           );
 
           return;
@@ -724,18 +814,21 @@ function OwnerPhotos() {
           401
         ) {
 
-          alert(
-            "Your login session has expired. Please login again."
+          showDialog(
+            "Session Expired",
+            "Your login session has expired. Please login again.",
+            "warning",
+            () => navigate("/login")
           );
-
-          navigate("/login");
 
           return;
         }
 
-        alert(
+        showDialog(
+          "Upload Failed",
           error.message ||
-            "Something went wrong while uploading the photo."
+            "Something went wrong while uploading the photo.",
+          "error"
         );
 
       } finally {
@@ -829,30 +922,48 @@ function OwnerPhotos() {
         getPhotoId(photo);
 
       if (!photoId) {
-        alert(
-          "Photo ID not found."
+        showDialog(
+          "Photo ID Missing",
+          "Photo ID not found.",
+          "error"
         );
+
         return;
       }
 
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to delete this photo?"
-        );
+      showDialog(
+        "Delete Photo",
+        "Are you sure you want to delete this photo?",
+        "warning",
+        () =>
+          confirmDeletePhoto(
+            photoId
+          ),
+        {
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          showCancel: true,
+        }
+      );
+    };
 
-      if (!confirmed) {
-        return;
-      }
+  // =====================================================
+  // CONFIRM DELETE PHOTO
+  // =====================================================
+
+  const confirmDeletePhoto =
+    async (photoId) => {
 
       const token =
         getToken();
 
       if (!token) {
-        alert(
-          "Please login again."
+        showDialog(
+          "Login Required",
+          "Please login again.",
+          "warning",
+          () => navigate("/login")
         );
-
-        navigate("/login");
 
         return;
       }
@@ -873,8 +984,10 @@ function OwnerPhotos() {
 
         await loadBusinessPhotosOnly();
 
-        alert(
-          "Photo deleted successfully."
+        showDialog(
+          "Photo Deleted",
+          "Photo deleted successfully.",
+          "success"
         );
 
       } catch (error) {
@@ -884,8 +997,24 @@ function OwnerPhotos() {
           error
         );
 
-        alert(
-          "Unable to delete photo."
+        if (
+          error.response?.status ===
+          401
+        ) {
+          showDialog(
+            "Session Expired",
+            "Your login session has expired. Please login again.",
+            "warning",
+            () => navigate("/login")
+          );
+
+          return;
+        }
+
+        showDialog(
+          "Delete Failed",
+          "Unable to delete photo.",
+          "error"
         );
 
       } finally {
@@ -902,8 +1031,10 @@ function OwnerPhotos() {
   const handleSetPrimary =
     async () => {
 
-      alert(
-        "Primary photo is selected automatically when the first photo is uploaded. To change the primary photo, the backend needs a SetPrimaryPhoto endpoint."
+      showDialog(
+        "Primary Photo",
+        "Primary photo is selected automatically when the first photo is uploaded. To change the primary photo, the backend needs a SetPrimaryPhoto endpoint.",
+        "info"
       );
 
     };
@@ -962,6 +1093,33 @@ function OwnerPhotos() {
           </div>
 
         </div>
+
+        <DialogBox
+          isOpen={
+            dialog.isOpen
+          }
+          title={
+            dialog.title
+          }
+          message={
+            dialog.message
+          }
+          type={
+            dialog.type
+          }
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
+          onCancel={
+            closeDialog
+          }
+          showCancel={
+            dialog.showCancel
+          }
+        />
 
       </MainLayout>
     );
@@ -1377,6 +1535,38 @@ function OwnerPhotos() {
         </div>
 
       </div>
+
+
+      {/* =====================================================
+          DIALOG
+      ===================================================== */}
+
+      <DialogBox
+        isOpen={
+          dialog.isOpen
+        }
+        title={
+          dialog.title
+        }
+        message={
+          dialog.message
+        }
+        type={
+          dialog.type
+        }
+        confirmText={
+          dialog.confirmText
+        }
+        onConfirm={
+          handleDialogConfirm
+        }
+        onCancel={
+          closeDialog
+        }
+        showCancel={
+          dialog.showCancel
+        }
+      />
 
     </MainLayout>
   );

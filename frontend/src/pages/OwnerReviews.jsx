@@ -19,9 +19,14 @@ import {
 import axios from "axios";
 
 import MainLayout from "../layouts/MainLayout";
+
+import DialogBox from "../components/DialogBox";
+
 import "../styles/OwnerReviews.css";
 
-const API_BASE = "http://localhost:5213/api";
+const API_BASE =
+  "http://localhost:5213/api";
+
 const PAGE_SIZE = 10;
 
 function OwnerReviews() {
@@ -60,6 +65,72 @@ function OwnerReviews() {
 
   const [replyText, setReplyText] =
     useState("");
+
+  // =====================================================
+  // DIALOG STATE
+  // =====================================================
+
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    showCancel: false,
+    action: null,
+  });
+
+  // =====================================================
+  // SHOW DIALOG
+  // =====================================================
+
+  const showDialog = (
+    title,
+    message,
+    type = "info",
+    action = null,
+    options = {}
+  ) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText:
+        options.confirmText || "OK",
+      cancelText:
+        options.cancelText || "Cancel",
+      showCancel:
+        options.showCancel || false,
+      action,
+    });
+  };
+
+  // =====================================================
+  // CLOSE DIALOG
+  // =====================================================
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  // =====================================================
+  // HANDLE DIALOG CONFIRM
+  // =====================================================
+
+  const handleDialogConfirm = () => {
+    const action = dialog.action;
+
+    closeDialog();
+
+    if (action) {
+      action();
+    }
+  };
 
   // =====================================================
   // REVIEW SUMMARY
@@ -859,9 +930,12 @@ function OwnerReviews() {
       replyText.trim();
 
     if (!trimmed) {
-      alert(
-        "Please enter your reply."
+      showDialog(
+        "Reply Required",
+        "Please enter your reply.",
+        "warning"
       );
+
       return;
     }
 
@@ -883,16 +957,12 @@ function OwnerReviews() {
             ) {
               return {
                 ...review,
-
                 ownerReply:
                   trimmed,
-
                 OwnerReply:
                   trimmed,
-
                 ownerReplyAt:
                   replyTime,
-
                 OwnerReplyAt:
                   replyTime,
               };
@@ -906,8 +976,10 @@ function OwnerReviews() {
     setReplyingTo(null);
     setReplyText("");
 
-    alert(
-      "Reply added successfully."
+    showDialog(
+      "Reply Added",
+      "Reply added successfully.",
+      "success"
     );
   };
 
@@ -918,22 +990,27 @@ function OwnerReviews() {
   const handleReport = (
     reviewId
   ) => {
-    const confirmed =
-      window.confirm(
-        "Do you want to report this review?"
-      );
+    showDialog(
+      "Report Review",
+      "Do you want to report this review?",
+      "warning",
+      () => {
+        console.log(
+          "Reported Review ID:",
+          reviewId
+        );
 
-    if (!confirmed) {
-      return;
-    }
-
-    console.log(
-      "Reported Review ID:",
-      reviewId
-    );
-
-    alert(
-      "Review has been reported to REVIO admin."
+        showDialog(
+          "Report Submitted",
+          "Review has been reported to REVIO admin.",
+          "success"
+        );
+      },
+      {
+        confirmText: "Report",
+        cancelText: "Cancel",
+        showCancel: true,
+      }
     );
   };
 
@@ -945,7 +1022,6 @@ function OwnerReviews() {
     return (
       <MainLayout>
         <div className="owner-reviews-page">
-
           <div className="owner-reviews-header">
             <button
               className="owner-reviews-back"
@@ -979,8 +1055,20 @@ function OwnerReviews() {
               load customer reviews.
             </p>
           </div>
-
         </div>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
+        />
       </MainLayout>
     );
   }
@@ -993,9 +1081,7 @@ function OwnerReviews() {
     return (
       <MainLayout>
         <div className="owner-reviews-page">
-
           <div className="owner-reviews-header">
-
             <button
               className="owner-reviews-back"
               onClick={() =>
@@ -1015,11 +1101,9 @@ function OwnerReviews() {
                 saying about your business.
               </p>
             </div>
-
           </div>
 
           <div className="owner-review-empty">
-
             <FaStar />
 
             <h2>
@@ -1038,10 +1122,21 @@ function OwnerReviews() {
             >
               Try Again
             </button>
-
           </div>
-
         </div>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
+        />
       </MainLayout>
     );
   }
@@ -1052,7 +1147,6 @@ function OwnerReviews() {
 
   return (
     <MainLayout>
-
       <div className="owner-reviews-page">
 
         {/* =================================================
@@ -1071,7 +1165,6 @@ function OwnerReviews() {
           </button>
 
           <div>
-
             <h1>
               Customer Reviews
             </h1>
@@ -1080,7 +1173,6 @@ function OwnerReviews() {
               See what customers are saying
               about your business.
             </p>
-
           </div>
 
         </div>
@@ -1143,7 +1235,6 @@ function OwnerReviews() {
                     </span>
 
                     <div className="rating-bar">
-
                       <div
                         className="rating-bar-fill"
                         style={{
@@ -1151,7 +1242,6 @@ function OwnerReviews() {
                             `${percentage}%`,
                         }}
                       />
-
                     </div>
 
                     <span className="rating-count">
@@ -1373,6 +1463,7 @@ function OwnerReviews() {
 
                     {replyingTo ===
                       reviewId && (
+
                       <div className="reply-form">
 
                         <textarea
@@ -1418,6 +1509,7 @@ function OwnerReviews() {
                         </div>
 
                       </div>
+
                     )}
 
                     <div className="review-actions">
@@ -1495,6 +1587,23 @@ function OwnerReviews() {
           )}
 
       </div>
+
+      {/* =================================================
+          DIALOG
+      ================================================= */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={
+          dialog.confirmText
+        }
+        onConfirm={
+          handleDialogConfirm
+        }
+      />
 
     </MainLayout>
   );

@@ -21,6 +21,8 @@ import {
   FaPen,
 } from "react-icons/fa";
 
+import DialogBox from "../components/DialogBox";
+
 import "../styles/PlaceDetails.css";
 
 function PlaceDetails() {
@@ -34,17 +36,71 @@ function PlaceDetails() {
   // FAVORITE STATE
   // ==========================================
 
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] =
+    useState(false);
+
   const [favoriteLoading, setFavoriteLoading] =
     useState(false);
 
   // ==========================================
-  // LOAD PLACE
+  // DIALOG STATE
   // ==========================================
 
-  useEffect(() => {
-    loadPlace();
-  }, [id]);
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "REVIO",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    onConfirm: null,
+  });
+
+  // ==========================================
+  // SHOW DIALOG
+  // ==========================================
+
+  const showDialog = ({
+    title = "REVIO",
+    message,
+    type = "info",
+    confirmText = "OK",
+    onConfirm = null,
+  }) => {
+    setDialog({
+      isOpen: true,
+      title,
+      message,
+      type,
+      confirmText,
+      onConfirm,
+    });
+  };
+
+  // ==========================================
+  // CLOSE DIALOG
+  // ==========================================
+
+  const closeDialog = () => {
+    setDialog((previous) => ({
+      ...previous,
+      isOpen: false,
+    }));
+  };
+
+  // ==========================================
+  // HANDLE DIALOG CONFIRM
+  // ==========================================
+
+  const handleDialogConfirm = () => {
+    const callback =
+      dialog.onConfirm;
+
+    closeDialog();
+
+    if (callback) {
+      callback();
+    }
+  };
 
   // ==========================================
   // GET USER ID
@@ -61,6 +117,14 @@ function PlaceDetails() {
   };
 
   // ==========================================
+  // LOAD PLACE
+  // ==========================================
+
+  useEffect(() => {
+    loadPlace();
+  }, [id]);
+
+  // ==========================================
   // LOAD PLACE DETAILS
   // ==========================================
 
@@ -72,18 +136,18 @@ function PlaceDetails() {
         await getPlaceDetails(id);
 
       console.log(
-        "Place Details :",
+        "Place Details:",
         response.data
       );
 
       setPlace(response.data);
 
-      // Check favorite only if a valid Place ID exists
       if (response.data?.placeId) {
         await checkFavorite(
           response.data.placeId
         );
       }
+
     } catch (error) {
       console.error(
         "Failed to load place details:",
@@ -91,6 +155,15 @@ function PlaceDetails() {
       );
 
       setPlace(null);
+
+      showDialog({
+        title: "Error",
+        message:
+          error.response?.data?.message ||
+          "Failed to load place details.",
+        type: "error",
+      });
+
     } finally {
       setLoading(false);
     }
@@ -100,7 +173,9 @@ function PlaceDetails() {
   // CHECK FAVORITE
   // ==========================================
 
-  const checkFavorite = async (placeId) => {
+  const checkFavorite = async (
+    placeId
+  ) => {
     try {
       const userId = getUserId();
 
@@ -113,7 +188,9 @@ function PlaceDetails() {
         await getFavorites(userId);
 
       const favorites =
-        response.data || [];
+        Array.isArray(response.data)
+          ? response.data
+          : [];
 
       const currentPlaceId =
         Number(placeId);
@@ -121,13 +198,19 @@ function PlaceDetails() {
       const alreadyFavorite =
         favorites.some(
           (favorite) =>
-            Number(favorite.placeId) ===
+            Number(
+              favorite.placeId ??
+              favorite.PlaceId ??
+              favorite.place?.placeId ??
+              favorite.place?.PlaceId
+            ) ===
             currentPlaceId
         );
 
       setIsFavorite(
         alreadyFavorite
       );
+
     } catch (error) {
       console.error(
         "Failed to check favorite:",
@@ -147,9 +230,12 @@ function PlaceDetails() {
       const userId = getUserId();
 
       if (!userId) {
-        alert(
-          "Please login first to add favorites."
-        );
+        showDialog({
+          title: "Login Required",
+          message:
+            "Please login first to add favorites.",
+          type: "warning",
+        });
 
         return;
       }
@@ -167,6 +253,7 @@ function PlaceDetails() {
         );
 
         setIsFavorite(false);
+
       } else {
         await addFavorite({
           userId: userId,
@@ -175,23 +262,21 @@ function PlaceDetails() {
 
         setIsFavorite(true);
       }
+
     } catch (error) {
       console.error(
         "Favorite operation failed:",
         error
       );
 
-      if (
-        error.response?.data?.message
-      ) {
-        alert(
-          error.response.data.message
-        );
-      } else {
-        alert(
-          "Something went wrong. Please try again."
-        );
-      }
+      showDialog({
+        title: "Error",
+        message:
+          error.response?.data?.message ||
+          "Something went wrong. Please try again.",
+        type: "error",
+      });
+
     } finally {
       setFavoriteLoading(false);
     }
@@ -233,9 +318,12 @@ function PlaceDetails() {
     const userId = getUserId();
 
     if (!userId) {
-      alert(
-        "Please login first to write a review."
-      );
+      showDialog({
+        title: "Login Required",
+        message:
+          "Please login first to write a review.",
+        type: "warning",
+      });
 
       return;
     }
@@ -256,9 +344,11 @@ function PlaceDetails() {
   if (loading) {
     return (
       <MainLayout>
+
         <h2 style={{ color: "#fff" }}>
           Loading...
         </h2>
+
       </MainLayout>
     );
   }
@@ -270,9 +360,12 @@ function PlaceDetails() {
   if (!place) {
     return (
       <MainLayout>
+
         <button
           className="back-btn"
-          onClick={() => navigate(-1)}
+          onClick={() =>
+            navigate(-1)
+          }
           title="Go Back"
         >
           <FaArrowLeft />
@@ -281,6 +374,20 @@ function PlaceDetails() {
         <h2 style={{ color: "#fff" }}>
           Place Not Found
         </h2>
+
+        <DialogBox
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
+        />
+
       </MainLayout>
     );
   }
@@ -292,27 +399,23 @@ function PlaceDetails() {
   return (
     <MainLayout>
 
-      {/* ========================================
-          BACK BUTTON
-      ======================================== */}
+      {/* BACK BUTTON */}
 
       <button
         className="back-btn"
-        onClick={() => navigate(-1)}
+        onClick={() =>
+          navigate(-1)
+        }
         title="Go Back"
       >
         <FaArrowLeft />
       </button>
 
-      {/* ========================================
-          MAIN PLACE SECTION
-      ======================================== */}
+      {/* MAIN PLACE SECTION */}
 
       <div className="place-details">
 
-        {/* ======================================
-            IMAGE SECTION
-        ====================================== */}
+        {/* IMAGE SECTION */}
 
         <div className="image-section">
 
@@ -339,7 +442,9 @@ function PlaceDetails() {
                 ? "favorite-active"
                 : ""
             }`}
-            onClick={handleFavorite}
+            onClick={
+              handleFavorite
+            }
             disabled={
               favoriteLoading
             }
@@ -354,9 +459,7 @@ function PlaceDetails() {
 
         </div>
 
-        {/* ======================================
-            DETAILS CARD
-        ====================================== */}
+        {/* DETAILS CARD */}
 
         <div className="details-card">
 
@@ -460,9 +563,7 @@ function PlaceDetails() {
 
           </div>
 
-          {/* ====================================
-              ACTION BUTTONS
-          ==================================== */}
+          {/* ACTION BUTTONS */}
 
           <div className="place-actions">
 
@@ -470,7 +571,9 @@ function PlaceDetails() {
 
             <button
               className="place-action-btn map-btn"
-              onClick={handleMapClick}
+              onClick={
+                handleMapClick
+              }
             >
               <FaMapMarkedAlt />
 
@@ -497,11 +600,10 @@ function PlaceDetails() {
           </div>
 
         </div>
+
       </div>
 
-      {/* ========================================
-          ABOUT
-      ======================================== */}
+      {/* ABOUT */}
 
       <div className="info-card">
 
@@ -512,14 +614,28 @@ function PlaceDetails() {
         <p>
           {place.name} is one of the
           popular places in{" "}
-          {place.city || "this area"}.
+          {place.city ||
+            "this area"}.
           Explore its details, reviews
           and location to learn more.
         </p>
 
       </div>
 
- 
+      {/* STANDARD DIALOG */}
+
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        confirmText={
+          dialog.confirmText
+        }
+        onConfirm={
+          handleDialogConfirm
+        }
+      />
 
     </MainLayout>
   );
