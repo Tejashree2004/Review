@@ -1,3 +1,4 @@
+
 /* ==========================
    Reviews Page
 ========================== */
@@ -209,6 +210,23 @@
 
 
 /* ==========================
+   Review Type
+========================== */
+
+.review-type {
+  margin-top: 14px;
+
+  color: #a5a5a5;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.2px;
+}
+
+
+/* ==========================
    Rating
 ========================== */
 
@@ -238,12 +256,12 @@
 
 
 .review-star.active {
-  color: #FFD700;
+  color: #ffffff;
 }
 
 
 .my-review-rating > span {
-  color: #ffffff;
+  color: #d0d0d0;
 
   font-size: 14px;
 
@@ -276,11 +294,75 @@
   font-size: 16px;
 
   line-height: 1.7;
+
+  display: -webkit-box;
+
+  -webkit-box-orient: vertical;
+
+  -webkit-line-clamp: 2;
+
+  overflow: hidden;
+}
+
+
+.review-comment p.expanded {
+  display: block;
+
+  overflow: visible;
 }
 
 
 /* ==========================
-   View Place
+   View More / View Less
+========================== */
+
+.review-view-more-btn {
+  display: inline-block;
+
+  margin-top: 7px;
+
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  color: #bdbdbd;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  line-height: 1.4;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    text-decoration 0.2s ease;
+}
+
+
+.review-view-more-btn:hover {
+  color: #ffffff;
+
+  text-decoration: underline;
+}
+
+
+.review-view-more-btn:focus-visible {
+  outline: 1px solid #ffffff;
+
+  outline-offset: 3px;
+
+  border-radius: 2px;
+}
+
+
+/* ==========================
+   View Place / Business
 ========================== */
 
 .view-place-btn {
@@ -416,6 +498,84 @@
 
 
 /* ==========================
+   Load More Reviews
+========================== */
+
+.load-more-reviews-container {
+  width: 100%;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  margin: 28px 0 40px;
+}
+
+
+.load-more-reviews-btn {
+  min-width: 190px;
+
+  min-height: 44px;
+
+  padding: 11px 24px;
+
+  border: 1px solid #2d2d2d;
+
+  border-radius: 8px;
+
+  background: #171717;
+
+  color: #ffffff;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  display: inline-flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 9px;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.load-more-reviews-btn:hover:not(:disabled) {
+  background: #ffffff;
+
+  color: #111111;
+
+  border-color: #ffffff;
+
+  transform: translateY(-1px);
+}
+
+
+.load-more-reviews-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+
+.load-more-reviews-btn:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.65;
+}
+
+
+/* ==========================
    Tablet
 ========================== */
 
@@ -506,6 +666,15 @@
 
   .review-comment p {
     font-size: 14px;
+
+    line-height: 1.6;
+  }
+
+
+  .review-view-more-btn {
+    font-size: 12px;
+
+    margin-top: 6px;
   }
 
 
@@ -513,14 +682,28 @@
     font-size: 16px;
   }
 
+
+  .review-type {
+    font-size: 11px;
+  }
+
+
+  .load-more-reviews-container {
+    margin: 24px 0 32px;
+
+    padding: 0 16px;
+  }
+
+
+  .load-more-reviews-btn {
+    width: 100%;
+
+    min-width: 0;
+
+    min-height: 46px;
+
+    font-size: 14px;
+  }
+
 }
-
-
-
-
-
-
-
-
-
 

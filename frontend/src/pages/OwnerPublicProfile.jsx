@@ -1,6 +1,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -80,6 +81,19 @@ function OwnerPublicProfile() {
 
   const [error, setError] =
     useState("");
+
+  // =====================================================
+  // REVIEW EXPANSION
+  // =====================================================
+
+  const [expandedReviews, setExpandedReviews] =
+    useState({});
+
+  const [reviewMoreStates, setReviewMoreStates] =
+    useState({});
+
+  const reviewCommentRefs =
+    useRef({});
 
   // =====================================================
   // TOKEN
@@ -440,7 +454,6 @@ function OwnerPublicProfile() {
                   )
                     ? totalReviews
                     : reviewList.length,
-
                 ReviewCount:
                   Number.isFinite(
                     totalReviews
@@ -497,6 +510,88 @@ function OwnerPublicProfile() {
 
     loadPublicProfile();
   }, [routeBusinessId]);
+
+  // =====================================================
+  // CHECK WHICH REVIEWS ACTUALLY NEED VIEW MORE
+  // =====================================================
+
+  useEffect(() => {
+    if (!reviews.length) {
+      return;
+    }
+
+    const checkReviewHeights = () => {
+      const states = {};
+
+      reviews
+        .slice(0, 3)
+        .forEach((review, index) => {
+          const reviewId =
+            getReviewId(
+              review,
+              index
+            );
+
+          const element =
+            reviewCommentRefs.current[
+              reviewId
+            ];
+
+          if (!element) {
+            return;
+          }
+
+          const computedStyle =
+            window.getComputedStyle(
+              element
+            );
+
+          const lineHeight =
+            parseFloat(
+              computedStyle.lineHeight
+            );
+
+          if (
+            !Number.isFinite(
+              lineHeight
+            ) ||
+            lineHeight <= 0
+          ) {
+            states[reviewId] = false;
+            return;
+          }
+
+          const twoLineHeight =
+            lineHeight * 2;
+
+          states[reviewId] =
+            element.scrollHeight >
+            twoLineHeight + 1;
+        });
+
+      setReviewMoreStates(states);
+    };
+
+    const timeout =
+      setTimeout(
+        checkReviewHeights,
+        50
+      );
+
+    window.addEventListener(
+      "resize",
+      checkReviewHeights
+    );
+
+    return () => {
+      clearTimeout(timeout);
+
+      window.removeEventListener(
+        "resize",
+        checkReviewHeights
+      );
+    };
+  }, [reviews]);
 
   // =====================================================
   // BUSINESS VALUES
@@ -766,7 +861,6 @@ function OwnerPublicProfile() {
         "Reviewer UserId not found:",
         review
       );
-
       return;
     }
 
@@ -778,13 +872,8 @@ function OwnerPublicProfile() {
         "ReviewId not found:",
         review
       );
-
       return;
     }
-
-    // =================================================
-    // USER PUBLIC PROFILE ROUTE
-    // =================================================
 
     navigate(
       `/user-profile/${userId}/review/${reviewId}`
@@ -882,6 +971,22 @@ function OwnerPublicProfile() {
   };
 
   // =====================================================
+  // REVIEW COMMENT TOGGLE
+  // =====================================================
+
+  const toggleReviewComment = (
+    reviewId
+  ) => {
+    setExpandedReviews(
+      (previous) => ({
+        ...previous,
+        [reviewId]:
+          !previous[reviewId],
+      })
+    );
+  };
+
+  // =====================================================
   // HANDLERS
   // =====================================================
 
@@ -937,7 +1042,6 @@ function OwnerPublicProfile() {
     return (
       <div className="public-profile-page">
         <header className="public-profile-header">
-
           <button
             className="public-back-btn"
             onClick={() =>
@@ -958,13 +1062,10 @@ function OwnerPublicProfile() {
               Public Profile
             </h1>
           </div>
-
         </header>
 
         <main className="public-profile-container">
-
           <section className="public-error-card">
-
             <h3>
               Unable to load profile
             </h3>
@@ -983,9 +1084,7 @@ function OwnerPublicProfile() {
             >
               Back to Businesses
             </button>
-
           </section>
-
         </main>
       </div>
     );
@@ -998,9 +1097,7 @@ function OwnerPublicProfile() {
   if (!business) {
     return (
       <div className="public-profile-page">
-
         <header className="public-profile-header">
-
           <button
             className="public-back-btn"
             onClick={() =>
@@ -1013,7 +1110,6 @@ function OwnerPublicProfile() {
           </button>
 
           <div className="public-header-title">
-
             <span>
               REVIO
             </span>
@@ -1021,15 +1117,11 @@ function OwnerPublicProfile() {
             <h1>
               Public Profile
             </h1>
-
           </div>
-
         </header>
 
         <main className="public-profile-container">
-
           <section className="public-error-card">
-
             <FaStore />
 
             <h3>
@@ -1050,11 +1142,8 @@ function OwnerPublicProfile() {
             >
               Add Business
             </button>
-
           </section>
-
         </main>
-
       </div>
     );
   }
@@ -1071,7 +1160,6 @@ function OwnerPublicProfile() {
       ===================================================== */}
 
       <header className="public-profile-header">
-
         <button
           className="public-back-btn"
           onClick={() =>
@@ -1084,7 +1172,6 @@ function OwnerPublicProfile() {
         </button>
 
         <div className="public-header-title">
-
           <span>
             REVIO
           </span>
@@ -1092,11 +1179,8 @@ function OwnerPublicProfile() {
           <h1>
             Public Profile
           </h1>
-
         </div>
-
       </header>
-
 
       <main className="public-profile-container">
 
@@ -1105,7 +1189,6 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-cover">
-
           <img
             src={coverImage}
             alt={`${businessName} cover`}
@@ -1121,20 +1204,16 @@ function OwnerPublicProfile() {
           >
             <FaHeart />
           </button>
-
         </section>
-
 
         {/* =====================================================
             BUSINESS INFORMATION
         ===================================================== */}
 
         <section className="public-business-info">
-
           <div className="public-title-row">
 
             <div className="public-business-title">
-
               <h2>
                 {businessName}
               </h2>
@@ -1142,11 +1221,9 @@ function OwnerPublicProfile() {
               <p className="public-category">
                 {categoryName}
               </p>
-
             </div>
 
             <div className="public-rating">
-
               <FaStar />
 
               {rating > 0 ? (
@@ -1178,15 +1255,11 @@ function OwnerPublicProfile() {
                   </span>
                 </>
               )}
-
             </div>
-
           </div>
-
 
           {(address || city) && (
             <div className="public-info-item">
-
               <FaMapMarkerAlt />
 
               <span>
@@ -1198,28 +1271,22 @@ function OwnerPublicProfile() {
 
                 {city}
               </span>
-
             </div>
           )}
 
-
           {phone && (
             <div className="public-info-item">
-
               <FaPhone />
 
               <span>
                 {phone}
               </span>
-
             </div>
           )}
-
 
           {(openingTime ||
             closingTime) && (
             <div className="public-info-item">
-
               <FaClock />
 
               <span>
@@ -1232,10 +1299,8 @@ function OwnerPublicProfile() {
 
                 {closingTime}
               </span>
-
             </div>
           )}
-
 
           {website && (
             <a
@@ -1250,7 +1315,6 @@ function OwnerPublicProfile() {
               target="_blank"
               rel="noreferrer"
             >
-
               <FaGlobe />
 
               <span>
@@ -1260,19 +1324,15 @@ function OwnerPublicProfile() {
               <FaChevronRight
                 className="website-arrow"
               />
-
             </a>
           )}
-
         </section>
-
 
         {/* =====================================================
             ABOUT
         ===================================================== */}
 
         <section className="public-section">
-
           <h3>
             About this business
           </h3>
@@ -1280,18 +1340,14 @@ function OwnerPublicProfile() {
           <p>
             {description}
           </p>
-
         </section>
-
 
         {/* =====================================================
             PHOTOS
         ===================================================== */}
 
         <section className="public-section public-photos-section">
-
           <div className="public-section-title">
-
             <h3>
               Photos
             </h3>
@@ -1300,14 +1356,11 @@ function OwnerPublicProfile() {
               {displayPhotos.length}{" "}
               Photos
             </span>
-
           </div>
 
           <div className="public-photo-grid">
-
             {displayPhotos.map(
               (photo, index) => (
-
                 <div
                   className={`public-photo ${
                     index === 0
@@ -1316,7 +1369,6 @@ function OwnerPublicProfile() {
                   }`}
                   key={photo.id}
                 >
-
                   <img
                     src={photo.url}
                     alt={photo.alt}
@@ -1327,27 +1379,19 @@ function OwnerPublicProfile() {
                       Featured
                     </div>
                   )}
-
                 </div>
-
               )
             )}
-
           </div>
-
         </section>
-
 
         {/* =====================================================
             REVIEWS
         ===================================================== */}
 
         <section className="public-section public-reviews-section">
-
           <div className="public-section-title">
-
             <div>
-
               <h3>
                 Customer Reviews
               </h3>
@@ -1360,7 +1404,6 @@ function OwnerPublicProfile() {
                     : "Reviews"}
                 </span>
               )}
-
             </div>
 
             <button
@@ -1372,32 +1415,24 @@ function OwnerPublicProfile() {
             >
               View All
             </button>
-
           </div>
-
 
           {/* =====================================================
               REVIEWS LOADING
           ===================================================== */}
 
           {reviewsLoading ? (
-
             <div className="public-review-empty">
-
               <FaStar />
 
               <p>
                 Loading customer reviews...
               </p>
-
             </div>
-
           ) : reviews.length > 0 ? (
-
             <div className="public-review-list">
 
-              {/* Only preview first 3 reviews here.
-                  View All opens complete reviewer list. */}
+              {/* Only preview first 3 reviews here. */}
 
               {reviews
                 .slice(0, 3)
@@ -1406,7 +1441,6 @@ function OwnerPublicProfile() {
                     review,
                     index
                   ) => {
-
                     const reviewRating =
                       getReviewRating(
                         review
@@ -1438,6 +1472,20 @@ function OwnerPublicProfile() {
                         review
                       );
 
+                    const isExpanded =
+                      Boolean(
+                        expandedReviews[
+                          reviewId
+                        ]
+                      );
+
+                    const showViewMore =
+                      Boolean(
+                        reviewMoreStates[
+                          reviewId
+                        ]
+                      );
+
                     return (
                       <article
                         className="public-review-card"
@@ -1446,11 +1494,13 @@ function OwnerPublicProfile() {
                         }
                       >
 
+                        {/* =================================================
+                            REVIEWER HEADER
+                        ================================================= */}
+
                         <div className="public-review-top">
 
-                          {/* =================================================
-                              CLICKABLE REVIEWER PROFILE AVATAR
-                          ================================================= */}
+                          {/* PROFILE AVATAR */}
 
                           <button
                             type="button"
@@ -1466,15 +1516,10 @@ function OwnerPublicProfile() {
                                 ? `View ${userName}'s profile`
                                 : "Reviewer profile unavailable"
                             }
-                            disabled={!userId}
-                            style={{
-                              cursor:
-                                userId
-                                  ? "pointer"
-                                  : "default",
-                            }}
+                            disabled={
+                              !userId
+                            }
                           >
-
                             <span>
                               {userName
                                 .charAt(
@@ -1482,13 +1527,9 @@ function OwnerPublicProfile() {
                                 )
                                 .toUpperCase()}
                             </span>
-
                           </button>
 
-
-                          {/* =================================================
-                              CLICKABLE REVIEWER NAME
-                          ================================================= */}
+                          {/* REVIEWER NAME + DATE */}
 
                           <button
                             type="button"
@@ -1499,28 +1540,15 @@ function OwnerPublicProfile() {
                                 index
                               )
                             }
-                            disabled={!userId}
-                            style={{
-                              cursor:
-                                userId
-                                  ? "pointer"
-                                  : "default",
-                              background:
-                                "none",
-                              border:
-                                "none",
-                              padding:
-                                0,
-                              textAlign:
-                                "left",
-                            }}
+                            disabled={
+                              !userId
+                            }
                             title={
                               userId
                                 ? `View ${userName}'s profile`
                                 : "Reviewer profile unavailable"
                             }
                           >
-
                             <strong>
                               {userName}
                             </strong>
@@ -1532,57 +1560,80 @@ function OwnerPublicProfile() {
                                 )}
                               </span>
                             )}
-
                           </button>
 
+                          {/* RATING */}
 
                           <div className="public-review-rating">
-
                             {renderStars(
                               reviewRating
                             )}
-
                           </div>
-
                         </div>
 
-
-                        {/* Actual submitted rating */}
+                        {/* =================================================
+                            ACTUAL SUBMITTED RATING
+                        ================================================= */}
 
                         {reviewRating > 0 && (
                           <div
-                            style={{
-                              marginTop:
-                                "5px",
-                              fontSize:
-                                "11px",
-                              color:
-                                "#777",
-                              textAlign:
-                                "right",
-                            }}
+                            className="public-review-rating-value"
                           >
                             {reviewRating}/5
                           </div>
                         )}
 
-
-                        {/* Actual submitted comment */}
+                        {/* =================================================
+                            ACTUAL SUBMITTED COMMENT
+                        ================================================= */}
 
                         {comment && (
-                          <p className="public-review-comment">
-                            "{comment}"
-                          </p>
+                          <div className="public-review-comment-wrapper">
+
+                            <p
+                              ref={(element) => {
+                                reviewCommentRefs.current[
+                                  reviewId
+                                ] = element;
+                              }}
+                              className={`public-review-comment ${
+                                isExpanded
+                                  ? "public-review-comment-expanded"
+                                  : ""
+                              }`}
+                            >
+                              "{comment}"
+                            </p>
+
+                            {/* View More appears ONLY
+                                when comment is actually
+                                longer than 2 lines. */}
+
+                            {showViewMore && (
+                              <button
+                                type="button"
+                                className="public-review-more-btn"
+                                onClick={() =>
+                                  toggleReviewComment(
+                                    reviewId
+                                  )
+                                }
+                              >
+                                {isExpanded
+                                  ? "View less"
+                                  : "View more"}
+                              </button>
+                            )}
+                          </div>
                         )}
 
-
-                        {/* Owner Reply */}
+                        {/* =================================================
+                            OWNER REPLY
+                        ================================================= */}
 
                         {(review?.ownerReply ||
                           review?.OwnerReply) && (
-
                           <div className="public-review-owner-reply">
-
                             <strong>
                               Business Owner Reply
                             </strong>
@@ -1591,22 +1642,15 @@ function OwnerPublicProfile() {
                               {review?.ownerReply ||
                                 review?.OwnerReply}
                             </p>
-
                           </div>
-
                         )}
-
                       </article>
                     );
                   }
                 )}
-
             </div>
-
           ) : (
-
             <div className="public-review-empty">
-
               <FaStar />
 
               <p>
@@ -1620,29 +1664,22 @@ function OwnerPublicProfile() {
                 ratings and comments
                 will appear here.
               </span>
-
             </div>
-
           )}
-
         </section>
-
 
         {/* =====================================================
             PUBLIC PREVIEW NOTE
         ===================================================== */}
 
         <div className="public-preview-note">
-
           <FaLock />
 
           <span>
             You are seeing this as a
             public user
           </span>
-
         </div>
-
 
         {/* =====================================================
             EDIT BUSINESS
@@ -1658,7 +1695,6 @@ function OwnerPublicProfile() {
           {" "}
           Edit Business Information
         </button>
-
 
         {/* =====================================================
             BACK TO BUSINESSES
@@ -1680,7 +1716,6 @@ function OwnerPublicProfile() {
         </button>
 
       </main>
-
     </div>
   );
 }

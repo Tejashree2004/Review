@@ -1,6 +1,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -47,6 +48,133 @@ function Reviews() {
 
   const [hasMore, setHasMore] =
     useState(true);
+
+  // =====================================================
+  // VIEW MORE / VIEW LESS STATE
+  // =====================================================
+
+  const [expandedReviews, setExpandedReviews] =
+    useState(new Set());
+
+  const [longReviews, setLongReviews] =
+    useState(new Set());
+
+  const commentRefs = useRef({});
+
+  // =====================================================
+  // CHECK WHETHER COMMENT IS LONGER THAN 2 LINES
+  // =====================================================
+
+  const checkCommentOverflow = (
+    reviewId
+  ) => {
+    const element =
+      commentRefs.current[
+        String(reviewId)
+      ];
+
+    if (!element) {
+      return;
+    }
+
+    const isOverflowing =
+      element.scrollHeight >
+      element.clientHeight + 1;
+
+    setLongReviews(
+      (previous) => {
+        const updated =
+          new Set(previous);
+
+        if (isOverflowing) {
+          updated.add(
+            String(reviewId)
+          );
+        } else {
+          updated.delete(
+            String(reviewId)
+          );
+        }
+
+        return updated;
+      }
+    );
+  };
+
+  // =====================================================
+  // CHECK ALL COMMENT OVERFLOW
+  // =====================================================
+
+  useEffect(() => {
+    const checkAllComments = () => {
+      reviews.forEach(
+        (review, index) => {
+          const reviewId =
+            getReviewId(
+              review,
+              index
+            );
+
+          checkCommentOverflow(
+            reviewId
+          );
+        }
+      );
+    };
+
+    const timeout =
+      setTimeout(
+        checkAllComments,
+        50
+      );
+
+    window.addEventListener(
+      "resize",
+      checkAllComments
+    );
+
+    return () => {
+      clearTimeout(timeout);
+
+      window.removeEventListener(
+        "resize",
+        checkAllComments
+      );
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviews]);
+
+  // =====================================================
+  // TOGGLE REVIEW COMMENT
+  // =====================================================
+
+  const toggleReviewComment = (
+    reviewId
+  ) => {
+    setExpandedReviews(
+      (previous) => {
+        const updated =
+          new Set(previous);
+
+        if (
+          updated.has(
+            String(reviewId)
+          )
+        ) {
+          updated.delete(
+            String(reviewId)
+          );
+        } else {
+          updated.add(
+            String(reviewId)
+          );
+        }
+
+        return updated;
+      }
+    );
+  };
 
   // =====================================================
   // GET LOGGED-IN USER ID
@@ -214,9 +342,6 @@ function Reviews() {
 
     // -------------------------------------------------
     // Fallback
-    //
-    // If backend returns a full page, assume another
-    // page may exist.
     // -------------------------------------------------
 
     return (
@@ -864,9 +989,6 @@ function Reviews() {
 
                   // =================================================
                   // BUSINESS NAME
-                  //
-                  // IMPORTANT:
-                  // Business model uses BusinessName
                   // =================================================
 
                   const businessName =
@@ -946,6 +1068,16 @@ function Reviews() {
                     getReviewId(
                       review,
                       index
+                    );
+
+                  const isExpanded =
+                    expandedReviews.has(
+                      String(reviewId)
+                    );
+
+                  const isLongReview =
+                    longReviews.has(
+                      String(reviewId)
                     );
 
                   return (
@@ -1056,15 +1188,45 @@ function Reviews() {
 
                       {/* ==========================================
                           COMMENT
+                          2 LINES + CONDITIONAL VIEW MORE
                       ========================================== */}
 
-                      <div className="review-comment">
+                      {comment && (
+                        <div className="review-comment">
 
-                        <p>
-                          "{comment}"
-                        </p>
+                          <p
+                            ref={(element) => {
+                              commentRefs.current[
+                                String(reviewId)
+                              ] = element;
+                            }}
+                            className={
+                              isExpanded
+                                ? "expanded"
+                                : ""
+                            }
+                          >
+                            "{comment}"
+                          </p>
 
-                      </div>
+                          {isLongReview && (
+                            <button
+                              type="button"
+                              className="review-view-more-btn"
+                              onClick={() =>
+                                toggleReviewComment(
+                                  reviewId
+                                )
+                              }
+                            >
+                              {isExpanded
+                                ? "View Less"
+                                : "View More"}
+                            </button>
+                          )}
+
+                        </div>
+                      )}
 
                       {/* ==========================================
                           VIEW PLACE

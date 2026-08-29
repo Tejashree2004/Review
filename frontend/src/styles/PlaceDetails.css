@@ -1,4 +1,3 @@
-
 /* ==========================
 
    Place Details
@@ -339,7 +338,9 @@
 
 
 /* ==========================
+
    Loading
+
 ========================== */
 
 .reviews-loading {
@@ -351,7 +352,9 @@
 
 
 /* ==========================
+
    No Reviews
+
 ========================== */
 
 .no-reviews {
@@ -373,7 +376,9 @@
 
 
 /* ==========================
+
    Reviews List
+
 ========================== */
 
 .reviews-list {
@@ -382,7 +387,9 @@
 
 
 /* ==========================
+
    Individual Review
+
 ========================== */
 
 .customer-review-item {
@@ -396,7 +403,9 @@
 
 
 /* ==========================
+
    Review Top
+
 ========================== */
 
 .customer-review-top {
@@ -408,7 +417,9 @@
 
 
 /* ==========================
+
    Reviewer Information
+
 ========================== */
 
 .reviewer-info {
@@ -447,7 +458,9 @@
 
 
 /* ==========================
+
    Review Stars
+
 ========================== */
 
 .review-stars {
@@ -471,7 +484,9 @@
 
 
 /* ==========================
+
    Review Comment
+
 ========================== */
 
 .customer-review-comment {
@@ -481,9 +496,54 @@
   line-height: 1.7;
 }
 
+.customer-review-comment p {
+  margin: 0;
+}
+
+
+/* =========================================================
+   REVIEW COMMENT - 2 LINE VIEW MORE
+   ========================================================= */
+
+.customer-review-comment.review-comment-collapsed {
+  max-height: calc(16px * 1.7 * 2);
+  overflow: hidden;
+}
+
+.customer-review-comment.review-comment-expanded {
+  max-height: none;
+  overflow: visible;
+}
+
 
 /* ==========================
+
+   View More / View Less
+
+========================== */
+
+.review-view-more-btn {
+  margin: 8px 0 0 57px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.review-view-more-btn:hover {
+  color: #bdbdbd;
+  text-decoration: underline;
+}
+
+
+/* ==========================
+
    Owner Reply
+
 ========================== */
 
 .owner-reply {
@@ -510,7 +570,9 @@
 
 
 /* ==========================
+
    View All Reviews
+
 ========================== */
 
 .view-all-reviews-wrapper {
@@ -634,7 +696,9 @@
 
 
   /* ==========================
+
      Mobile Customer Reviews
+
   ========================== */
 
   .customer-reviews-card {
@@ -696,12 +760,20 @@
     line-height: 1.6;
   }
 
+  .customer-review-comment.review-comment-collapsed {
+    max-height: calc(14px * 1.6 * 2);
+  }
+
   .owner-reply {
     margin-left: 50px;
+  }
+
+  .review-view-more-btn {
+    margin-left: 50px;
+    font-size: 13px;
   }
 
   .view-all-reviews-btn {
     width: 100%;
   }
 }
-

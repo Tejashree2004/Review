@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
@@ -39,6 +38,78 @@ function BusinessDetails() {
 
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  // =====================================================
+  // REVIEW COMMENT EXPANSION
+  // =====================================================
+
+  const [expandedReviews, setExpandedReviews] = useState({});
+  const [reviewOverflow, setReviewOverflow] = useState({});
+
+  const reviewCommentRefs = useRef({});
+
+  const toggleReview = (reviewId) => {
+    setExpandedReviews((previous) => ({
+      ...previous,
+      [reviewId]: !previous[reviewId],
+    }));
+  };
+
+  // =====================================================
+  // CHECK REVIEW TEXT OVERFLOW
+  // =====================================================
+
+  const checkReviewOverflow = () => {
+    const overflowState = {};
+
+    Object.keys(reviewCommentRefs.current).forEach(
+      (reviewId) => {
+        const element =
+          reviewCommentRefs.current[reviewId];
+
+        if (!element) {
+          return;
+        }
+
+        const lineHeight =
+          parseFloat(
+            window.getComputedStyle(element).lineHeight
+          ) || 24;
+
+        const maxHeight =
+          lineHeight * 2;
+
+        overflowState[reviewId] =
+          element.scrollHeight > maxHeight + 1;
+      }
+    );
+
+    setReviewOverflow(overflowState);
+  };
+
+  useEffect(() => {
+    if (!reviews.length) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      checkReviewOverflow();
+    }, 0);
+
+    window.addEventListener(
+      "resize",
+      checkReviewOverflow
+    );
+
+    return () => {
+      clearTimeout(timer);
+
+      window.removeEventListener(
+        "resize",
+        checkReviewOverflow
+      );
+    };
+  }, [reviews]);
 
   // =====================================================
   // DIALOG
@@ -256,7 +327,6 @@ function BusinessDetails() {
       setTotalReviews(total);
       setCurrentReviewPage(page);
       setHasMoreReviews(hasMore);
-
     } catch (error) {
       console.error(
         "Failed to load business reviews:",
@@ -269,7 +339,6 @@ function BusinessDetails() {
       }
 
       setHasMoreReviews(false);
-
     } finally {
       setReviewsLoading(false);
     }
@@ -339,7 +408,6 @@ function BusinessDetails() {
         );
 
       setIsFavorite(alreadyFavorite);
-
     } catch (error) {
       console.error(
         "Failed to check business favorite:",
@@ -406,7 +474,6 @@ function BusinessDetails() {
 
         setIsFavorite(true);
       }
-
     } catch (error) {
       console.error(
         "Favorite operation failed:",
@@ -435,7 +502,6 @@ function BusinessDetails() {
           type: "error",
         });
       }
-
     } finally {
       setFavoriteLoading(false);
     }
@@ -521,9 +587,6 @@ function BusinessDetails() {
 
   // =====================================================
   // OPEN REVIEWER PROFILE
-  // =====================================================
-  // ONLY NEW FUNCTION ADDED FOR PROFILE CLICK
-  // Existing UI remains unchanged.
   // =====================================================
 
   const handleReviewerProfileClick = (review) => {
@@ -804,7 +867,6 @@ function BusinessDetails() {
   if (!business) {
     return (
       <MainLayout>
-
         <button
           className="back-btn"
           onClick={() => navigate(-1)}
@@ -825,7 +887,6 @@ function BusinessDetails() {
           confirmText={dialog.confirmText}
           onConfirm={handleDialogConfirm}
         />
-
       </MainLayout>
     );
   }
@@ -1154,6 +1215,20 @@ function BusinessDetails() {
                       index
                     );
 
+                  const isExpanded =
+                    Boolean(
+                      expandedReviews[
+                        reviewId
+                      ]
+                    );
+
+                  const hasOverflow =
+                    Boolean(
+                      reviewOverflow[
+                        reviewId
+                      ]
+                    );
+
                   return (
                     <div
                       className="customer-review-item"
@@ -1164,8 +1239,8 @@ function BusinessDetails() {
 
                         <div className="reviewer-info">
 
-                          {/* ONLY CHANGE:
-                              PROFILE AVATAR CLICK */}
+                          {/* PROFILE AVATAR CLICK */}
+
                           <div
                             className="reviewer-avatar"
                             onClick={() =>
@@ -1208,9 +1283,41 @@ function BusinessDetails() {
                       </div>
 
 
-                      <p className="customer-review-comment">
-                        "{reviewComment}"
-                      </p>
+                      {/* REVIEW COMMENT */}
+
+                      <div
+                        ref={(element) => {
+                          reviewCommentRefs.current[
+                            reviewId
+                          ] = element;
+                        }}
+                        className={`customer-review-comment ${
+                          isExpanded
+                            ? "review-comment-expanded"
+                            : "review-comment-collapsed"
+                        }`}
+                      >
+                        <p>
+                          "{reviewComment}"
+                        </p>
+                      </div>
+
+
+                      {/* VIEW MORE / VIEW LESS */}
+
+                      {hasOverflow && (
+                        <button
+                          type="button"
+                          className="review-view-more-btn"
+                          onClick={() =>
+                            toggleReview(reviewId)
+                          }
+                        >
+                          {isExpanded
+                            ? "View Less"
+                            : "View More"}
+                        </button>
+                      )}
 
 
                       {(review.OwnerReply ||
@@ -1260,9 +1367,7 @@ function BusinessDetails() {
       </div>
 
 
-      {/* =================================================
-          STANDARD DIALOG
-      ================================================= */}
+      {/* STANDARD DIALOG */}
 
       <DialogBox
         isOpen={dialog.isOpen}
@@ -1278,4 +1383,3 @@ function BusinessDetails() {
 }
 
 export default BusinessDetails;
-

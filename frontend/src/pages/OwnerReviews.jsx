@@ -1,6 +1,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -24,13 +25,11 @@ import DialogBox from "../components/DialogBox";
 
 import "../styles/OwnerReviews.css";
 
-const API_BASE =
-  "http://localhost:5213/api";
+const API_BASE = "http://localhost:5213/api";
 
 const PAGE_SIZE = 10;
 
 function OwnerReviews() {
-
   const navigate = useNavigate();
 
   const {
@@ -68,19 +67,150 @@ function OwnerReviews() {
     useState("");
 
   // =====================================================
+  // VIEW MORE / VIEW LESS STATE
+  // =====================================================
+
+  const [expandedReviews, setExpandedReviews] =
+    useState(new Set());
+
+  // =====================================================
+  // REVIEW OVERFLOW STATE
+  // Stores only reviews whose comments actually exceed
+  // two lines.
+  // =====================================================
+
+  const [longReviews, setLongReviews] =
+    useState(new Set());
+
+  // =====================================================
+  // COMMENT REFS
+  // Used to detect whether comment exceeds 2 lines.
+  // =====================================================
+
+  const commentRefs = useRef({});
+
+  // =====================================================
+  // CHECK COMMENT OVERFLOW
+  // =====================================================
+
+  const checkCommentOverflow = () => {
+    const longReviewIds = new Set();
+
+    reviews.forEach((review, index) => {
+      const reviewId = getReviewId(
+        review,
+        index
+      );
+
+      const element =
+        commentRefs.current[
+          String(reviewId)
+        ];
+
+      if (!element) {
+        return;
+      }
+
+      const computedStyle =
+        window.getComputedStyle(element);
+
+      const lineHeight =
+        parseFloat(
+          computedStyle.lineHeight
+        );
+
+      if (
+        !Number.isFinite(lineHeight) ||
+        lineHeight <= 0
+      ) {
+        return;
+      }
+
+      const maxHeight =
+        lineHeight * 2;
+
+      if (
+        element.scrollHeight >
+        maxHeight + 1
+      ) {
+        longReviewIds.add(
+          String(reviewId)
+        );
+      }
+    });
+
+    setLongReviews(longReviewIds);
+  };
+
+  // =====================================================
+  // CHECK COMMENT OVERFLOW AFTER REVIEWS RENDER
+  // =====================================================
+
+  useEffect(() => {
+    if (!reviews.length) {
+      setLongReviews(new Set());
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      checkCommentOverflow();
+    }, 0);
+
+    const handleResize = () => {
+      checkCommentOverflow();
+    };
+
+    window.addEventListener(
+      "resize",
+      handleResize
+    );
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+    };
+  }, [reviews]);
+
+  // =====================================================
+  // TOGGLE REVIEW COMMENT
+  // =====================================================
+
+  const toggleReviewComment = (
+    reviewId
+  ) => {
+    setExpandedReviews((previous) => {
+      const updated = new Set(previous);
+
+      if (
+        updated.has(String(reviewId))
+      ) {
+        updated.delete(String(reviewId));
+      } else {
+        updated.add(String(reviewId));
+      }
+
+      return updated;
+    });
+  };
+
+  // =====================================================
   // DIALOG STATE
   // =====================================================
 
-  const [dialog, setDialog] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "info",
-    confirmText: "OK",
-    cancelText: "Cancel",
-    showCancel: false,
-    action: null,
-  });
+  const [dialog, setDialog] =
+    useState({
+      isOpen: false,
+      title: "",
+      message: "",
+      type: "info",
+      confirmText: "OK",
+      cancelText: "Cancel",
+      showCancel: false,
+      action: null,
+    });
 
   // =====================================================
   // SHOW DIALOG
@@ -93,7 +223,6 @@ function OwnerReviews() {
     action = null,
     options = {}
   ) => {
-
     setDialog({
       isOpen: true,
       title,
@@ -114,12 +243,10 @@ function OwnerReviews() {
   // =====================================================
 
   const closeDialog = () => {
-
     setDialog((previous) => ({
       ...previous,
       isOpen: false,
     }));
-
   };
 
   // =====================================================
@@ -127,7 +254,6 @@ function OwnerReviews() {
   // =====================================================
 
   const handleDialogConfirm = () => {
-
     const action = dialog.action;
 
     closeDialog();
@@ -135,7 +261,6 @@ function OwnerReviews() {
     if (action) {
       action();
     }
-
   };
 
   // =====================================================
@@ -160,36 +285,35 @@ function OwnerReviews() {
   // =====================================================
 
   const getToken = () => {
-
     return (
       localStorage.getItem("token") ||
       localStorage.getItem("authToken") ||
       localStorage.getItem("jwtToken") ||
       localStorage.getItem("accessToken")
     );
-
   };
 
   // =====================================================
   // RESPONSE DATA
   // =====================================================
 
-  const getResponseData = (response) => {
-
+  const getResponseData = (
+    response
+  ) => {
     return (
       response?.data?.data ??
       response?.data?.Data ??
       response?.data
     );
-
   };
 
   // =====================================================
   // NORMALIZE NUMBER
   // =====================================================
 
-  const normalizeNumber = (value) => {
-
+  const normalizeNumber = (
+    value
+  ) => {
     if (
       value === null ||
       value === undefined
@@ -198,17 +322,13 @@ function OwnerReviews() {
     }
 
     if (typeof value === "number") {
-
       return Number.isFinite(value)
         ? value
         : null;
-
     }
 
     if (typeof value === "string") {
-
-      const cleaned =
-        value.trim();
+      const cleaned = value.trim();
 
       if (!cleaned) {
         return null;
@@ -223,25 +343,25 @@ function OwnerReviews() {
         return null;
       }
 
-      const parsed =
-        Number(match[1]);
+      const parsed = Number(
+        match[1]
+      );
 
       return Number.isFinite(parsed)
         ? parsed
         : null;
-
     }
 
     return null;
-
   };
 
   // =====================================================
   // GET REVIEW RATING
   // =====================================================
 
-  const getReviewRating = (review) => {
-
+  const getReviewRating = (
+    review
+  ) => {
     const values = [
       review?.rating,
       review?.Rating,
@@ -254,7 +374,6 @@ function OwnerReviews() {
     ];
 
     for (const value of values) {
-
       const parsed =
         normalizeNumber(value);
 
@@ -265,11 +384,9 @@ function OwnerReviews() {
       ) {
         return parsed;
       }
-
     }
 
     return 0;
-
   };
 
   // =====================================================
@@ -280,7 +397,6 @@ function OwnerReviews() {
     review,
     index = 0
   ) => {
-
     return (
       review?.reviewId ??
       review?.ReviewId ??
@@ -288,17 +404,15 @@ function OwnerReviews() {
       review?.Id ??
       `review-${index}`
     );
-
   };
 
   // =====================================================
   // GET REVIEWER ID
   // =====================================================
-  // ADDED ONLY FOR PUBLIC PROFILE FUNCTIONALITY
-  // =====================================================
 
-  const getReviewerId = (review) => {
-
+  const getReviewerId = (
+    review
+  ) => {
     return (
       review?.userId ??
       review?.UserId ??
@@ -308,20 +422,16 @@ function OwnerReviews() {
       review?.User?.Id ??
       null
     );
-
   };
 
   // =====================================================
   // OPEN REVIEWER PUBLIC PROFILE
-  // =====================================================
-  // ADDED ONLY FOR PUBLIC PROFILE FUNCTIONALITY
   // =====================================================
 
   const handleReviewerProfile = (
     review,
     index
   ) => {
-
     const reviewerId =
       getReviewerId(review);
 
@@ -335,10 +445,8 @@ function OwnerReviews() {
       !reviewerId ||
       reviewId === null ||
       reviewId === undefined ||
-      typeof Number(reviewId) !== "number" ||
       Number.isNaN(Number(reviewId))
     ) {
-
       console.warn(
         "Cannot open reviewer profile. Missing UserId or ReviewId.",
         {
@@ -352,17 +460,19 @@ function OwnerReviews() {
     }
 
     navigate(
-      `/user-profile/${reviewerId}/review/${Number(reviewId)}`
+      `/user-profile/${reviewerId}/review/${Number(
+        reviewId
+      )}`
     );
-
   };
 
   // =====================================================
   // USER NAME
   // =====================================================
 
-  const getUserName = (review) => {
-
+  const getUserName = (
+    review
+  ) => {
     if (
       typeof review?.User ===
       "string"
@@ -390,15 +500,15 @@ function OwnerReviews() {
       review?.Name ??
       "REVIO User"
     );
-
   };
 
   // =====================================================
   // COMMENT
   // =====================================================
 
-  const getReviewComment = (review) => {
-
+  const getReviewComment = (
+    review
+  ) => {
     return (
       review?.comment ??
       review?.Comment ??
@@ -406,15 +516,15 @@ function OwnerReviews() {
       review?.ReviewText ??
       ""
     );
-
   };
 
   // =====================================================
   // DATE
   // =====================================================
 
-  const getReviewDate = (review) => {
-
+  const getReviewDate = (
+    review
+  ) => {
     return (
       review?.createdAt ??
       review?.CreatedAt ??
@@ -422,15 +532,15 @@ function OwnerReviews() {
       review?.ReviewDate ??
       ""
     );
-
   };
 
   // =====================================================
   // OWNER REPLY
   // =====================================================
 
-  const getReply = (review) => {
-
+  const getReply = (
+    review
+  ) => {
     return (
       review?.ownerReply ??
       review?.OwnerReply ??
@@ -438,21 +548,20 @@ function OwnerReviews() {
       review?.Reply ??
       ""
     );
-
   };
 
   // =====================================================
   // FORMAT DATE
   // =====================================================
 
-  const formatDate = (date) => {
-
+  const formatDate = (
+    date
+  ) => {
     if (!date) {
       return "";
     }
 
-    const parsed =
-      new Date(date);
+    const parsed = new Date(date);
 
     if (
       Number.isNaN(
@@ -470,50 +579,46 @@ function OwnerReviews() {
         year: "numeric",
       }
     );
-
   };
 
   // =====================================================
   // GET OWNER BUSINESS ID
   // =====================================================
 
-  const getOwnerBusinessId = async (
-    config
-  ) => {
+  const getOwnerBusinessId =
+    async (config) => {
+      if (routeBusinessId) {
+        return routeBusinessId;
+      }
 
-    if (routeBusinessId) {
-      return routeBusinessId;
-    }
+      const businessResponse =
+        await axios.get(
+          `${API_BASE}/owner/business`,
+          config
+        );
 
-    const businessResponse =
-      await axios.get(
-        `${API_BASE}/owner/business`,
-        config
+      const businessData =
+        getResponseData(
+          businessResponse
+        );
+
+      const ownerBusiness =
+        Array.isArray(
+          businessData
+        )
+          ? businessData[0]
+          : businessData;
+
+      if (!ownerBusiness) {
+        return null;
+      }
+
+      return (
+        ownerBusiness?.businessId ??
+        ownerBusiness?.BusinessId ??
+        null
       );
-
-    const businessData =
-      getResponseData(
-        businessResponse
-      );
-
-    const ownerBusiness =
-      Array.isArray(
-        businessData
-      )
-        ? businessData[0]
-        : businessData;
-
-    if (!ownerBusiness) {
-      return null;
-    }
-
-    return (
-      ownerBusiness?.businessId ??
-      ownerBusiness?.BusinessId ??
-      null
-    );
-
-  };
+    };
 
   // =====================================================
   // GET PAGINATION INFO
@@ -524,7 +629,6 @@ function OwnerReviews() {
     currentPage,
     receivedCount
   ) => {
-
     const pagination =
       data?.pagination ??
       data?.Pagination ??
@@ -565,20 +669,17 @@ function OwnerReviews() {
     }
 
     if (responseTotal > 0) {
-
       return (
         responsePage *
           responsePageSize <
         responseTotal
       );
-
     }
 
     return (
       receivedCount >=
       responsePageSize
     );
-
   };
 
   // =====================================================
@@ -588,7 +689,6 @@ function OwnerReviews() {
   const updateReviewSummary = (
     responseData
   ) => {
-
     const backendAverage =
       responseData?.averageRating ??
       responseData?.AverageRating;
@@ -608,7 +708,6 @@ function OwnerReviews() {
       backendTotal !== undefined ||
       backendCounts
     ) {
-
       setReviewSummary(
         (previous) => ({
           averageRating:
@@ -663,295 +762,253 @@ function OwnerReviews() {
               : previous.ratingCounts,
         })
       );
-
     }
-
   };
 
   // =====================================================
   // LOAD BUSINESS REVIEWS
   // =====================================================
 
-  const loadBusinessReviews = async ({
-    targetPage = 1,
-    append = false,
-    filter = selectedFilter,
-  } = {}) => {
+  const loadBusinessReviews =
+    async ({
+      targetPage = 1,
+      append = false,
+      filter = selectedFilter,
+    } = {}) => {
+      try {
+        if (append) {
+          setLoadingMore(true);
+        } else {
+          setLoading(true);
+          setError("");
+        }
 
-    try {
+        const token = getToken();
 
-      if (append) {
+        if (!token) {
+          setError(
+            "Please login again to view your reviews."
+          );
+          return;
+        }
 
-        setLoadingMore(true);
+        const config = {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        };
 
-      } else {
+        const resolvedBusinessId =
+          await getOwnerBusinessId(
+            config
+          );
 
-        setLoading(true);
-        setError("");
+        if (!resolvedBusinessId) {
+          setReviews([]);
+          setError(
+            "Business information is missing."
+          );
+          return;
+        }
 
-      }
-
-      const token =
-        getToken();
-
-      if (!token) {
-
-        setError(
-          "Please login again to view your reviews."
+        setBusinessId(
+          resolvedBusinessId
         );
 
-        return;
-      }
+        const rating =
+          filter === "all"
+            ? null
+            : Number(filter);
 
-      const config = {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-        },
-      };
+        const params = {
+          page: targetPage,
+          pageSize: PAGE_SIZE,
+          ...(rating
+            ? { rating }
+            : {}),
+        };
 
-      const resolvedBusinessId =
-        await getOwnerBusinessId(
-          config
+        const response =
+          await axios.get(
+            `${API_BASE}/Review/business/${resolvedBusinessId}`,
+            {
+              ...config,
+              params,
+            }
+          );
+
+        console.log(
+          "Owner Business Reviews API Response:",
+          response.data
         );
 
-      if (!resolvedBusinessId) {
+        const responseData =
+          getResponseData(response);
 
-        setReviews([]);
+        // =================================================
+        // EXTRACT REVIEWS
+        // =================================================
 
-        setError(
-          "Business information is missing."
-        );
+        let reviewData = [];
 
-        return;
-      }
+        if (
+          Array.isArray(
+            responseData
+          )
+        ) {
+          reviewData =
+            responseData;
+        } else if (
+          Array.isArray(
+            responseData?.reviews
+          )
+        ) {
+          reviewData =
+            responseData.reviews;
+        } else if (
+          Array.isArray(
+            responseData?.Reviews
+          )
+        ) {
+          reviewData =
+            responseData.Reviews;
+        } else if (
+          Array.isArray(
+            responseData?.items
+          )
+        ) {
+          reviewData =
+            responseData.items;
+        } else if (
+          Array.isArray(
+            responseData?.Items
+          )
+        ) {
+          reviewData =
+            responseData.Items;
+        }
 
-      setBusinessId(
-        resolvedBusinessId
-      );
+        // =================================================
+        // BACKEND SUMMARY
+        // =================================================
 
-      const rating =
-        filter === "all"
-          ? null
-          : Number(filter);
-
-      const params = {
-        page: targetPage,
-        pageSize: PAGE_SIZE,
-        ...(rating
-          ? { rating }
-          : {}),
-      };
-
-      const response =
-        await axios.get(
-          `${API_BASE}/Review/business/${resolvedBusinessId}`,
-          {
-            ...config,
-            params,
-          }
-        );
-
-      console.log(
-        "Owner Business Reviews API Response:",
-        response.data
-      );
-
-      const responseData =
-        getResponseData(response);
-
-      // =================================================
-      // EXTRACT REVIEWS
-      // =================================================
-
-      let reviewData = [];
-
-      if (
-        Array.isArray(
+        updateReviewSummary(
           responseData
-        )
-      ) {
+        );
 
-        reviewData =
-          responseData;
+        // =================================================
+        // APPEND / REPLACE
+        // =================================================
 
-      } else if (
-        Array.isArray(
-          responseData?.reviews
-        )
-      ) {
+        setReviews(
+          (previous) => {
+            if (!append) {
+              return reviewData;
+            }
 
-        reviewData =
-          responseData.reviews;
+            const existingIds =
+              new Set(
+                previous.map(
+                  (
+                    review,
+                    index
+                  ) =>
+                    String(
+                      getReviewId(
+                        review,
+                        index
+                      )
+                    )
+                )
+              );
 
-      } else if (
-        Array.isArray(
-          responseData?.Reviews
-        )
-      ) {
-
-        reviewData =
-          responseData.Reviews;
-
-      } else if (
-        Array.isArray(
-          responseData?.items
-        )
-      ) {
-
-        reviewData =
-          responseData.items;
-
-      } else if (
-        Array.isArray(
-          responseData?.Items
-        )
-      ) {
-
-        reviewData =
-          responseData.Items;
-
-      }
-
-      // =================================================
-      // BACKEND SUMMARY
-      // =================================================
-
-      updateReviewSummary(
-        responseData
-      );
-
-      // =================================================
-      // APPEND / REPLACE
-      // =================================================
-
-      setReviews(
-        (previous) => {
-
-          if (!append) {
-            return reviewData;
-          }
-
-          const existingIds =
-            new Set(
-              previous.map(
+            const newReviews =
+              reviewData.filter(
                 (
                   review,
                   index
                 ) =>
-                  String(
-                    getReviewId(
-                      review,
-                      index
+                  !existingIds.has(
+                    String(
+                      getReviewId(
+                        review,
+                        index
+                      )
                     )
                   )
-              )
-            );
+              );
 
-          const newReviews =
-            reviewData.filter(
-              (
-                review,
-                index
-              ) =>
-                !existingIds.has(
-                  String(
-                    getReviewId(
-                      review,
-                      index
-                    )
-                  )
-                )
-            );
+            return [
+              ...previous,
+              ...newReviews,
+            ];
+          }
+        );
 
-          return [
-            ...previous,
-            ...newReviews,
-          ];
+        // =================================================
+        // PAGINATION
+        // =================================================
 
+        setPage(
+          targetPage
+        );
+
+        setHasMore(
+          getPaginationInfo(
+            responseData,
+            targetPage,
+            reviewData.length
+          )
+        );
+      } catch (err) {
+        console.error(
+          "Failed to load business reviews:",
+          err
+        );
+
+        if (!append) {
+          setReviews([]);
         }
-      );
 
-      // =================================================
-      // PAGINATION
-      // =================================================
-
-      setPage(
-        targetPage
-      );
-
-      setHasMore(
-        getPaginationInfo(
-          responseData,
-          targetPage,
-          reviewData.length
-        )
-      );
-
-    } catch (err) {
-
-      console.error(
-        "Failed to load business reviews:",
-        err
-      );
-
-      if (!append) {
-        setReviews([]);
+        if (
+          err.response?.status ===
+          401
+        ) {
+          setError(
+            "Your session has expired. Please login again."
+          );
+        } else if (
+          err.response?.status ===
+          404
+        ) {
+          setError(
+            "No reviews found for this business."
+          );
+        } else {
+          setError(
+            "Unable to load customer reviews."
+          );
+        }
+      } finally {
+        if (append) {
+          setLoadingMore(false);
+        } else {
+          setLoading(false);
+        }
       }
-
-      if (
-        err.response?.status ===
-        401
-      ) {
-
-        setError(
-          "Your session has expired. Please login again."
-        );
-
-      } else if (
-        err.response?.status ===
-        404
-      ) {
-
-        setError(
-          "No reviews found for this business."
-        );
-
-      } else {
-
-        setError(
-          "Unable to load customer reviews."
-        );
-
-      }
-
-    } finally {
-
-      if (append) {
-
-        setLoadingMore(false);
-
-      } else {
-
-        setLoading(false);
-
-      }
-
-    }
-
-  };
+    };
 
   // =====================================================
   // INITIAL LOAD + FILTER CHANGE
   // =====================================================
 
   useEffect(() => {
-
     setPage(1);
-
     setHasMore(true);
-
     setReviews([]);
+    setExpandedReviews(new Set());
+    setLongReviews(new Set());
 
     loadBusinessReviews({
       targetPage: 1,
@@ -960,7 +1017,6 @@ function OwnerReviews() {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-
   }, [
     routeBusinessId,
     selectedFilter,
@@ -970,23 +1026,22 @@ function OwnerReviews() {
   // LOAD MORE
   // =====================================================
 
-  const handleLoadMore = async () => {
+  const handleLoadMore =
+    async () => {
+      if (
+        loading ||
+        loadingMore ||
+        !hasMore
+      ) {
+        return;
+      }
 
-    if (
-      loading ||
-      loadingMore ||
-      !hasMore
-    ) {
-      return;
-    }
-
-    await loadBusinessReviews({
-      targetPage: page + 1,
-      append: true,
-      filter: selectedFilter,
-    });
-
-  };
+      await loadBusinessReviews({
+        targetPage: page + 1,
+        append: true,
+        filter: selectedFilter,
+      });
+    };
 
   // =====================================================
   // TOTAL REVIEWS
@@ -1012,14 +1067,12 @@ function OwnerReviews() {
   const getRatingCount = (
     rating
   ) => {
-
     return Number(
       reviewSummary
         .ratingCounts?.[
         rating
       ] || 0
     );
-
   };
 
   // =====================================================
@@ -1029,7 +1082,6 @@ function OwnerReviews() {
   const renderStars = (
     rating
   ) => {
-
     const numeric =
       normalizeNumber(
         rating
@@ -1046,10 +1098,8 @@ function OwnerReviews() {
 
     return (
       <div className="owner-review-stars">
-
         {[1, 2, 3, 4, 5].map(
           (star) => (
-
             <FaStar
               key={star}
               className={
@@ -1061,13 +1111,10 @@ function OwnerReviews() {
                   : "star-empty"
               }
             />
-
           )
         )}
-
       </div>
     );
-
   };
 
   // =====================================================
@@ -1077,32 +1124,26 @@ function OwnerReviews() {
   const handleReplyClick = (
     reviewId
   ) => {
-
     setReplyingTo(
       reviewId
     );
 
     setReplyText("");
-
   };
 
-  const handleCancelReply = () => {
-
-    setReplyingTo(null);
-
-    setReplyText("");
-
-  };
+  const handleCancelReply =
+    () => {
+      setReplyingTo(null);
+      setReplyText("");
+    };
 
   const handleSubmitReply = (
     reviewId
   ) => {
-
     const trimmed =
       replyText.trim();
 
     if (!trimmed) {
-
       showDialog(
         "Reply Required",
         "Please enter your reply.",
@@ -1119,7 +1160,6 @@ function OwnerReviews() {
       (previous) =>
         previous.map(
           (review) => {
-
             const currentId =
               getReviewId(
                 review
@@ -1129,33 +1169,25 @@ function OwnerReviews() {
               currentId ===
               reviewId
             ) {
-
               return {
                 ...review,
-
                 ownerReply:
                   trimmed,
-
                 OwnerReply:
                   trimmed,
-
                 ownerReplyAt:
                   replyTime,
-
                 OwnerReplyAt:
                   replyTime,
               };
-
             }
 
             return review;
-
           }
         )
     );
 
     setReplyingTo(null);
-
     setReplyText("");
 
     showDialog(
@@ -1163,7 +1195,6 @@ function OwnerReviews() {
       "Reply added successfully.",
       "success"
     );
-
   };
 
   // =====================================================
@@ -1173,13 +1204,11 @@ function OwnerReviews() {
   const handleReport = (
     reviewId
   ) => {
-
     showDialog(
       "Report Review",
       "Do you want to report this review?",
       "warning",
       () => {
-
         console.log(
           "Reported Review ID:",
           reviewId
@@ -1190,7 +1219,6 @@ function OwnerReviews() {
           "Review has been reported to REVIO admin.",
           "success"
         );
-
       },
       {
         confirmText: "Report",
@@ -1198,7 +1226,6 @@ function OwnerReviews() {
         showCancel: true,
       }
     );
-
   };
 
   // =====================================================
@@ -1206,14 +1233,10 @@ function OwnerReviews() {
   // =====================================================
 
   if (loading) {
-
     return (
       <MainLayout>
-
         <div className="owner-reviews-page">
-
           <div className="owner-reviews-header">
-
             <button
               className="owner-reviews-back"
               onClick={() =>
@@ -1224,7 +1247,6 @@ function OwnerReviews() {
             </button>
 
             <div>
-
               <h1>
                 Customer Reviews
               </h1>
@@ -1232,13 +1254,10 @@ function OwnerReviews() {
               <p>
                 Loading customer reviews...
               </p>
-
             </div>
-
           </div>
 
           <div className="owner-review-empty">
-
             <FaStar />
 
             <h2>
@@ -1249,16 +1268,22 @@ function OwnerReviews() {
               Please wait while we
               load customer reviews.
             </p>
-
           </div>
-
         </div>
 
         <DialogBox
-          isOpen={dialog.isOpen}
-          title={dialog.title}
-          message={dialog.message}
-          type={dialog.type}
+          isOpen={
+            dialog.isOpen
+          }
+          title={
+            dialog.title
+          }
+          message={
+            dialog.message
+          }
+          type={
+            dialog.type
+          }
           confirmText={
             dialog.confirmText
           }
@@ -1266,10 +1291,8 @@ function OwnerReviews() {
             handleDialogConfirm
           }
         />
-
       </MainLayout>
     );
-
   }
 
   // =====================================================
@@ -1277,14 +1300,10 @@ function OwnerReviews() {
   // =====================================================
 
   if (error) {
-
     return (
       <MainLayout>
-
         <div className="owner-reviews-page">
-
           <div className="owner-reviews-header">
-
             <button
               className="owner-reviews-back"
               onClick={() =>
@@ -1295,7 +1314,6 @@ function OwnerReviews() {
             </button>
 
             <div>
-
               <h1>
                 Customer Reviews
               </h1>
@@ -1304,13 +1322,10 @@ function OwnerReviews() {
                 See what customers are
                 saying about your business.
               </p>
-
             </div>
-
           </div>
 
           <div className="owner-review-empty">
-
             <FaStar />
 
             <h2>
@@ -1329,16 +1344,22 @@ function OwnerReviews() {
             >
               Try Again
             </button>
-
           </div>
-
         </div>
 
         <DialogBox
-          isOpen={dialog.isOpen}
-          title={dialog.title}
-          message={dialog.message}
-          type={dialog.type}
+          isOpen={
+            dialog.isOpen
+          }
+          title={
+            dialog.title
+          }
+          message={
+            dialog.message
+          }
+          type={
+            dialog.type
+          }
           confirmText={
             dialog.confirmText
           }
@@ -1346,10 +1367,8 @@ function OwnerReviews() {
             handleDialogConfirm
           }
         />
-
       </MainLayout>
     );
-
   }
 
   // =====================================================
@@ -1358,7 +1377,6 @@ function OwnerReviews() {
 
   return (
     <MainLayout>
-
       <div className="owner-reviews-page">
 
         {/* =================================================
@@ -1366,7 +1384,6 @@ function OwnerReviews() {
         ================================================= */}
 
         <div className="owner-reviews-header">
-
           <button
             className="owner-reviews-back"
             onClick={() =>
@@ -1377,7 +1394,6 @@ function OwnerReviews() {
           </button>
 
           <div>
-
             <h1>
               Customer Reviews
             </h1>
@@ -1386,9 +1402,7 @@ function OwnerReviews() {
               See what customers are saying
               about your business.
             </p>
-
           </div>
-
         </div>
 
         {/* =================================================
@@ -1396,9 +1410,7 @@ function OwnerReviews() {
         ================================================= */}
 
         <section className="owner-rating-summary">
-
           <div className="rating-main">
-
             <div className="rating-number">
               {averageRating}
             </div>
@@ -1417,14 +1429,11 @@ function OwnerReviews() {
                 ? "review"
                 : "reviews"}
             </p>
-
           </div>
 
           <div className="rating-distribution">
-
             {[5, 4, 3, 2, 1].map(
               (rating) => {
-
                 const count =
                   getRatingCount(
                     rating
@@ -1438,22 +1447,16 @@ function OwnerReviews() {
                     : 0;
 
                 return (
-
                   <div
                     className="rating-row"
                     key={rating}
                   >
-
                     <span className="rating-label">
-
                       {rating}
-
                       <FaStar />
-
                     </span>
 
                     <div className="rating-bar">
-
                       <div
                         className="rating-bar-fill"
                         style={{
@@ -1461,22 +1464,16 @@ function OwnerReviews() {
                             `${percentage}%`,
                         }}
                       />
-
                     </div>
 
                     <span className="rating-count">
                       {count}
                     </span>
-
                   </div>
-
                 );
-
               }
             )}
-
           </div>
-
         </section>
 
         {/* =================================================
@@ -1484,9 +1481,7 @@ function OwnerReviews() {
         ================================================= */}
 
         {totalReviews > 0 && (
-
           <div className="review-filters">
-
             <span className="filter-title">
               Filter:
             </span>
@@ -1509,7 +1504,6 @@ function OwnerReviews() {
 
             {[5, 4, 3, 2, 1].map(
               (rating) => (
-
                 <button
                   key={rating}
                   className={
@@ -1526,18 +1520,12 @@ function OwnerReviews() {
                     )
                   }
                 >
-
                   {rating}
-
                   <FaStar />
-
                 </button>
-
               )
             )}
-
           </div>
-
         )}
 
         {/* =================================================
@@ -1545,11 +1533,8 @@ function OwnerReviews() {
         ================================================= */}
 
         <section className="owner-review-list">
-
           {reviews.length === 0 ? (
-
             <div className="owner-review-empty">
-
               <FaStar />
 
               <h2>
@@ -1563,17 +1548,13 @@ function OwnerReviews() {
                   ? "Customers have not reviewed this business yet."
                   : "There are no reviews for this rating yet."}
               </p>
-
             </div>
-
           ) : (
-
             reviews.map(
               (
                 review,
                 index
               ) => {
-
                 const reviewId =
                   getReviewId(
                     review,
@@ -1613,30 +1594,49 @@ function OwnerReviews() {
                 const canOpenProfile =
                   Boolean(
                     reviewerId &&
-                    reviewId !== null &&
-                    reviewId !== undefined &&
+                    reviewId !==
+                      null &&
+                    reviewId !==
+                      undefined &&
                     !Number.isNaN(
-                      Number(reviewId)
+                      Number(
+                        reviewId
+                      )
                     )
                   );
 
-                return (
+                const isExpanded =
+                  expandedReviews.has(
+                    String(
+                      reviewId
+                    )
+                  );
 
+                const isLongReview =
+                  longReviews.has(
+                    String(
+                      reviewId
+                    )
+                  );
+
+                const commentClassName =
+                  isExpanded
+                    ? "customer-comment expanded"
+                    : "customer-comment";
+
+                return (
                   <article
                     className="owner-review-card"
                     key={
                       reviewId
                     }
                   >
+                    {/* =================================================
+                        CUSTOMER HEADER
+                    ================================================= */}
 
                     <div className="review-customer-header">
-
                       <div className="customer-info">
-
-                        {/* =================================================
-                            EXISTING PROFILE ICON
-                            ONLY CLICK FUNCTIONALITY ADDED
-                        ================================================= */}
 
                         <FaUserCircle
                           className="customer-avatar"
@@ -1662,8 +1662,9 @@ function OwnerReviews() {
                               ? 0
                               : undefined
                           }
-                          onKeyDown={(event) => {
-
+                          onKeyDown={(
+                            event
+                          ) => {
                             if (
                               canOpenProfile &&
                               (
@@ -1673,103 +1674,115 @@ function OwnerReviews() {
                                   " "
                               )
                             ) {
-
                               event.preventDefault();
 
                               handleReviewerProfile(
                                 review,
                                 index
                               );
-
                             }
-
                           }}
                         />
 
                         <div>
-
                           <h3>
                             {userName}
                           </h3>
 
                           {date && (
-
                             <span>
                               {formatDate(
                                 date
                               )}
                             </span>
-
                           )}
-
                         </div>
-
                       </div>
 
                       <div className="customer-rating">
-
                         {renderStars(
                           rating
                         )}
-
                       </div>
-
                     </div>
 
-                    {rating > 0 && (
+                    {/* =================================================
+                        RATING NUMBER
+                    ================================================= */}
 
-                      <div
-                        style={{
-                          marginTop:
-                            "7px",
-                          fontSize:
-                            "11px",
-                          color:
-                            "#777777",
-                          textAlign:
-                            "right",
-                        }}
-                      >
+                    {rating > 0 && (
+                      <div className="review-rating-number">
                         {rating}/5
                       </div>
-
                     )}
+
+                    {/* =================================================
+                        CUSTOMER COMMENT
+                        View More ONLY when comment exceeds 2 lines.
+                    ================================================= */}
 
                     {comment && (
+                      <div className="customer-comment-wrapper">
+                        <p
+                          ref={(element) => {
+                            commentRefs.current[
+                              String(
+                                reviewId
+                              )
+                            ] = element;
+                          }}
+                          className={
+                            commentClassName
+                          }
+                        >
+                          "{comment}"
+                        </p>
 
-                      <p className="customer-comment">
-                        "{comment}"
-                      </p>
-
+                        {isLongReview && (
+                          <button
+                            type="button"
+                            className="review-view-more-btn"
+                            onClick={() =>
+                              toggleReviewComment(
+                                reviewId
+                              )
+                            }
+                          >
+                            {isExpanded
+                              ? "View Less"
+                              : "View More"}
+                          </button>
+                        )}
+                      </div>
                     )}
 
+                    {/* =================================================
+                        OWNER REPLY
+                    ================================================= */}
+
                     {reply && (
-
                       <div className="owner-reply">
-
                         <div className="owner-reply-header">
-
                           <FaReply />
 
                           <strong>
                             Your response
                           </strong>
-
                         </div>
 
                         <p>
                           {reply}
                         </p>
-
                       </div>
-
                     )}
+
+                    {/* =================================================
+                        REPLY FORM
+                    ================================================= */}
 
                     {replyingTo ===
                       reviewId && (
-
                       <div className="reply-form">
-
                         <textarea
                           value={
                             replyText
@@ -1778,8 +1791,7 @@ function OwnerReviews() {
                             event
                           ) =>
                             setReplyText(
-                              event
-                                .target
+                              event.target
                                 .value
                             )
                           }
@@ -1788,7 +1800,6 @@ function OwnerReviews() {
                         />
 
                         <div className="reply-actions">
-
                           <button
                             className="cancel-reply-btn"
                             onClick={
@@ -1806,23 +1817,19 @@ function OwnerReviews() {
                               )
                             }
                           >
-
                             <FaReply />
-
                             Submit Reply
-
                           </button>
-
                         </div>
-
                       </div>
-
                     )}
 
+                    {/* =================================================
+                        REVIEW ACTIONS
+                    ================================================= */}
+
                     <div className="review-actions">
-
                       {!reply && (
-
                         <button
                           className="reply-btn"
                           onClick={() =>
@@ -1831,13 +1838,9 @@ function OwnerReviews() {
                             )
                           }
                         >
-
                           <FaReply />
-
                           Reply
-
                         </button>
-
                       )}
 
                       <button
@@ -1848,24 +1851,15 @@ function OwnerReviews() {
                           )
                         }
                       >
-
                         <FaFlag />
-
                         Report
-
                       </button>
-
                     </div>
-
                   </article>
-
                 );
-
               }
             )
-
           )}
-
         </section>
 
         {/* =================================================
@@ -1874,9 +1868,7 @@ function OwnerReviews() {
 
         {reviews.length > 0 &&
           hasMore && (
-
             <div className="load-more-reviews-container">
-
               <button
                 type="button"
                 className="load-more-reviews-btn"
@@ -1887,27 +1879,17 @@ function OwnerReviews() {
                   loadingMore
                 }
               >
-
                 {loadingMore ? (
-
                   <>
                     <span className="load-more-spinner" />
-
                     Loading Reviews...
                   </>
-
                 ) : (
-
                   "Load More Reviews"
-
                 )}
-
               </button>
-
             </div>
-
           )}
-
       </div>
 
       {/* =================================================
@@ -1915,10 +1897,18 @@ function OwnerReviews() {
       ================================================= */}
 
       <DialogBox
-        isOpen={dialog.isOpen}
-        title={dialog.title}
-        message={dialog.message}
-        type={dialog.type}
+        isOpen={
+          dialog.isOpen
+        }
+        title={
+          dialog.title
+        }
+        message={
+          dialog.message
+        }
+        type={
+          dialog.type
+        }
         confirmText={
           dialog.confirmText
         }
@@ -1926,10 +1916,8 @@ function OwnerReviews() {
           handleDialogConfirm
         }
       />
-
     </MainLayout>
   );
-
 }
 
 export default OwnerReviews;
