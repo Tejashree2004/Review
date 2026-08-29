@@ -51,6 +51,19 @@ export const getPlaceReviews = (
 };
 
 // =====================================================
+// GET USER PUBLIC PROFILE + CLICKED REVIEW
+// =====================================================
+
+export const getUserPublicProfile = (
+  userId,
+  reviewId
+) => {
+  return axios.get(
+    `${API_BASE}/Review/user/${userId}/review/${reviewId}`
+  );
+};
+
+// =====================================================
 // ADD REVIEW
 // =====================================================
 

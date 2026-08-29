@@ -126,24 +126,6 @@ function BusinessReviews() {
         reviewResponse.data
       );
 
-      /*
-        Backend response:
-
-        {
-          success: true,
-          data: {
-            reviews: [],
-            totalReviews: 20,
-            page: 1,
-            pageSize: 10,
-            totalPages: 2,
-            hasMore: true,
-            averageRating: 4.5,
-            ...
-          }
-        }
-      */
-
       const responseData =
         reviewResponse.data?.data ??
         reviewResponse.data?.Data ??
@@ -323,6 +305,61 @@ function BusinessReviews() {
   };
 
   // =====================================================
+  // GET REVIEWER ID
+  // =====================================================
+
+  const getReviewerId = (review) => {
+    return (
+      review.UserId ??
+      review.userId ??
+      review.User?.Id ??
+      review.user?.id ??
+      null
+    );
+  };
+
+  // =====================================================
+  // OPEN USER PUBLIC PROFILE
+  // =====================================================
+
+  const handleReviewerProfile = (
+    review
+  ) => {
+    const reviewerId =
+      getReviewerId(review);
+
+    const reviewId =
+      getReviewId(
+        review
+      );
+
+    // =================================================
+    // BOTH IDs ARE REQUIRED
+    // =================================================
+
+    if (
+      !reviewerId ||
+      !reviewId ||
+      typeof reviewId !== "number"
+    ) {
+      console.warn(
+        "Cannot open reviewer profile. Missing UserId or ReviewId.",
+        {
+          reviewerId,
+          reviewId,
+          review,
+        }
+      );
+
+      return;
+    }
+
+    navigate(
+      `/user-profile/${reviewerId}/review/${reviewId}`
+    );
+  };
+
+  // =====================================================
   // GET RATING
   // =====================================================
 
@@ -366,11 +403,19 @@ function BusinessReviews() {
     review,
     index
   ) => {
-    return (
+    const reviewId =
       review.ReviewId ??
       review.reviewId ??
-      `review-${index}`
-    );
+      null;
+
+    if (
+      reviewId !== null &&
+      reviewId !== undefined
+    ) {
+      return Number(reviewId);
+    }
+
+    return `review-${index}`;
   };
 
   // =====================================================
@@ -768,6 +813,17 @@ function BusinessReviews() {
                     index
                   );
 
+                const reviewerId =
+                  getReviewerId(
+                    review
+                  );
+
+                const canOpenProfile =
+                  Boolean(
+                    reviewerId &&
+                    typeof reviewId === "number"
+                  );
+
                 return (
                   <div
                     className="all-review-card"
@@ -780,13 +836,38 @@ function BusinessReviews() {
 
                       <div className="all-review-user">
 
-                        <div className="all-review-avatar">
+                        {/* =================================================
+                            CLICKABLE REVIEWER AVATAR
+                        ================================================= */}
+
+                        <button
+                          type="button"
+                          className="all-review-avatar"
+                          onClick={() =>
+                            handleReviewerProfile(
+                              review
+                            )
+                          }
+                          disabled={
+                            !canOpenProfile
+                          }
+                          title={
+                            canOpenProfile
+                              ? "View reviewer profile"
+                              : "Reviewer profile unavailable"
+                          }
+                          aria-label={
+                            canOpenProfile
+                              ? `View ${reviewerName}'s profile`
+                              : "Reviewer profile unavailable"
+                          }
+                        >
 
                           {reviewerName
                             .charAt(0)
                             .toUpperCase()}
 
-                        </div>
+                        </button>
 
                         <div>
 

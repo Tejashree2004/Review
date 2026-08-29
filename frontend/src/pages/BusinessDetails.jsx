@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -515,6 +516,38 @@ function BusinessDetails() {
 
     navigate(
       `/business/${businessId}/reviews`
+    );
+  };
+
+  // =====================================================
+  // OPEN REVIEWER PROFILE
+  // =====================================================
+  // ONLY NEW FUNCTION ADDED FOR PROFILE CLICK
+  // Existing UI remains unchanged.
+  // =====================================================
+
+  const handleReviewerProfileClick = (review) => {
+    const userId =
+      review.UserId ??
+      review.userId ??
+      review.User?.Id ??
+      review.user?.id;
+
+    const reviewId =
+      review.ReviewId ??
+      review.reviewId;
+
+    if (!userId || !reviewId) {
+      console.error(
+        "Reviewer profile information not found:",
+        review
+      );
+
+      return;
+    }
+
+    navigate(
+      `/user-profile/${userId}/review/${reviewId}`
     );
   };
 
@@ -1131,7 +1164,20 @@ function BusinessDetails() {
 
                         <div className="reviewer-info">
 
-                          <div className="reviewer-avatar">
+                          {/* ONLY CHANGE:
+                              PROFILE AVATAR CLICK */}
+                          <div
+                            className="reviewer-avatar"
+                            onClick={() =>
+                              handleReviewerProfileClick(
+                                review
+                              )
+                            }
+                            title="View Profile"
+                            style={{
+                              cursor: "pointer",
+                            }}
+                          >
 
                             {reviewerName
                               .charAt(0)
@@ -1232,3 +1278,4 @@ function BusinessDetails() {
 }
 
 export default BusinessDetails;
+

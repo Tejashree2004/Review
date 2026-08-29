@@ -530,6 +530,73 @@ namespace Review.API.Services
         }
 
         // =====================================================
+        // GET USER PUBLIC PROFILE + CLICKED REVIEW
+        // =====================================================
+        // IMPORTANT:
+        // The review must actually belong to the requested user.
+        //
+        // Example:
+        // userId   = 15
+        // reviewId = 82
+        //
+        // The query checks:
+        // ReviewId == 82 AND UserId == 15
+        //
+        // Therefore another user's review cannot be returned.
+        // =====================================================
+
+        public async Task<UserPublicProfileDto?>
+            GetUserPublicProfileAsync(
+                int userId,
+                int reviewId)
+        {
+            if (userId <= 0 ||
+                reviewId <= 0)
+            {
+                return null;
+            }
+
+            var result =
+                await _context.Reviews
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.ReviewId == reviewId &&
+                        x.UserId == userId)
+                    .Select(x => new UserPublicProfileDto
+                    {
+                        User = new UserPublicProfileInfoDto
+                        {
+                            Id =
+                                x.User.Id,
+
+                            FullName =
+                                x.User.FullName,
+
+                            CreatedAt =
+                                x.User.CreatedAt
+                        },
+
+                        Review = new UserPublicReviewDto
+                        {
+                            ReviewId =
+                                x.ReviewId,
+
+                            Rating =
+                                x.Rating,
+
+                            Comment =
+                                x.Comment,
+
+                            CreatedAt =
+                                x.CreatedAt
+                        }
+                    })
+                    .FirstOrDefaultAsync();
+
+            return result;
+        }
+
+        // =====================================================
         // ADD REVIEW
         // =====================================================
 

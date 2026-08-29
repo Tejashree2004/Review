@@ -216,6 +216,113 @@ namespace Review.API.Controllers
         }
 
         // =====================================================
+        // GET USER PUBLIC PROFILE + CLICKED REVIEW
+        // =====================================================
+        //
+        // Example:
+        //
+        // GET /api/Review/user/15/review/82
+        //
+        // This returns:
+        // - Public user information
+        // - Only the clicked review
+        //
+        // IMPORTANT:
+        // The service verifies that Review #82 actually
+        // belongs to User #15.
+        //
+        // Private information such as:
+        // - PasswordHash
+        // - Email
+        // - Mobile number
+        // is NOT returned.
+        // =====================================================
+
+        [HttpGet("user/{userId}/review/{reviewId}")]
+        public async Task<IActionResult> GetUserPublicProfile(
+            int userId,
+            int reviewId)
+        {
+            try
+            {
+                // =================================================
+                // VALIDATE USER ID
+                // =================================================
+
+                if (userId <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid user ID."
+                    });
+                }
+
+                // =================================================
+                // VALIDATE REVIEW ID
+                // =================================================
+
+                if (reviewId <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid review ID."
+                    });
+                }
+
+                // =================================================
+                // GET USER + CLICKED REVIEW
+                // =================================================
+
+                var result =
+                    await _reviewService
+                        .GetUserPublicProfileAsync(
+                            userId,
+                            reviewId);
+
+                // =================================================
+                // USER / REVIEW NOT FOUND
+                //
+                // This also covers the case where the review
+                // exists but belongs to another user.
+                // =================================================
+
+                if (result == null)
+                {
+                    return NotFound(new
+                    {
+                        success = false,
+                        message =
+                            "User or review not found."
+                    });
+                }
+
+                // =================================================
+                // SUCCESS
+                // =================================================
+
+                return Ok(new
+                {
+                    success = true,
+                    data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Failed to load user profile and review.",
+                        error = ex.Message
+                    });
+            }
+        }
+
+        // =====================================================
         // ADD REVIEW
         // =====================================================
 

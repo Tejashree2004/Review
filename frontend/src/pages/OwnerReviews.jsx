@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useState,
@@ -19,7 +20,6 @@ import {
 import axios from "axios";
 
 import MainLayout from "../layouts/MainLayout";
-
 import DialogBox from "../components/DialogBox";
 
 import "../styles/OwnerReviews.css";
@@ -30,6 +30,7 @@ const API_BASE =
 const PAGE_SIZE = 10;
 
 function OwnerReviews() {
+
   const navigate = useNavigate();
 
   const {
@@ -92,6 +93,7 @@ function OwnerReviews() {
     action = null,
     options = {}
   ) => {
+
     setDialog({
       isOpen: true,
       title,
@@ -112,10 +114,12 @@ function OwnerReviews() {
   // =====================================================
 
   const closeDialog = () => {
+
     setDialog((previous) => ({
       ...previous,
       isOpen: false,
     }));
+
   };
 
   // =====================================================
@@ -123,6 +127,7 @@ function OwnerReviews() {
   // =====================================================
 
   const handleDialogConfirm = () => {
+
     const action = dialog.action;
 
     closeDialog();
@@ -130,6 +135,7 @@ function OwnerReviews() {
     if (action) {
       action();
     }
+
   };
 
   // =====================================================
@@ -154,12 +160,14 @@ function OwnerReviews() {
   // =====================================================
 
   const getToken = () => {
+
     return (
       localStorage.getItem("token") ||
       localStorage.getItem("authToken") ||
       localStorage.getItem("jwtToken") ||
       localStorage.getItem("accessToken")
     );
+
   };
 
   // =====================================================
@@ -167,11 +175,13 @@ function OwnerReviews() {
   // =====================================================
 
   const getResponseData = (response) => {
+
     return (
       response?.data?.data ??
       response?.data?.Data ??
       response?.data
     );
+
   };
 
   // =====================================================
@@ -179,6 +189,7 @@ function OwnerReviews() {
   // =====================================================
 
   const normalizeNumber = (value) => {
+
     if (
       value === null ||
       value === undefined
@@ -187,34 +198,42 @@ function OwnerReviews() {
     }
 
     if (typeof value === "number") {
+
       return Number.isFinite(value)
         ? value
         : null;
+
     }
 
     if (typeof value === "string") {
-      const cleaned = value.trim();
+
+      const cleaned =
+        value.trim();
 
       if (!cleaned) {
         return null;
       }
 
-      const match = cleaned.match(
-        /(\d+(?:\.\d+)?)/
-      );
+      const match =
+        cleaned.match(
+          /(\d+(?:\.\d+)?)/
+        );
 
       if (!match) {
         return null;
       }
 
-      const parsed = Number(match[1]);
+      const parsed =
+        Number(match[1]);
 
       return Number.isFinite(parsed)
         ? parsed
         : null;
+
     }
 
     return null;
+
   };
 
   // =====================================================
@@ -222,6 +241,7 @@ function OwnerReviews() {
   // =====================================================
 
   const getReviewRating = (review) => {
+
     const values = [
       review?.rating,
       review?.Rating,
@@ -234,6 +254,7 @@ function OwnerReviews() {
     ];
 
     for (const value of values) {
+
       const parsed =
         normalizeNumber(value);
 
@@ -244,9 +265,11 @@ function OwnerReviews() {
       ) {
         return parsed;
       }
+
     }
 
     return 0;
+
   };
 
   // =====================================================
@@ -257,6 +280,7 @@ function OwnerReviews() {
     review,
     index = 0
   ) => {
+
     return (
       review?.reviewId ??
       review?.ReviewId ??
@@ -264,6 +288,73 @@ function OwnerReviews() {
       review?.Id ??
       `review-${index}`
     );
+
+  };
+
+  // =====================================================
+  // GET REVIEWER ID
+  // =====================================================
+  // ADDED ONLY FOR PUBLIC PROFILE FUNCTIONALITY
+  // =====================================================
+
+  const getReviewerId = (review) => {
+
+    return (
+      review?.userId ??
+      review?.UserId ??
+      review?.user?.id ??
+      review?.user?.Id ??
+      review?.User?.id ??
+      review?.User?.Id ??
+      null
+    );
+
+  };
+
+  // =====================================================
+  // OPEN REVIEWER PUBLIC PROFILE
+  // =====================================================
+  // ADDED ONLY FOR PUBLIC PROFILE FUNCTIONALITY
+  // =====================================================
+
+  const handleReviewerProfile = (
+    review,
+    index
+  ) => {
+
+    const reviewerId =
+      getReviewerId(review);
+
+    const reviewId =
+      getReviewId(
+        review,
+        index
+      );
+
+    if (
+      !reviewerId ||
+      reviewId === null ||
+      reviewId === undefined ||
+      typeof Number(reviewId) !== "number" ||
+      Number.isNaN(Number(reviewId))
+    ) {
+
+      console.warn(
+        "Cannot open reviewer profile. Missing UserId or ReviewId.",
+        {
+          reviewerId,
+          reviewId,
+          review,
+        }
+      );
+
+      return;
+    }
+
+    navigate(
+      `/user-profile/${reviewerId}/review/${Number(reviewId)}`
+    );
+
   };
 
   // =====================================================
@@ -271,6 +362,7 @@ function OwnerReviews() {
   // =====================================================
 
   const getUserName = (review) => {
+
     if (
       typeof review?.User ===
       "string"
@@ -298,6 +390,7 @@ function OwnerReviews() {
       review?.Name ??
       "REVIO User"
     );
+
   };
 
   // =====================================================
@@ -305,6 +398,7 @@ function OwnerReviews() {
   // =====================================================
 
   const getReviewComment = (review) => {
+
     return (
       review?.comment ??
       review?.Comment ??
@@ -312,6 +406,7 @@ function OwnerReviews() {
       review?.ReviewText ??
       ""
     );
+
   };
 
   // =====================================================
@@ -319,6 +414,7 @@ function OwnerReviews() {
   // =====================================================
 
   const getReviewDate = (review) => {
+
     return (
       review?.createdAt ??
       review?.CreatedAt ??
@@ -326,6 +422,7 @@ function OwnerReviews() {
       review?.ReviewDate ??
       ""
     );
+
   };
 
   // =====================================================
@@ -333,6 +430,7 @@ function OwnerReviews() {
   // =====================================================
 
   const getReply = (review) => {
+
     return (
       review?.ownerReply ??
       review?.OwnerReply ??
@@ -340,6 +438,7 @@ function OwnerReviews() {
       review?.Reply ??
       ""
     );
+
   };
 
   // =====================================================
@@ -347,11 +446,13 @@ function OwnerReviews() {
   // =====================================================
 
   const formatDate = (date) => {
+
     if (!date) {
       return "";
     }
 
-    const parsed = new Date(date);
+    const parsed =
+      new Date(date);
 
     if (
       Number.isNaN(
@@ -369,6 +470,7 @@ function OwnerReviews() {
         year: "numeric",
       }
     );
+
   };
 
   // =====================================================
@@ -378,6 +480,7 @@ function OwnerReviews() {
   const getOwnerBusinessId = async (
     config
   ) => {
+
     if (routeBusinessId) {
       return routeBusinessId;
     }
@@ -409,6 +512,7 @@ function OwnerReviews() {
       ownerBusiness?.BusinessId ??
       null
     );
+
   };
 
   // =====================================================
@@ -420,6 +524,7 @@ function OwnerReviews() {
     currentPage,
     receivedCount
   ) => {
+
     const pagination =
       data?.pagination ??
       data?.Pagination ??
@@ -460,17 +565,20 @@ function OwnerReviews() {
     }
 
     if (responseTotal > 0) {
+
       return (
         responsePage *
           responsePageSize <
         responseTotal
       );
+
     }
 
     return (
       receivedCount >=
       responsePageSize
     );
+
   };
 
   // =====================================================
@@ -480,6 +588,7 @@ function OwnerReviews() {
   const updateReviewSummary = (
     responseData
   ) => {
+
     const backendAverage =
       responseData?.averageRating ??
       responseData?.AverageRating;
@@ -499,6 +608,7 @@ function OwnerReviews() {
       backendTotal !== undefined ||
       backendCounts
     ) {
+
       setReviewSummary(
         (previous) => ({
           averageRating:
@@ -553,7 +663,9 @@ function OwnerReviews() {
               : previous.ratingCounts,
         })
       );
+
     }
+
   };
 
   // =====================================================
@@ -565,20 +677,29 @@ function OwnerReviews() {
     append = false,
     filter = selectedFilter,
   } = {}) => {
+
     try {
+
       if (append) {
+
         setLoadingMore(true);
+
       } else {
+
         setLoading(true);
         setError("");
+
       }
 
-      const token = getToken();
+      const token =
+        getToken();
 
       if (!token) {
+
         setError(
           "Please login again to view your reviews."
         );
+
         return;
       }
 
@@ -595,10 +716,13 @@ function OwnerReviews() {
         );
 
       if (!resolvedBusinessId) {
+
         setReviews([]);
+
         setError(
           "Business information is missing."
         );
+
         return;
       }
 
@@ -647,36 +771,46 @@ function OwnerReviews() {
           responseData
         )
       ) {
+
         reviewData =
           responseData;
+
       } else if (
         Array.isArray(
           responseData?.reviews
         )
       ) {
+
         reviewData =
           responseData.reviews;
+
       } else if (
         Array.isArray(
           responseData?.Reviews
         )
       ) {
+
         reviewData =
           responseData.Reviews;
+
       } else if (
         Array.isArray(
           responseData?.items
         )
       ) {
+
         reviewData =
           responseData.items;
+
       } else if (
         Array.isArray(
           responseData?.Items
         )
       ) {
+
         reviewData =
           responseData.Items;
+
       }
 
       // =================================================
@@ -693,6 +827,7 @@ function OwnerReviews() {
 
       setReviews(
         (previous) => {
+
           if (!append) {
             return reviewData;
           }
@@ -733,6 +868,7 @@ function OwnerReviews() {
             ...previous,
             ...newReviews,
           ];
+
         }
       );
 
@@ -751,7 +887,9 @@ function OwnerReviews() {
           reviewData.length
         )
       );
+
     } catch (err) {
+
       console.error(
         "Failed to load business reviews:",
         err
@@ -765,28 +903,42 @@ function OwnerReviews() {
         err.response?.status ===
         401
       ) {
+
         setError(
           "Your session has expired. Please login again."
         );
+
       } else if (
         err.response?.status ===
         404
       ) {
+
         setError(
           "No reviews found for this business."
         );
+
       } else {
+
         setError(
           "Unable to load customer reviews."
         );
+
       }
+
     } finally {
+
       if (append) {
+
         setLoadingMore(false);
+
       } else {
+
         setLoading(false);
+
       }
+
     }
+
   };
 
   // =====================================================
@@ -794,8 +946,11 @@ function OwnerReviews() {
   // =====================================================
 
   useEffect(() => {
+
     setPage(1);
+
     setHasMore(true);
+
     setReviews([]);
 
     loadBusinessReviews({
@@ -805,6 +960,7 @@ function OwnerReviews() {
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [
     routeBusinessId,
     selectedFilter,
@@ -815,6 +971,7 @@ function OwnerReviews() {
   // =====================================================
 
   const handleLoadMore = async () => {
+
     if (
       loading ||
       loadingMore ||
@@ -828,6 +985,7 @@ function OwnerReviews() {
       append: true,
       filter: selectedFilter,
     });
+
   };
 
   // =====================================================
@@ -854,12 +1012,14 @@ function OwnerReviews() {
   const getRatingCount = (
     rating
   ) => {
+
     return Number(
       reviewSummary
         .ratingCounts?.[
         rating
       ] || 0
     );
+
   };
 
   // =====================================================
@@ -869,6 +1029,7 @@ function OwnerReviews() {
   const renderStars = (
     rating
   ) => {
+
     const numeric =
       normalizeNumber(
         rating
@@ -885,8 +1046,10 @@ function OwnerReviews() {
 
     return (
       <div className="owner-review-stars">
+
         {[1, 2, 3, 4, 5].map(
           (star) => (
+
             <FaStar
               key={star}
               className={
@@ -898,10 +1061,13 @@ function OwnerReviews() {
                   : "star-empty"
               }
             />
+
           )
         )}
+
       </div>
     );
+
   };
 
   // =====================================================
@@ -911,25 +1077,32 @@ function OwnerReviews() {
   const handleReplyClick = (
     reviewId
   ) => {
+
     setReplyingTo(
       reviewId
     );
 
     setReplyText("");
+
   };
 
   const handleCancelReply = () => {
+
     setReplyingTo(null);
+
     setReplyText("");
+
   };
 
   const handleSubmitReply = (
     reviewId
   ) => {
+
     const trimmed =
       replyText.trim();
 
     if (!trimmed) {
+
       showDialog(
         "Reply Required",
         "Please enter your reply.",
@@ -946,6 +1119,7 @@ function OwnerReviews() {
       (previous) =>
         previous.map(
           (review) => {
+
             const currentId =
               getReviewId(
                 review
@@ -955,25 +1129,33 @@ function OwnerReviews() {
               currentId ===
               reviewId
             ) {
+
               return {
                 ...review,
+
                 ownerReply:
                   trimmed,
+
                 OwnerReply:
                   trimmed,
+
                 ownerReplyAt:
                   replyTime,
+
                 OwnerReplyAt:
                   replyTime,
               };
+
             }
 
             return review;
+
           }
         )
     );
 
     setReplyingTo(null);
+
     setReplyText("");
 
     showDialog(
@@ -981,6 +1163,7 @@ function OwnerReviews() {
       "Reply added successfully.",
       "success"
     );
+
   };
 
   // =====================================================
@@ -990,11 +1173,13 @@ function OwnerReviews() {
   const handleReport = (
     reviewId
   ) => {
+
     showDialog(
       "Report Review",
       "Do you want to report this review?",
       "warning",
       () => {
+
         console.log(
           "Reported Review ID:",
           reviewId
@@ -1005,6 +1190,7 @@ function OwnerReviews() {
           "Review has been reported to REVIO admin.",
           "success"
         );
+
       },
       {
         confirmText: "Report",
@@ -1012,6 +1198,7 @@ function OwnerReviews() {
         showCancel: true,
       }
     );
+
   };
 
   // =====================================================
@@ -1019,10 +1206,14 @@ function OwnerReviews() {
   // =====================================================
 
   if (loading) {
+
     return (
       <MainLayout>
+
         <div className="owner-reviews-page">
+
           <div className="owner-reviews-header">
+
             <button
               className="owner-reviews-back"
               onClick={() =>
@@ -1033,6 +1224,7 @@ function OwnerReviews() {
             </button>
 
             <div>
+
               <h1>
                 Customer Reviews
               </h1>
@@ -1040,10 +1232,13 @@ function OwnerReviews() {
               <p>
                 Loading customer reviews...
               </p>
+
             </div>
+
           </div>
 
           <div className="owner-review-empty">
+
             <FaStar />
 
             <h2>
@@ -1054,7 +1249,9 @@ function OwnerReviews() {
               Please wait while we
               load customer reviews.
             </p>
+
           </div>
+
         </div>
 
         <DialogBox
@@ -1069,8 +1266,10 @@ function OwnerReviews() {
             handleDialogConfirm
           }
         />
+
       </MainLayout>
     );
+
   }
 
   // =====================================================
@@ -1078,10 +1277,14 @@ function OwnerReviews() {
   // =====================================================
 
   if (error) {
+
     return (
       <MainLayout>
+
         <div className="owner-reviews-page">
+
           <div className="owner-reviews-header">
+
             <button
               className="owner-reviews-back"
               onClick={() =>
@@ -1092,6 +1295,7 @@ function OwnerReviews() {
             </button>
 
             <div>
+
               <h1>
                 Customer Reviews
               </h1>
@@ -1100,10 +1304,13 @@ function OwnerReviews() {
                 See what customers are
                 saying about your business.
               </p>
+
             </div>
+
           </div>
 
           <div className="owner-review-empty">
+
             <FaStar />
 
             <h2>
@@ -1122,7 +1329,9 @@ function OwnerReviews() {
             >
               Try Again
             </button>
+
           </div>
+
         </div>
 
         <DialogBox
@@ -1137,8 +1346,10 @@ function OwnerReviews() {
             handleDialogConfirm
           }
         />
+
       </MainLayout>
     );
+
   }
 
   // =====================================================
@@ -1147,6 +1358,7 @@ function OwnerReviews() {
 
   return (
     <MainLayout>
+
       <div className="owner-reviews-page">
 
         {/* =================================================
@@ -1165,6 +1377,7 @@ function OwnerReviews() {
           </button>
 
           <div>
+
             <h1>
               Customer Reviews
             </h1>
@@ -1173,6 +1386,7 @@ function OwnerReviews() {
               See what customers are saying
               about your business.
             </p>
+
           </div>
 
         </div>
@@ -1224,17 +1438,22 @@ function OwnerReviews() {
                     : 0;
 
                 return (
+
                   <div
                     className="rating-row"
                     key={rating}
                   >
 
                     <span className="rating-label">
+
                       {rating}
+
                       <FaStar />
+
                     </span>
 
                     <div className="rating-bar">
+
                       <div
                         className="rating-bar-fill"
                         style={{
@@ -1242,6 +1461,7 @@ function OwnerReviews() {
                             `${percentage}%`,
                         }}
                       />
+
                     </div>
 
                     <span className="rating-count">
@@ -1249,7 +1469,9 @@ function OwnerReviews() {
                     </span>
 
                   </div>
+
                 );
+
               }
             )}
 
@@ -1262,6 +1484,7 @@ function OwnerReviews() {
         ================================================= */}
 
         {totalReviews > 0 && (
+
           <div className="review-filters">
 
             <span className="filter-title">
@@ -1286,6 +1509,7 @@ function OwnerReviews() {
 
             {[5, 4, 3, 2, 1].map(
               (rating) => (
+
                 <button
                   key={rating}
                   className={
@@ -1302,13 +1526,18 @@ function OwnerReviews() {
                     )
                   }
                 >
+
                   {rating}
+
                   <FaStar />
+
                 </button>
+
               )
             )}
 
           </div>
+
         )}
 
         {/* =================================================
@@ -1376,7 +1605,23 @@ function OwnerReviews() {
                     review
                   );
 
+                const reviewerId =
+                  getReviewerId(
+                    review
+                  );
+
+                const canOpenProfile =
+                  Boolean(
+                    reviewerId &&
+                    reviewId !== null &&
+                    reviewId !== undefined &&
+                    !Number.isNaN(
+                      Number(reviewId)
+                    )
+                  );
+
                 return (
+
                   <article
                     className="owner-review-card"
                     key={
@@ -1388,8 +1633,57 @@ function OwnerReviews() {
 
                       <div className="customer-info">
 
+                        {/* =================================================
+                            EXISTING PROFILE ICON
+                            ONLY CLICK FUNCTIONALITY ADDED
+                        ================================================= */}
+
                         <FaUserCircle
                           className="customer-avatar"
+                          onClick={() =>
+                            canOpenProfile &&
+                            handleReviewerProfile(
+                              review,
+                              index
+                            )
+                          }
+                          title={
+                            canOpenProfile
+                              ? "View reviewer profile"
+                              : "Reviewer profile unavailable"
+                          }
+                          role={
+                            canOpenProfile
+                              ? "button"
+                              : undefined
+                          }
+                          tabIndex={
+                            canOpenProfile
+                              ? 0
+                              : undefined
+                          }
+                          onKeyDown={(event) => {
+
+                            if (
+                              canOpenProfile &&
+                              (
+                                event.key ===
+                                  "Enter" ||
+                                event.key ===
+                                  " "
+                              )
+                            ) {
+
+                              event.preventDefault();
+
+                              handleReviewerProfile(
+                                review,
+                                index
+                              );
+
+                            }
+
+                          }}
                         />
 
                         <div>
@@ -1399,11 +1693,13 @@ function OwnerReviews() {
                           </h3>
 
                           {date && (
+
                             <span>
                               {formatDate(
                                 date
                               )}
                             </span>
+
                           )}
 
                         </div>
@@ -1411,14 +1707,17 @@ function OwnerReviews() {
                       </div>
 
                       <div className="customer-rating">
+
                         {renderStars(
                           rating
                         )}
+
                       </div>
 
                     </div>
 
                     {rating > 0 && (
+
                       <div
                         style={{
                           marginTop:
@@ -1433,15 +1732,19 @@ function OwnerReviews() {
                       >
                         {rating}/5
                       </div>
+
                     )}
 
                     {comment && (
+
                       <p className="customer-comment">
                         "{comment}"
                       </p>
+
                     )}
 
                     {reply && (
+
                       <div className="owner-reply">
 
                         <div className="owner-reply-header">
@@ -1459,6 +1762,7 @@ function OwnerReviews() {
                         </p>
 
                       </div>
+
                     )}
 
                     {replyingTo ===
@@ -1502,8 +1806,11 @@ function OwnerReviews() {
                               )
                             }
                           >
+
                             <FaReply />
+
                             Submit Reply
+
                           </button>
 
                         </div>
@@ -1515,6 +1822,7 @@ function OwnerReviews() {
                     <div className="review-actions">
 
                       {!reply && (
+
                         <button
                           className="reply-btn"
                           onClick={() =>
@@ -1523,9 +1831,13 @@ function OwnerReviews() {
                             )
                           }
                         >
+
                           <FaReply />
+
                           Reply
+
                         </button>
+
                       )}
 
                       <button
@@ -1536,14 +1848,19 @@ function OwnerReviews() {
                           )
                         }
                       >
+
                         <FaFlag />
+
                         Report
+
                       </button>
 
                     </div>
 
                   </article>
+
                 );
+
               }
             )
 
@@ -1572,12 +1889,17 @@ function OwnerReviews() {
               >
 
                 {loadingMore ? (
+
                   <>
                     <span className="load-more-spinner" />
+
                     Loading Reviews...
                   </>
+
                 ) : (
+
                   "Load More Reviews"
+
                 )}
 
               </button>
@@ -1607,6 +1929,8 @@ function OwnerReviews() {
 
     </MainLayout>
   );
+
 }
 
 export default OwnerReviews;
+

@@ -1,12 +1,16 @@
+
 import {
   useEffect,
   useState,
 } from "react";
+
 import {
   useNavigate,
   useParams,
 } from "react-router-dom";
+
 import axios from "axios";
+
 import {
   FaArrowLeft,
   FaMapMarkerAlt,
@@ -20,6 +24,7 @@ import {
   FaEdit,
   FaStore,
 } from "react-icons/fa";
+
 import "../styles/OwnerPublicProfile.css";
 
 const API_BASE =
@@ -54,6 +59,7 @@ const SAMPLE_PHOTOS = [
 
 function OwnerPublicProfile() {
   const navigate = useNavigate();
+
   const {
     businessId: routeBusinessId,
   } = useParams();
@@ -326,9 +332,6 @@ function OwnerPublicProfile() {
                 `${API_BASE}/Review/business/${businessId}`,
                 {
                   ...config,
-
-                  // Public profile only needs
-                  // the first 3 reviews.
                   params: {
                     page: 1,
                     pageSize: 3,
@@ -345,17 +348,6 @@ function OwnerPublicProfile() {
               getResponseData(
                 reviewResponse
               );
-
-            // =============================================
-            // FIX:
-            // Backend may return:
-            //
-            // data: [...]
-            // data: { reviews: [...] }
-            // data: { Reviews: [...] }
-            // data: { items: [...] }
-            // data: { Items: [...] }
-            // =============================================
 
             let reviewList = [];
 
@@ -401,8 +393,6 @@ function OwnerPublicProfile() {
               reviewList
             );
 
-            // Only 3 reviews are displayed
-            // on the public profile.
             setReviews(
               reviewList.slice(0, 3)
             );
@@ -545,10 +535,6 @@ function OwnerPublicProfile() {
         0
     );
 
-  // IMPORTANT:
-  // The profile can display only 3 reviews,
-  // but the business's actual review count
-  // should remain the backend total.
   const reviewCount =
     backendReviewCount > 0
       ? backendReviewCount
@@ -636,6 +622,24 @@ function OwnerPublicProfile() {
       review?.userName ??
       review?.UserName ??
       "REVIO User"
+    );
+  };
+
+  // =====================================================
+  // REVIEW USER ID
+  // =====================================================
+
+  const getReviewUserId = (
+    review
+  ) => {
+    return (
+      review?.userId ??
+      review?.UserId ??
+      review?.user?.id ??
+      review?.user?.Id ??
+      review?.User?.id ??
+      review?.User?.Id ??
+      null
     );
   };
 
@@ -753,6 +757,39 @@ function OwnerPublicProfile() {
     } else {
       navigate(
         "/owner/business"
+      );
+    }
+  };
+
+  // =====================================================
+  // REVIEWER PROFILE
+  // =====================================================
+
+  const handleReviewerProfile = (
+    review
+  ) => {
+    const userId =
+      getReviewUserId(review);
+
+    const reviewId =
+      review?.reviewId ??
+      review?.ReviewId;
+
+    if (!userId) {
+      console.warn(
+        "Reviewer UserId not found:",
+        review
+      );
+      return;
+    }
+
+    if (reviewId) {
+      navigate(
+        `/user-profile/${userId}?reviewId=${reviewId}`
+      );
+    } else {
+      navigate(
+        `/user-profile/${userId}`
       );
     }
   };
@@ -955,7 +992,6 @@ function OwnerPublicProfile() {
 
         <section className="public-business-info">
           <div className="public-title-row">
-
             <div className="public-business-title">
               <h2>
                 {businessName}
@@ -1165,9 +1201,7 @@ function OwnerPublicProfile() {
           ) : reviews.length > 0 ? (
             <div className="public-review-list">
 
-              {/* Only preview first 3 reviews here.
-                  View All opens complete reviewer list. */}
-
+              {/* Only preview first 3 reviews here. */}
               {reviews
                 .slice(0, 3)
                 .map(
@@ -1200,6 +1234,11 @@ function OwnerPublicProfile() {
                       review?.ReviewId ??
                       index;
 
+                    const reviewerUserId =
+                      getReviewUserId(
+                        review
+                      );
+
                     return (
                       <article
                         className="public-review-card"
@@ -1207,9 +1246,32 @@ function OwnerPublicProfile() {
                           reviewId
                         }
                       >
+
                         <div className="public-review-top">
 
-                          <div className="public-review-avatar">
+                          {/* =====================================================
+                              REVIEWER PROFILE AVATAR
+                          ===================================================== */}
+
+                          <button
+                            type="button"
+                            className="public-review-avatar"
+                            onClick={() =>
+                              handleReviewerProfile(
+                                review
+                              )
+                            }
+                            aria-label={`View ${userName}'s profile`}
+                            disabled={
+                              !reviewerUserId
+                            }
+                            style={{
+                              cursor:
+                                reviewerUserId
+                                  ? "pointer"
+                                  : "default",
+                            }}
+                          >
                             <span>
                               {userName
                                 .charAt(
@@ -1217,9 +1279,38 @@ function OwnerPublicProfile() {
                                 )
                                 .toUpperCase()}
                             </span>
-                          </div>
+                          </button>
 
-                          <div className="public-review-user">
+                          {/* =====================================================
+                              REVIEWER NAME
+                          ===================================================== */}
+
+                          <button
+                            type="button"
+                            className="public-review-user"
+                            onClick={() =>
+                              handleReviewerProfile(
+                                review
+                              )
+                            }
+                            disabled={
+                              !reviewerUserId
+                            }
+                            style={{
+                              cursor:
+                                reviewerUserId
+                                  ? "pointer"
+                                  : "default",
+                              background:
+                                "none",
+                              border:
+                                "none",
+                              padding:
+                                0,
+                              textAlign:
+                                "left",
+                            }}
+                          >
                             <strong>
                               {userName}
                             </strong>
@@ -1231,7 +1322,7 @@ function OwnerPublicProfile() {
                                 )}
                               </span>
                             )}
-                          </div>
+                          </button>
 
                           <div className="public-review-rating">
                             {renderStars(
@@ -1343,3 +1434,4 @@ function OwnerPublicProfile() {
 }
 
 export default OwnerPublicProfile;
+

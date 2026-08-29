@@ -24,6 +24,7 @@ import WriteReview from "./pages/WriteReview";
 import Notifications from "./pages/Notifications";
 import Categories from "./pages/Categories";
 import EditProfile from "./pages/EditProfile";
+import UserPublicProfile from "./pages/UserPublicProfile";
 
 // =========================
 // Business Owner
@@ -76,10 +77,11 @@ function App() {
         path="/role-selection"
         element={<RoleSelection />}
       />
+
       <Route
-  path="/edit-profile"
-  element={<EditProfile />}
-/>
+        path="/edit-profile"
+        element={<EditProfile />}
+      />
 
 
       {/* =====================================================
@@ -114,6 +116,32 @@ function App() {
       <Route
         path="/business/:businessId/reviews"
         element={<BusinessReviews />}
+      />
+
+      {/* =====================================================
+          PUBLIC USER PROFILE FROM REVIEW
+
+          Supported URLs:
+
+          /user-profile/:userId/review/:reviewId
+
+          AND
+
+          /user-profile/:userId?reviewId=:reviewId
+
+          The second route is required because the current
+          reviewer profile click is navigating using a query
+          parameter.
+      ===================================================== */}
+
+      <Route
+        path="/user-profile/:userId/review/:reviewId"
+        element={<UserPublicProfile />}
+      />
+
+      <Route
+        path="/user-profile/:userId"
+        element={<UserPublicProfile />}
       />
 
       <Route
@@ -161,9 +189,9 @@ function App() {
 
       {/* =====================================================
           MY BUSINESSES
-          
+
           Shows all businesses owned by logged-in owner
-          
+
           URL:
           /owner/my-businesses
       ===================================================== */}
