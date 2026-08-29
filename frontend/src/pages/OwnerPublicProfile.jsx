@@ -27,8 +27,7 @@ import {
 
 import "../styles/OwnerPublicProfile.css";
 
-const API_BASE =
-  "http://localhost:5213/api";
+const API_BASE = "http://localhost:5213/api";
 
 const SAMPLE_PHOTOS = [
   {
@@ -132,9 +131,10 @@ function OwnerPublicProfile() {
         return null;
       }
 
-      const match = cleaned.match(
-        /(\d+(?:\.\d+)?)/
-      );
+      const match =
+        cleaned.match(
+          /(\d+(?:\.\d+)?)/
+        );
 
       if (!match) {
         return null;
@@ -349,6 +349,10 @@ function OwnerPublicProfile() {
                 reviewResponse
               );
 
+            // =============================================
+            // REVIEW LIST
+            // =============================================
+
             let reviewList = [];
 
             if (
@@ -393,6 +397,60 @@ function OwnerPublicProfile() {
               reviewList
             );
 
+            // =============================================
+            // TOTAL REVIEW COUNT
+            // =============================================
+
+            const totalReviews =
+              Number(
+                reviewData?.totalReviews ??
+                reviewData?.TotalReviews ??
+                reviewData?.reviewCount ??
+                reviewData?.ReviewCount ??
+                reviewData?.total ??
+                reviewData?.Total ??
+                reviewData?.totalCount ??
+                reviewData?.TotalCount ??
+                ownerBusiness?.reviewCount ??
+                ownerBusiness?.ReviewCount ??
+                reviewList.length
+              );
+
+            console.log(
+              "TOTAL BUSINESS REVIEWS:",
+              totalReviews
+            );
+
+            // =============================================
+            // UPDATE BUSINESS REVIEW COUNT LOCALLY
+            // =============================================
+
+            setBusiness((previous) => {
+              if (!previous) {
+                return previous;
+              }
+
+              return {
+                ...previous,
+                reviewCount:
+                  Number.isFinite(
+                    totalReviews
+                  )
+                    ? totalReviews
+                    : reviewList.length,
+                ReviewCount:
+                  Number.isFinite(
+                    totalReviews
+                  )
+                    ? totalReviews
+                    : reviewList.length,
+              };
+            });
+
+            // =============================================
+            // ONLY FIRST 3 REVIEWS DISPLAYED
+            // =============================================
+
             setReviews(
               reviewList.slice(0, 3)
             );
@@ -413,15 +471,13 @@ function OwnerPublicProfile() {
           );
 
           if (
-            err.response?.status ===
-            401
+            err.response?.status === 401
           ) {
             setError(
               "Your session has expired. Please login again."
             );
           } else if (
-            err.response?.status ===
-            404
+            err.response?.status === 404
           ) {
             setBusiness(null);
             setPhotos([]);
@@ -509,33 +565,41 @@ function OwnerPublicProfile() {
       ? ratedReviews.reduce(
           (sum, review) =>
             sum +
-            getReviewRating(
-              review
-            ),
+            getReviewRating(review),
           0
-        ) /
-        ratedReviews.length
+        ) / ratedReviews.length
       : 0;
 
   const backendRating =
     normalizeNumber(
       business?.rating ??
-        business?.Rating
+        business?.Rating ??
+        business?.averageRating ??
+        business?.AverageRating
     ) ?? 0;
 
   const rating =
-    ratedReviews.length > 0
-      ? calculatedRating
-      : backendRating;
+    backendRating > 0
+      ? backendRating
+      : calculatedRating;
+
+  // =====================================================
+  // REVIEW COUNT
+  // =====================================================
 
   const backendReviewCount =
     Number(
       business?.reviewCount ??
         business?.ReviewCount ??
+        business?.totalReviews ??
+        business?.TotalReviews ??
         0
     );
 
   const reviewCount =
+    Number.isFinite(
+      backendReviewCount
+    ) &&
     backendReviewCount > 0
       ? backendReviewCount
       : reviews.length;
@@ -622,24 +686,6 @@ function OwnerPublicProfile() {
       review?.userName ??
       review?.UserName ??
       "REVIO User"
-    );
-  };
-
-  // =====================================================
-  // REVIEW USER ID
-  // =====================================================
-
-  const getReviewUserId = (
-    review
-  ) => {
-    return (
-      review?.userId ??
-      review?.UserId ??
-      review?.user?.id ??
-      review?.user?.Id ??
-      review?.User?.id ??
-      review?.User?.Id ??
-      null
     );
   };
 
@@ -757,39 +803,6 @@ function OwnerPublicProfile() {
     } else {
       navigate(
         "/owner/business"
-      );
-    }
-  };
-
-  // =====================================================
-  // REVIEWER PROFILE
-  // =====================================================
-
-  const handleReviewerProfile = (
-    review
-  ) => {
-    const userId =
-      getReviewUserId(review);
-
-    const reviewId =
-      review?.reviewId ??
-      review?.ReviewId;
-
-    if (!userId) {
-      console.warn(
-        "Reviewer UserId not found:",
-        review
-      );
-      return;
-    }
-
-    if (reviewId) {
-      navigate(
-        `/user-profile/${userId}?reviewId=${reviewId}`
-      );
-    } else {
-      navigate(
-        `/user-profile/${userId}`
       );
     }
   };
@@ -991,7 +1004,9 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-business-info">
+
           <div className="public-title-row">
+
             <div className="public-business-title">
               <h2>
                 {businessName}
@@ -1020,11 +1035,22 @@ function OwnerPublicProfile() {
                   </span>
                 </>
               ) : (
-                <strong>
-                  New
-                </strong>
+                <>
+                  <strong>
+                    New
+                  </strong>
+
+                  <span>
+                    ({reviewCount}{" "}
+                    {reviewCount === 1
+                      ? "Review"
+                      : "Reviews"}
+                    )
+                  </span>
+                </>
               )}
             </div>
+
           </div>
 
           {(address || city) && (
@@ -1095,6 +1121,7 @@ function OwnerPublicProfile() {
               />
             </a>
           )}
+
         </section>
 
         {/* =====================================================
@@ -1116,7 +1143,9 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-section public-photos-section">
+
           <div className="public-section-title">
+
             <h3>
               Photos
             </h3>
@@ -1125,9 +1154,11 @@ function OwnerPublicProfile() {
               {displayPhotos.length}{" "}
               Photos
             </span>
+
           </div>
 
           <div className="public-photo-grid">
+
             {displayPhotos.map(
               (photo, index) => (
                 <div
@@ -1151,7 +1182,9 @@ function OwnerPublicProfile() {
                 </div>
               )
             )}
+
           </div>
+
         </section>
 
         {/* =====================================================
@@ -1159,7 +1192,9 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-section public-reviews-section">
+
           <div className="public-section-title">
+
             <div>
               <h3>
                 Customer Reviews
@@ -1184,6 +1219,7 @@ function OwnerPublicProfile() {
             >
               View All
             </button>
+
           </div>
 
           {/* =====================================================
@@ -1201,7 +1237,9 @@ function OwnerPublicProfile() {
           ) : reviews.length > 0 ? (
             <div className="public-review-list">
 
-              {/* Only preview first 3 reviews here. */}
+              {/* Only preview first 3 reviews here.
+                  View All opens complete reviewer list. */}
+
               {reviews
                 .slice(0, 3)
                 .map(
@@ -1234,11 +1272,6 @@ function OwnerPublicProfile() {
                       review?.ReviewId ??
                       index;
 
-                    const reviewerUserId =
-                      getReviewUserId(
-                        review
-                      );
-
                     return (
                       <article
                         className="public-review-card"
@@ -1249,29 +1282,7 @@ function OwnerPublicProfile() {
 
                         <div className="public-review-top">
 
-                          {/* =====================================================
-                              REVIEWER PROFILE AVATAR
-                          ===================================================== */}
-
-                          <button
-                            type="button"
-                            className="public-review-avatar"
-                            onClick={() =>
-                              handleReviewerProfile(
-                                review
-                              )
-                            }
-                            aria-label={`View ${userName}'s profile`}
-                            disabled={
-                              !reviewerUserId
-                            }
-                            style={{
-                              cursor:
-                                reviewerUserId
-                                  ? "pointer"
-                                  : "default",
-                            }}
-                          >
+                          <div className="public-review-avatar">
                             <span>
                               {userName
                                 .charAt(
@@ -1279,38 +1290,10 @@ function OwnerPublicProfile() {
                                 )
                                 .toUpperCase()}
                             </span>
-                          </button>
+                          </div>
 
-                          {/* =====================================================
-                              REVIEWER NAME
-                          ===================================================== */}
+                          <div className="public-review-user">
 
-                          <button
-                            type="button"
-                            className="public-review-user"
-                            onClick={() =>
-                              handleReviewerProfile(
-                                review
-                              )
-                            }
-                            disabled={
-                              !reviewerUserId
-                            }
-                            style={{
-                              cursor:
-                                reviewerUserId
-                                  ? "pointer"
-                                  : "default",
-                              background:
-                                "none",
-                              border:
-                                "none",
-                              padding:
-                                0,
-                              textAlign:
-                                "left",
-                            }}
-                          >
                             <strong>
                               {userName}
                             </strong>
@@ -1322,13 +1305,15 @@ function OwnerPublicProfile() {
                                 )}
                               </span>
                             )}
-                          </button>
+
+                          </div>
 
                           <div className="public-review-rating">
                             {renderStars(
                               reviewRating
                             )}
                           </div>
+
                         </div>
 
                         {/* Actual submitted rating */}
@@ -1357,13 +1342,32 @@ function OwnerPublicProfile() {
                             "{comment}"
                           </p>
                         )}
+
+                        {/* Owner Reply */}
+
+                        {(review?.ownerReply ||
+                          review?.OwnerReply) && (
+                          <div className="public-review-owner-reply">
+                            <strong>
+                              Business Owner Reply
+                            </strong>
+
+                            <p>
+                              {review?.ownerReply ||
+                                review?.OwnerReply}
+                            </p>
+                          </div>
+                        )}
+
                       </article>
                     );
                   }
                 )}
+
             </div>
           ) : (
             <div className="public-review-empty">
+
               <FaStar />
 
               <p>
@@ -1377,8 +1381,10 @@ function OwnerPublicProfile() {
                 ratings and comments
                 will appear here.
               </span>
+
             </div>
           )}
+
         </section>
 
         {/* =====================================================
@@ -1386,12 +1392,14 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <div className="public-preview-note">
+
           <FaLock />
 
           <span>
             You are seeing this as a
             public user
           </span>
+
         </div>
 
         {/* =====================================================
