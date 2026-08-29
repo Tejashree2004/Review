@@ -281,7 +281,9 @@ function OwnerPublicProfile() {
 
           const businessId =
             ownerBusiness?.businessId ??
-            ownerBusiness?.BusinessId;
+            ownerBusiness?.BusinessId ??
+            ownerBusiness?.id ??
+            ownerBusiness?.Id;
 
           if (!businessId) {
             setError(
@@ -438,6 +440,7 @@ function OwnerPublicProfile() {
                   )
                     ? totalReviews
                     : reviewList.length,
+
                 ReviewCount:
                   Number.isFinite(
                     totalReviews
@@ -541,7 +544,9 @@ function OwnerPublicProfile() {
 
   const businessId =
     business?.businessId ??
-    business?.BusinessId;
+    business?.BusinessId ??
+    business?.id ??
+    business?.Id;
 
   const categoryName =
     business?.category?.categoryName ??
@@ -686,6 +691,103 @@ function OwnerPublicProfile() {
       review?.userName ??
       review?.UserName ??
       "REVIO User"
+    );
+  };
+
+  // =====================================================
+  // REVIEW USER ID
+  // =====================================================
+
+  const getReviewUserId = (
+    review
+  ) => {
+    return (
+      review?.userId ??
+      review?.UserId ??
+      review?.userID ??
+      review?.UserID ??
+      review?.user?.id ??
+      review?.user?.Id ??
+      review?.User?.id ??
+      review?.User?.Id ??
+      review?.user?.userId ??
+      review?.user?.UserId ??
+      review?.User?.userId ??
+      review?.User?.UserId ??
+      null
+    );
+  };
+
+  // =====================================================
+  // REVIEW ID
+  // =====================================================
+
+  const getReviewId = (
+    review,
+    fallbackIndex = null
+  ) => {
+    return (
+      review?.reviewId ??
+      review?.ReviewId ??
+      review?.id ??
+      review?.Id ??
+      fallbackIndex
+    );
+  };
+
+  // =====================================================
+  // OPEN REVIEWER PROFILE
+  // =====================================================
+
+  const handleReviewUserClick = (
+    review,
+    index
+  ) => {
+    const userId =
+      getReviewUserId(review);
+
+    const reviewId =
+      getReviewId(
+        review,
+        index
+      );
+
+    console.log(
+      "CLICKED REVIEW USER:",
+      {
+        userId,
+        reviewId,
+        review,
+      }
+    );
+
+    if (!userId) {
+      console.warn(
+        "Reviewer UserId not found:",
+        review
+      );
+
+      return;
+    }
+
+    if (
+      reviewId === null ||
+      reviewId === undefined
+    ) {
+      console.warn(
+        "ReviewId not found:",
+        review
+      );
+
+      return;
+    }
+
+    // =================================================
+    // USER PUBLIC PROFILE ROUTE
+    // =================================================
+
+    navigate(
+      `/user-profile/${userId}/review/${reviewId}`
     );
   };
 
@@ -835,6 +937,7 @@ function OwnerPublicProfile() {
     return (
       <div className="public-profile-page">
         <header className="public-profile-header">
+
           <button
             className="public-back-btn"
             onClick={() =>
@@ -855,10 +958,13 @@ function OwnerPublicProfile() {
               Public Profile
             </h1>
           </div>
+
         </header>
 
         <main className="public-profile-container">
+
           <section className="public-error-card">
+
             <h3>
               Unable to load profile
             </h3>
@@ -877,7 +983,9 @@ function OwnerPublicProfile() {
             >
               Back to Businesses
             </button>
+
           </section>
+
         </main>
       </div>
     );
@@ -890,7 +998,9 @@ function OwnerPublicProfile() {
   if (!business) {
     return (
       <div className="public-profile-page">
+
         <header className="public-profile-header">
+
           <button
             className="public-back-btn"
             onClick={() =>
@@ -903,6 +1013,7 @@ function OwnerPublicProfile() {
           </button>
 
           <div className="public-header-title">
+
             <span>
               REVIO
             </span>
@@ -910,11 +1021,15 @@ function OwnerPublicProfile() {
             <h1>
               Public Profile
             </h1>
+
           </div>
+
         </header>
 
         <main className="public-profile-container">
+
           <section className="public-error-card">
+
             <FaStore />
 
             <h3>
@@ -935,8 +1050,11 @@ function OwnerPublicProfile() {
             >
               Add Business
             </button>
+
           </section>
+
         </main>
+
       </div>
     );
   }
@@ -953,6 +1071,7 @@ function OwnerPublicProfile() {
       ===================================================== */}
 
       <header className="public-profile-header">
+
         <button
           className="public-back-btn"
           onClick={() =>
@@ -965,6 +1084,7 @@ function OwnerPublicProfile() {
         </button>
 
         <div className="public-header-title">
+
           <span>
             REVIO
           </span>
@@ -972,8 +1092,11 @@ function OwnerPublicProfile() {
           <h1>
             Public Profile
           </h1>
+
         </div>
+
       </header>
+
 
       <main className="public-profile-container">
 
@@ -982,6 +1105,7 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-cover">
+
           <img
             src={coverImage}
             alt={`${businessName} cover`}
@@ -997,7 +1121,9 @@ function OwnerPublicProfile() {
           >
             <FaHeart />
           </button>
+
         </section>
+
 
         {/* =====================================================
             BUSINESS INFORMATION
@@ -1008,6 +1134,7 @@ function OwnerPublicProfile() {
           <div className="public-title-row">
 
             <div className="public-business-title">
+
               <h2>
                 {businessName}
               </h2>
@@ -1015,9 +1142,11 @@ function OwnerPublicProfile() {
               <p className="public-category">
                 {categoryName}
               </p>
+
             </div>
 
             <div className="public-rating">
+
               <FaStar />
 
               {rating > 0 ? (
@@ -1049,12 +1178,15 @@ function OwnerPublicProfile() {
                   </span>
                 </>
               )}
+
             </div>
 
           </div>
 
+
           {(address || city) && (
             <div className="public-info-item">
+
               <FaMapMarkerAlt />
 
               <span>
@@ -1066,22 +1198,28 @@ function OwnerPublicProfile() {
 
                 {city}
               </span>
+
             </div>
           )}
 
+
           {phone && (
             <div className="public-info-item">
+
               <FaPhone />
 
               <span>
                 {phone}
               </span>
+
             </div>
           )}
+
 
           {(openingTime ||
             closingTime) && (
             <div className="public-info-item">
+
               <FaClock />
 
               <span>
@@ -1094,8 +1232,10 @@ function OwnerPublicProfile() {
 
                 {closingTime}
               </span>
+
             </div>
           )}
+
 
           {website && (
             <a
@@ -1110,6 +1250,7 @@ function OwnerPublicProfile() {
               target="_blank"
               rel="noreferrer"
             >
+
               <FaGlobe />
 
               <span>
@@ -1119,16 +1260,19 @@ function OwnerPublicProfile() {
               <FaChevronRight
                 className="website-arrow"
               />
+
             </a>
           )}
 
         </section>
+
 
         {/* =====================================================
             ABOUT
         ===================================================== */}
 
         <section className="public-section">
+
           <h3>
             About this business
           </h3>
@@ -1136,7 +1280,9 @@ function OwnerPublicProfile() {
           <p>
             {description}
           </p>
+
         </section>
+
 
         {/* =====================================================
             PHOTOS
@@ -1161,6 +1307,7 @@ function OwnerPublicProfile() {
 
             {displayPhotos.map(
               (photo, index) => (
+
                 <div
                   className={`public-photo ${
                     index === 0
@@ -1169,6 +1316,7 @@ function OwnerPublicProfile() {
                   }`}
                   key={photo.id}
                 >
+
                   <img
                     src={photo.url}
                     alt={photo.alt}
@@ -1179,13 +1327,16 @@ function OwnerPublicProfile() {
                       Featured
                     </div>
                   )}
+
                 </div>
+
               )
             )}
 
           </div>
 
         </section>
+
 
         {/* =====================================================
             REVIEWS
@@ -1196,6 +1347,7 @@ function OwnerPublicProfile() {
           <div className="public-section-title">
 
             <div>
+
               <h3>
                 Customer Reviews
               </h3>
@@ -1208,6 +1360,7 @@ function OwnerPublicProfile() {
                     : "Reviews"}
                 </span>
               )}
+
             </div>
 
             <button
@@ -1222,19 +1375,25 @@ function OwnerPublicProfile() {
 
           </div>
 
+
           {/* =====================================================
               REVIEWS LOADING
           ===================================================== */}
 
           {reviewsLoading ? (
+
             <div className="public-review-empty">
+
               <FaStar />
 
               <p>
                 Loading customer reviews...
               </p>
+
             </div>
+
           ) : reviews.length > 0 ? (
+
             <div className="public-review-list">
 
               {/* Only preview first 3 reviews here.
@@ -1247,6 +1406,7 @@ function OwnerPublicProfile() {
                     review,
                     index
                   ) => {
+
                     const reviewRating =
                       getReviewRating(
                         review
@@ -1268,9 +1428,15 @@ function OwnerPublicProfile() {
                       );
 
                     const reviewId =
-                      review?.reviewId ??
-                      review?.ReviewId ??
-                      index;
+                      getReviewId(
+                        review,
+                        index
+                      );
+
+                    const userId =
+                      getReviewUserId(
+                        review
+                      );
 
                     return (
                       <article
@@ -1282,7 +1448,33 @@ function OwnerPublicProfile() {
 
                         <div className="public-review-top">
 
-                          <div className="public-review-avatar">
+                          {/* =================================================
+                              CLICKABLE REVIEWER PROFILE AVATAR
+                          ================================================= */}
+
+                          <button
+                            type="button"
+                            className="public-review-avatar"
+                            onClick={() =>
+                              handleReviewUserClick(
+                                review,
+                                index
+                              )
+                            }
+                            title={
+                              userId
+                                ? `View ${userName}'s profile`
+                                : "Reviewer profile unavailable"
+                            }
+                            disabled={!userId}
+                            style={{
+                              cursor:
+                                userId
+                                  ? "pointer"
+                                  : "default",
+                            }}
+                          >
+
                             <span>
                               {userName
                                 .charAt(
@@ -1290,9 +1482,44 @@ function OwnerPublicProfile() {
                                 )
                                 .toUpperCase()}
                             </span>
-                          </div>
 
-                          <div className="public-review-user">
+                          </button>
+
+
+                          {/* =================================================
+                              CLICKABLE REVIEWER NAME
+                          ================================================= */}
+
+                          <button
+                            type="button"
+                            className="public-review-user"
+                            onClick={() =>
+                              handleReviewUserClick(
+                                review,
+                                index
+                              )
+                            }
+                            disabled={!userId}
+                            style={{
+                              cursor:
+                                userId
+                                  ? "pointer"
+                                  : "default",
+                              background:
+                                "none",
+                              border:
+                                "none",
+                              padding:
+                                0,
+                              textAlign:
+                                "left",
+                            }}
+                            title={
+                              userId
+                                ? `View ${userName}'s profile`
+                                : "Reviewer profile unavailable"
+                            }
+                          >
 
                             <strong>
                               {userName}
@@ -1306,15 +1533,19 @@ function OwnerPublicProfile() {
                               </span>
                             )}
 
-                          </div>
+                          </button>
+
 
                           <div className="public-review-rating">
+
                             {renderStars(
                               reviewRating
                             )}
+
                           </div>
 
                         </div>
+
 
                         {/* Actual submitted rating */}
 
@@ -1335,6 +1566,7 @@ function OwnerPublicProfile() {
                           </div>
                         )}
 
+
                         {/* Actual submitted comment */}
 
                         {comment && (
@@ -1343,11 +1575,14 @@ function OwnerPublicProfile() {
                           </p>
                         )}
 
+
                         {/* Owner Reply */}
 
                         {(review?.ownerReply ||
                           review?.OwnerReply) && (
+
                           <div className="public-review-owner-reply">
+
                             <strong>
                               Business Owner Reply
                             </strong>
@@ -1356,7 +1591,9 @@ function OwnerPublicProfile() {
                               {review?.ownerReply ||
                                 review?.OwnerReply}
                             </p>
+
                           </div>
+
                         )}
 
                       </article>
@@ -1365,7 +1602,9 @@ function OwnerPublicProfile() {
                 )}
 
             </div>
+
           ) : (
+
             <div className="public-review-empty">
 
               <FaStar />
@@ -1383,9 +1622,11 @@ function OwnerPublicProfile() {
               </span>
 
             </div>
+
           )}
 
         </section>
+
 
         {/* =====================================================
             PUBLIC PREVIEW NOTE
@@ -1402,6 +1643,7 @@ function OwnerPublicProfile() {
 
         </div>
 
+
         {/* =====================================================
             EDIT BUSINESS
         ===================================================== */}
@@ -1416,6 +1658,7 @@ function OwnerPublicProfile() {
           {" "}
           Edit Business Information
         </button>
+
 
         {/* =====================================================
             BACK TO BUSINESSES
@@ -1437,6 +1680,7 @@ function OwnerPublicProfile() {
         </button>
 
       </main>
+
     </div>
   );
 }
