@@ -80,7 +80,8 @@ function BusinessDetails() {
           lineHeight * 2;
 
         overflowState[reviewId] =
-          element.scrollHeight > maxHeight + 1;
+          element.scrollHeight >
+          maxHeight + 1;
       }
     );
 
@@ -163,16 +164,26 @@ function BusinessDetails() {
   // =====================================================
 
   const [isFavorite, setIsFavorite] = useState(false);
-  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] =
+    useState(false);
 
   // =====================================================
   // REVIEW PAGINATION
   // =====================================================
 
   const [totalReviews, setTotalReviews] = useState(0);
-  const [currentReviewPage, setCurrentReviewPage] = useState(1);
+  const [currentReviewPage, setCurrentReviewPage] =
+    useState(1);
   const [reviewPageSize] = useState(10);
-  const [hasMoreReviews, setHasMoreReviews] = useState(false);
+  const [hasMoreReviews, setHasMoreReviews] =
+    useState(false);
+
+  // =====================================================
+  // ACTUAL AVERAGE RATING
+  // =====================================================
+
+  const [averageRating, setAverageRating] =
+    useState(null);
 
   // =====================================================
   // GET USER ID
@@ -183,7 +194,9 @@ function BusinessDetails() {
       localStorage.getItem("userId") ||
       localStorage.getItem("UserId");
 
-    return userId ? Number(userId) : null;
+    return userId
+      ? Number(userId)
+      : null;
   };
 
   // =====================================================
@@ -192,6 +205,8 @@ function BusinessDetails() {
 
   useEffect(() => {
     loadBusiness();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // =====================================================
@@ -237,6 +252,7 @@ function BusinessDetails() {
       );
 
       setBusiness(null);
+      setAverageRating(null);
     } finally {
       setLoading(false);
     }
@@ -275,6 +291,10 @@ function BusinessDetails() {
       let total = 0;
       let hasMore = false;
 
+      // =================================================
+      // PAGINATED RESPONSE
+      // =================================================
+
       if (
         responseData &&
         !Array.isArray(responseData)
@@ -297,6 +317,25 @@ function BusinessDetails() {
             responseData.HasMore ??
             false
           );
+
+        // =================================================
+        // ACTUAL AVERAGE RATING FROM API
+        // =================================================
+
+        const apiAverageRating =
+          Number(
+            responseData.averageRating ??
+            responseData.AverageRating
+          );
+
+        if (
+          Number.isFinite(apiAverageRating) &&
+          apiAverageRating >= 0
+        ) {
+          setAverageRating(
+            apiAverageRating
+          );
+        }
       } else if (
         Array.isArray(responseData)
       ) {
@@ -336,6 +375,7 @@ function BusinessDetails() {
       if (!append) {
         setReviews([]);
         setTotalReviews(0);
+        setAverageRating(null);
       }
 
       setHasMoreReviews(false);
@@ -375,7 +415,9 @@ function BusinessDetails() {
   // CHECK BUSINESS FAVORITE
   // =====================================================
 
-  const checkFavorite = async (businessId) => {
+  const checkFavorite = async (
+    businessId
+  ) => {
     try {
       const userId = getUserId();
 
@@ -407,7 +449,9 @@ function BusinessDetails() {
             ) === currentBusinessId
         );
 
-      setIsFavorite(alreadyFavorite);
+      setIsFavorite(
+        alreadyFavorite
+      );
     } catch (error) {
       console.error(
         "Failed to check business favorite:",
@@ -589,7 +633,9 @@ function BusinessDetails() {
   // OPEN REVIEWER PROFILE
   // =====================================================
 
-  const handleReviewerProfileClick = (review) => {
+  const handleReviewerProfileClick = (
+    review
+  ) => {
     const userId =
       review.UserId ??
       review.userId ??
@@ -618,7 +664,9 @@ function BusinessDetails() {
   // FORMAT REVIEW DATE
   // =====================================================
 
-  const getRelativeDate = (dateValue) => {
+  const getRelativeDate = (
+    dateValue
+  ) => {
     if (!dateValue) {
       return "";
     }
@@ -626,7 +674,11 @@ function BusinessDetails() {
     const reviewDate =
       new Date(dateValue);
 
-    if (Number.isNaN(reviewDate.getTime())) {
+    if (
+      Number.isNaN(
+        reviewDate.getTime()
+      )
+    ) {
       return "";
     }
 
@@ -637,7 +689,9 @@ function BusinessDetails() {
       reviewDate.getTime();
 
     const seconds =
-      Math.floor(difference / 1000);
+      Math.floor(
+        difference / 1000
+      );
 
     const minutes =
       Math.floor(seconds / 60);
@@ -687,7 +741,9 @@ function BusinessDetails() {
   // RATING STARS
   // =====================================================
 
-  const renderStars = (rating) => {
+  const renderStars = (
+    rating
+  ) => {
     const numericRating =
       Number(rating) || 0;
 
@@ -713,7 +769,9 @@ function BusinessDetails() {
   // GET REVIEW USER NAME
   // =====================================================
 
-  const getReviewerName = (review) => {
+  const getReviewerName = (
+    review
+  ) => {
     if (review.UserName) {
       return review.UserName;
     }
@@ -757,7 +815,9 @@ function BusinessDetails() {
   // GET REVIEW RATING
   // =====================================================
 
-  const getReviewRating = (review) => {
+  const getReviewRating = (
+    review
+  ) => {
     return Number(
       review.Rating ??
       review.rating ??
@@ -769,7 +829,9 @@ function BusinessDetails() {
   // GET REVIEW COMMENT
   // =====================================================
 
-  const getReviewComment = (review) => {
+  const getReviewComment = (
+    review
+  ) => {
     return (
       review.Comment ??
       review.comment ??
@@ -781,7 +843,9 @@ function BusinessDetails() {
   // GET REVIEW DATE
   // =====================================================
 
-  const getReviewDate = (review) => {
+  const getReviewDate = (
+    review
+  ) => {
     return (
       review.CreatedAt ??
       review.createdAt ??
@@ -805,36 +869,79 @@ function BusinessDetails() {
   };
 
   // =====================================================
-  // CALCULATE RATING
+  // CALCULATE ACTUAL AVERAGE RATING
   // =====================================================
 
   const calculateAverageRating = () => {
-    if (!reviews.length) {
-      return Number(
-        business?.rating ?? 0
-      ).toFixed(1);
-    }
+    // -------------------------------------------------
+    // 1. FIRST PRIORITY:
+    //    AverageRating returned by Reviews API
+    // -------------------------------------------------
 
     if (
-      business?.rating !== undefined &&
-      business?.rating !== null
+      averageRating !== null &&
+      Number.isFinite(
+        Number(averageRating)
+      )
     ) {
       return Number(
-        business.rating
+        averageRating
       ).toFixed(1);
     }
 
-    const total =
-      reviews.reduce(
-        (sum, review) =>
-          sum +
-          getReviewRating(review),
-        0
+    // -------------------------------------------------
+    // 2. FALLBACK:
+    //    Calculate from currently loaded reviews
+    // -------------------------------------------------
+
+    if (reviews.length > 0) {
+      const validRatings =
+        reviews
+          .map((review) =>
+            getReviewRating(review)
+          )
+          .filter(
+            (rating) =>
+              rating >= 1 &&
+              rating <= 5
+          );
+
+      if (validRatings.length > 0) {
+        const total =
+          validRatings.reduce(
+            (sum, rating) =>
+              sum + rating,
+            0
+          );
+
+        return (
+          total /
+          validRatings.length
+        ).toFixed(1);
+      }
+    }
+
+    // -------------------------------------------------
+    // 3. FINAL FALLBACK:
+    //    Business rating
+    // -------------------------------------------------
+
+    const businessRating =
+      Number(
+        business?.rating ??
+        business?.Rating
       );
 
-    return (
-      total / reviews.length
-    ).toFixed(1);
+    if (
+      Number.isFinite(
+        businessRating
+      ) &&
+      businessRating >= 0
+    ) {
+      return businessRating.toFixed(1);
+    }
+
+    return "0.0";
   };
 
   // =====================================================
@@ -844,7 +951,11 @@ function BusinessDetails() {
   if (loading) {
     return (
       <MainLayout>
-        <h2 style={{ color: "#fff" }}>
+        <h2
+          style={{
+            color: "#fff",
+          }}
+        >
           Loading...
         </h2>
 
@@ -853,8 +964,12 @@ function BusinessDetails() {
           title={dialog.title}
           message={dialog.message}
           type={dialog.type}
-          confirmText={dialog.confirmText}
-          onConfirm={handleDialogConfirm}
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
         />
       </MainLayout>
     );
@@ -869,13 +984,19 @@ function BusinessDetails() {
       <MainLayout>
         <button
           className="back-btn"
-          onClick={() => navigate(-1)}
+          onClick={() =>
+            navigate(-1)
+          }
           title="Go Back"
         >
           <FaArrowLeft />
         </button>
 
-        <h2 style={{ color: "#fff" }}>
+        <h2
+          style={{
+            color: "#fff",
+          }}
+        >
           Business Not Found
         </h2>
 
@@ -884,8 +1005,12 @@ function BusinessDetails() {
           title={dialog.title}
           message={dialog.message}
           type={dialog.type}
-          confirmText={dialog.confirmText}
-          onConfirm={handleDialogConfirm}
+          confirmText={
+            dialog.confirmText
+          }
+          onConfirm={
+            handleDialogConfirm
+          }
         />
       </MainLayout>
     );
@@ -909,12 +1034,17 @@ function BusinessDetails() {
     business.photos?.[0]?.photoUrl ||
     "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
 
+  // =====================================================
+  // ACTUAL RATING
+  // =====================================================
+
   const rating =
     calculateAverageRating();
 
   const reviewCount =
     totalReviews ||
     business.reviewCount ||
+    business.ReviewCount ||
     reviews.length ||
     0;
 
@@ -935,22 +1065,29 @@ function BusinessDetails() {
   return (
     <MainLayout>
 
-      {/* BACK BUTTON */}
+      {/* =================================================
+          BACK BUTTON
+      ================================================= */}
 
       <button
         className="back-btn"
-        onClick={() => navigate(-1)}
+        onClick={() =>
+          navigate(-1)
+        }
         title="Go Back"
       >
         <FaArrowLeft />
       </button>
 
-
-      {/* BUSINESS DETAILS */}
+      {/* =================================================
+          BUSINESS DETAILS
+      ================================================= */}
 
       <div className="place-details">
 
-        {/* IMAGE */}
+        {/* =================================================
+            IMAGE
+        ================================================= */}
 
         <div className="image-section">
 
@@ -969,8 +1106,12 @@ function BusinessDetails() {
                 ? "favorite-active"
                 : ""
             }`}
-            onClick={handleFavorite}
-            disabled={favoriteLoading}
+            onClick={
+              handleFavorite
+            }
+            disabled={
+              favoriteLoading
+            }
             title={
               isFavorite
                 ? "Remove from favorites"
@@ -982,8 +1123,9 @@ function BusinessDetails() {
 
         </div>
 
-
-        {/* DETAILS */}
+        {/* =================================================
+            DETAILS CARD
+        ================================================= */}
 
         <div className="details-card">
 
@@ -991,8 +1133,9 @@ function BusinessDetails() {
             {businessName}
           </h1>
 
-
-          {/* RATING */}
+          {/* =================================================
+              RATING
+          ================================================= */}
 
           <div className="rating-row">
 
@@ -1008,8 +1151,9 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* LOCATION */}
+          {/* =================================================
+              LOCATION
+          ================================================= */}
 
           <div className="info-row">
 
@@ -1026,8 +1170,9 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* CATEGORY */}
+          {/* =================================================
+              CATEGORY
+          ================================================= */}
 
           <div className="info-row">
 
@@ -1046,8 +1191,9 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* REVIEWS */}
+          {/* =================================================
+              REVIEWS
+          ================================================= */}
 
           <div className="info-row">
 
@@ -1063,8 +1209,9 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* STATUS */}
+          {/* =================================================
+              STATUS
+          ================================================= */}
 
           <div className="info-row">
 
@@ -1086,14 +1233,17 @@ function BusinessDetails() {
 
           </div>
 
-
-          {/* ACTION BUTTONS */}
+          {/* =================================================
+              ACTION BUTTONS
+          ================================================= */}
 
           <div className="place-actions">
 
             <button
               className="place-action-btn map-btn"
-              onClick={handleMapClick}
+              onClick={
+                handleMapClick
+              }
             >
               <FaMapMarkedAlt />
 
@@ -1104,7 +1254,9 @@ function BusinessDetails() {
 
             <button
               className="place-action-btn review-btn"
-              onClick={handleWriteReview}
+              onClick={
+                handleWriteReview
+              }
             >
               <FaPen />
 
@@ -1119,8 +1271,9 @@ function BusinessDetails() {
 
       </div>
 
-
-      {/* ABOUT */}
+      {/* =================================================
+          ABOUT
+      ================================================= */}
 
       <div className="info-card">
 
@@ -1134,8 +1287,9 @@ function BusinessDetails() {
 
       </div>
 
-
-      {/* CUSTOMER REVIEWS */}
+      {/* =================================================
+          CUSTOMER REVIEWS
+      ================================================= */}
 
       <div className="customer-reviews-card">
 
@@ -1155,8 +1309,9 @@ function BusinessDetails() {
 
         </div>
 
-
-        {/* REVIEWS LOADING */}
+        {/* =================================================
+            REVIEWS LOADING
+        ================================================= */}
 
         {reviewsLoading &&
           reviews.length === 0 && (
@@ -1165,8 +1320,9 @@ function BusinessDetails() {
             </div>
           )}
 
-
-        {/* NO REVIEWS */}
+        {/* =================================================
+            NO REVIEWS
+        ================================================= */}
 
         {!reviewsLoading &&
           reviews.length === 0 && (
@@ -1185,8 +1341,9 @@ function BusinessDetails() {
             </div>
           )}
 
-
-        {/* REVIEW LIST */}
+        {/* =================================================
+            REVIEW LIST
+        ================================================= */}
 
         {!reviewsLoading &&
           reviews.length > 0 && (
@@ -1195,157 +1352,192 @@ function BusinessDetails() {
 
               {reviews
                 .slice(0, 3)
-                .map((review, index) => {
+                .map(
+                  (
+                    review,
+                    index
+                  ) => {
 
-                  const reviewerName =
-                    getReviewerName(review);
+                    const reviewerName =
+                      getReviewerName(
+                        review
+                      );
 
-                  const reviewRating =
-                    getReviewRating(review);
+                    const reviewRating =
+                      getReviewRating(
+                        review
+                      );
 
-                  const reviewComment =
-                    getReviewComment(review);
+                    const reviewComment =
+                      getReviewComment(
+                        review
+                      );
 
-                  const reviewDate =
-                    getReviewDate(review);
+                    const reviewDate =
+                      getReviewDate(
+                        review
+                      );
 
-                  const reviewId =
-                    getReviewId(
-                      review,
-                      index
-                    );
+                    const reviewId =
+                      getReviewId(
+                        review,
+                        index
+                      );
 
-                  const isExpanded =
-                    Boolean(
-                      expandedReviews[
-                        reviewId
-                      ]
-                    );
+                    const isExpanded =
+                      Boolean(
+                        expandedReviews[
+                          reviewId
+                        ]
+                      );
 
-                  const hasOverflow =
-                    Boolean(
-                      reviewOverflow[
-                        reviewId
-                      ]
-                    );
+                    const hasOverflow =
+                      Boolean(
+                        reviewOverflow[
+                          reviewId
+                        ]
+                      );
 
-                  return (
-                    <div
-                      className="customer-review-item"
-                      key={reviewId}
-                    >
+                    return (
+                      <div
+                        className="customer-review-item"
+                        key={reviewId}
+                      >
 
-                      <div className="customer-review-top">
+                        {/* ==========================================
+                            REVIEW TOP
+                        ========================================== */}
 
-                        <div className="reviewer-info">
+                        <div className="customer-review-top">
 
-                          {/* PROFILE AVATAR CLICK */}
+                          <div className="reviewer-info">
 
-                          <div
-                            className="reviewer-avatar"
-                            onClick={() =>
-                              handleReviewerProfileClick(
-                                review
-                              )
-                            }
-                            title="View Profile"
-                            style={{
-                              cursor: "pointer",
-                            }}
-                          >
+                            {/* PROFILE AVATAR */}
 
-                            {reviewerName
-                              .charAt(0)
-                              .toUpperCase()}
+                            <div
+                              className="reviewer-avatar"
+                              onClick={() =>
+                                handleReviewerProfileClick(
+                                  review
+                                )
+                              }
+                              title="View Profile"
+                              style={{
+                                cursor:
+                                  "pointer",
+                              }}
+                            >
+
+                              {reviewerName
+                                .charAt(
+                                  0
+                                )
+                                .toUpperCase()}
+
+                            </div>
+
+                            <div>
+
+                              <h3>
+                                {reviewerName}
+                              </h3>
+
+                              <span>
+                                {getRelativeDate(
+                                  reviewDate
+                                )}
+                              </span>
+
+                            </div>
 
                           </div>
 
-                          <div>
-
-                            <h3>
-                              {reviewerName}
-                            </h3>
-
-                            <span>
-                              {getRelativeDate(
-                                reviewDate
-                              )}
-                            </span>
-
-                          </div>
+                          {renderStars(
+                            reviewRating
+                          )}
 
                         </div>
 
-                        {renderStars(
-                          reviewRating
-                        )}
+                        {/* ==========================================
+                            REVIEW COMMENT
+                        ========================================== */}
 
-                      </div>
-
-
-                      {/* REVIEW COMMENT */}
-
-                      <div
-                        ref={(element) => {
-                          reviewCommentRefs.current[
-                            reviewId
-                          ] = element;
-                        }}
-                        className={`customer-review-comment ${
-                          isExpanded
-                            ? "review-comment-expanded"
-                            : "review-comment-collapsed"
-                        }`}
-                      >
-                        <p>
-                          "{reviewComment}"
-                        </p>
-                      </div>
-
-
-                      {/* VIEW MORE / VIEW LESS */}
-
-                      {hasOverflow && (
-                        <button
-                          type="button"
-                          className="review-view-more-btn"
-                          onClick={() =>
-                            toggleReview(reviewId)
-                          }
+                        <div
+                          ref={(
+                            element
+                          ) => {
+                            reviewCommentRefs.current[
+                              reviewId
+                            ] = element;
+                          }}
+                          className={`customer-review-comment ${
+                            isExpanded
+                              ? "review-comment-expanded"
+                              : "review-comment-collapsed"
+                          }`}
                         >
-                          {isExpanded
-                            ? "View Less"
-                            : "View More"}
-                        </button>
-                      )}
-
-
-                      {(review.OwnerReply ||
-                        review.ownerReply) && (
-
-                        <div className="owner-reply">
-
-                          <strong>
-                            Business Owner Reply
-                          </strong>
 
                           <p>
-                            {review.OwnerReply ||
-                              review.ownerReply}
+                            "{reviewComment}"
                           </p>
 
                         </div>
-                      )}
 
-                    </div>
-                  );
-                })}
+                        {/* ==========================================
+                            VIEW MORE / VIEW LESS
+                        ========================================== */}
+
+                        {hasOverflow && (
+
+                          <button
+                            type="button"
+                            className="review-view-more-btn"
+                            onClick={() =>
+                              toggleReview(
+                                reviewId
+                              )
+                            }
+                          >
+                            {isExpanded
+                              ? "View Less"
+                              : "View More"}
+                          </button>
+
+                        )}
+
+                        {/* ==========================================
+                            OWNER REPLY
+                        ========================================== */}
+
+                        {(review.OwnerReply ||
+                          review.ownerReply) && (
+
+                          <div className="owner-reply">
+
+                            <strong>
+                              Business Owner Reply
+                            </strong>
+
+                            <p>
+                              {review.OwnerReply ||
+                                review.ownerReply}
+                            </p>
+
+                          </div>
+
+                        )}
+
+                      </div>
+                    );
+                  }
+                )}
 
             </div>
           )}
 
-
-        {/* VIEW ALL */}
+        {/* =================================================
+            VIEW ALL REVIEWS
+        ================================================= */}
 
         {!reviewsLoading &&
           totalReviews > 3 && (
@@ -1366,16 +1558,21 @@ function BusinessDetails() {
 
       </div>
 
-
-      {/* STANDARD DIALOG */}
+      {/* =================================================
+          STANDARD DIALOG
+      ================================================= */}
 
       <DialogBox
         isOpen={dialog.isOpen}
         title={dialog.title}
         message={dialog.message}
         type={dialog.type}
-        confirmText={dialog.confirmText}
-        onConfirm={handleDialogConfirm}
+        confirmText={
+          dialog.confirmText
+        }
+        onConfirm={
+          handleDialogConfirm
+        }
       />
 
     </MainLayout>

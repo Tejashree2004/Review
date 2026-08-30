@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useState,
@@ -110,6 +111,152 @@ function MyBusinesses() {
   };
 
   // =====================================================
+  // GET BUSINESS ID
+  // =====================================================
+
+  const getBusinessId = (business) => {
+    return (
+      business?.businessId ??
+      business?.BusinessId ??
+      business?.id ??
+      business?.Id ??
+      null
+    );
+  };
+
+  // =====================================================
+  // LOAD REVIEW SUMMARY FOR ALL BUSINESSES
+  // =====================================================
+  //
+  // The owner/business API may not contain the latest
+  // review count and average rating.
+  //
+  // Therefore we separately call:
+  //
+  // GET /api/Review/business/{businessId}
+  //
+  // and use:
+  //
+  // AverageRating
+  // TotalReviews
+  //
+  // from ReviewPaginationDto.
+  //
+  // IMPORTANT:
+  // This does NOT replace the existing business API.
+  // It only enriches every business with live review data.
+  // =====================================================
+
+  const loadBusinessReviewSummaries =
+    async (businessList, token) => {
+      if (
+        !Array.isArray(businessList) ||
+        businessList.length === 0 ||
+        !token
+      ) {
+        return businessList;
+      }
+
+      const businessesWithReviews =
+        await Promise.all(
+          businessList.map(
+            async (business) => {
+              const businessId =
+                getBusinessId(
+                  business
+                );
+
+              if (!businessId) {
+                return {
+                  ...business,
+                  averageRating: 0,
+                  reviewCount: 0,
+                };
+              }
+
+              try {
+                const response =
+                  await axios.get(
+                    `${API_BASE}/Review/business/${businessId}`,
+                    {
+                      params: {
+                        page: 1,
+                        pageSize: 1,
+                      },
+                      headers: {
+                        Authorization:
+                          `Bearer ${token}`,
+                      },
+                    }
+                  );
+
+                console.log(
+                  `REVIEW SUMMARY - BUSINESS ${businessId}:`,
+                  response.data
+                );
+
+                const reviewData =
+                  getResponseData(
+                    response
+                  ) || {};
+
+                const averageRating =
+                  Number(
+                    reviewData?.averageRating ??
+                    reviewData?.AverageRating ??
+                    0
+                  ) || 0;
+
+                const reviewCount =
+                  Number(
+                    reviewData?.totalReviews ??
+                    reviewData?.TotalReviews ??
+                    0
+                  ) || 0;
+
+                return {
+                  ...business,
+
+                  // Keep both naming styles available
+                  // so existing code remains compatible.
+                  averageRating:
+                    averageRating,
+
+                  AverageRating:
+                    averageRating,
+
+                  reviewCount:
+                    reviewCount,
+
+                  ReviewCount:
+                    reviewCount,
+
+                  totalReviews:
+                    reviewCount,
+
+                  TotalReviews:
+                    reviewCount,
+                };
+              } catch (error) {
+                console.error(
+                  `Failed to load reviews for business ${businessId}:`,
+                  error
+                );
+
+                // If review API fails, keep the
+                // business visible and fall back
+                // to whatever data the business API
+                // already provided.
+                return business;
+              }
+            }
+          )
+        );
+
+      return businessesWithReviews;
+    };
+
+  // =====================================================
   // LOAD OWNER BUSINESSES
   // =====================================================
 
@@ -153,10 +300,23 @@ function MyBusinesses() {
       const data =
         getResponseData(response);
 
-      setBusinesses(
+      const ownerBusinesses =
         Array.isArray(data)
           ? data
-          : []
+          : [];
+
+      // =================================================
+      // LOAD ACTUAL REVIEW DATA
+      // =================================================
+
+      const businessesWithReviews =
+        await loadBusinessReviewSummaries(
+          ownerBusinesses,
+          token
+        );
+
+      setBusinesses(
+        businessesWithReviews
       );
     } catch (error) {
       console.error(
@@ -207,16 +367,6 @@ function MyBusinesses() {
   // =====================================================
   // BUSINESS HELPERS
   // =====================================================
-
-  const getBusinessId = (business) => {
-    return (
-      business?.businessId ??
-      business?.BusinessId ??
-      business?.id ??
-      business?.Id ??
-      null
-    );
-  };
 
   const getBusinessName = (business) => {
     return (
@@ -924,3 +1074,4 @@ function MyBusinesses() {
 }
 
 export default MyBusinesses;
+

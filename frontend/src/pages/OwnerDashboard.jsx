@@ -121,15 +121,17 @@ function OwnerDashboard() {
           return;
         }
 
+        const config = {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        };
+
         const response =
           await axios.get(
             `${API_BASE}/owner/business`,
-            {
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-              },
-            }
+            config
           );
 
         console.log(
@@ -142,10 +144,178 @@ function OwnerDashboard() {
           response?.data?.Data ??
           response?.data;
 
-        setBusinesses(
+        const ownerBusinesses =
           Array.isArray(data)
             ? data
-            : []
+            : [];
+
+        // =====================================================
+        // LOAD ACTUAL REVIEW STATISTICS
+        // =====================================================
+        //
+        // The owner business API may return rating/reviewCount
+        // as 0 or may not contain the latest values.
+        //
+        // ReviewController already calculates:
+        // - TotalReviews
+        // - AverageRating
+        //
+        // Therefore the Review API is used as the source of
+        // truth for each business.
+        // =====================================================
+
+        const businessesWithReviewStats =
+          await Promise.all(
+            ownerBusinesses.map(
+              async (business) => {
+                const businessId =
+                  business?.businessId ??
+                  business?.BusinessId ??
+                  business?.id ??
+                  business?.Id ??
+                  null;
+
+                // -------------------------------------------------
+                // No business ID -> keep existing business object
+                // -------------------------------------------------
+
+                if (!businessId) {
+                  return business;
+                }
+
+                try {
+                  const reviewResponse =
+                    await axios.get(
+                      `${API_BASE}/Review/business/${businessId}`,
+                      {
+                        ...config,
+                        params: {
+                          page: 1,
+                          pageSize: 1,
+                        },
+                      }
+                    );
+
+                  console.log(
+                    `REVIEW STATISTICS FOR BUSINESS ${businessId}:`,
+                    reviewResponse.data
+                  );
+
+                  const reviewData =
+                    reviewResponse?.data?.data ??
+                    reviewResponse?.data?.Data ??
+                    reviewResponse?.data;
+
+                  // -------------------------------------------------
+                  // ACTUAL REVIEW COUNT
+                  // -------------------------------------------------
+
+                  const totalReviewsValue =
+                    reviewData?.totalReviews ??
+                    reviewData?.TotalReviews ??
+                    reviewData?.reviewCount ??
+                    reviewData?.ReviewCount ??
+                    reviewData?.total ??
+                    reviewData?.Total ??
+                    reviewData?.totalCount ??
+                    reviewData?.TotalCount;
+
+                  const parsedReviewCount =
+                    Number(
+                      totalReviewsValue
+                    );
+
+                  // -------------------------------------------------
+                  // ACTUAL AVERAGE RATING
+                  // -------------------------------------------------
+
+                  const averageRatingValue =
+                    reviewData?.averageRating ??
+                    reviewData?.AverageRating ??
+                    null;
+
+                  const parsedAverageRating =
+                    Number(
+                      averageRatingValue
+                    );
+
+                  return {
+                    ...business,
+
+                    // Keep both camelCase and PascalCase
+                    // so the existing frontend remains compatible.
+                    reviewCount:
+                      Number.isFinite(
+                        parsedReviewCount
+                      ) &&
+                      parsedReviewCount >= 0
+                        ? parsedReviewCount
+                        : Number(
+                            business?.reviewCount ??
+                            business?.ReviewCount ??
+                            0
+                          ),
+
+                    ReviewCount:
+                      Number.isFinite(
+                        parsedReviewCount
+                      ) &&
+                      parsedReviewCount >= 0
+                        ? parsedReviewCount
+                        : Number(
+                            business?.ReviewCount ??
+                            business?.reviewCount ??
+                            0
+                          ),
+
+                    rating:
+                      Number.isFinite(
+                        parsedAverageRating
+                      ) &&
+                      parsedAverageRating > 0
+                        ? parsedAverageRating
+                        : Number(
+                            business?.rating ??
+                            business?.Rating ??
+                            0
+                          ),
+
+                    Rating:
+                      Number.isFinite(
+                        parsedAverageRating
+                      ) &&
+                      parsedAverageRating > 0
+                        ? parsedAverageRating
+                        : Number(
+                            business?.Rating ??
+                            business?.rating ??
+                            0
+                          ),
+                  };
+                } catch (reviewError) {
+                  // -------------------------------------------------
+                  // If review API fails, do not break the business
+                  // list. Keep the original business information.
+                  // -------------------------------------------------
+
+                  console.error(
+                    `Failed to load reviews for business ${businessId}:`,
+                    reviewError
+                  );
+
+                  return business;
+                }
+              }
+            )
+          );
+
+        console.log(
+          "OWNER BUSINESSES WITH REVIEW STATS:",
+          businessesWithReviewStats
+        );
+
+        setBusinesses(
+          businessesWithReviewStats
         );
       } catch (error) {
         console.error(
@@ -505,9 +675,6 @@ function OwnerDashboard() {
           ================================================= */}
 
 
-        
-
-
           {/* Public Profile */}
 
           <button
@@ -691,18 +858,34 @@ function OwnerDashboard() {
                       business
                     );
 
+                  // =================================================
+                  // ACTUAL REVIEW RATING
+                  // =================================================
+
+                  const ratingValue =
+                    business?.rating ??
+                    business?.Rating ??
+                    0;
+
                   const rating =
                     Number(
-                      business?.rating ??
-                      business?.Rating ??
-                      0
+                      ratingValue
                     );
+
+                  // =================================================
+                  // ACTUAL REVIEW COUNT
+                  // =================================================
+
+                  const reviewCountValue =
+                    business?.reviewCount ??
+                    business?.ReviewCount ??
+                    business?.totalReviews ??
+                    business?.TotalReviews ??
+                    0;
 
                   const reviewCount =
                     Number(
-                      business?.reviewCount ??
-                      business?.ReviewCount ??
-                      0
+                      reviewCountValue
                     );
 
                   return (
@@ -743,8 +926,11 @@ function OwnerDashboard() {
                           <FaStar />
 
                           <span>
-                            {rating >
-                            0
+                            {Number.isFinite(
+                              rating
+                            ) &&
+                            rating >
+                              0
                               ? rating.toFixed(
                                   1
                                 )
@@ -752,11 +938,17 @@ function OwnerDashboard() {
                           </span>
 
                           <span>
-                            ({reviewCount}{" "}
+                            (
+                            {Number.isFinite(
+                              reviewCount
+                            )
+                              ? reviewCount
+                              : 0}{" "}
                             {reviewCount ===
                             1
                               ? "Review"
-                              : "Reviews"})
+                              : "Reviews"}
+                            )
                           </span>
 
                         </div>

@@ -1,3 +1,4 @@
+
 import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
 
 function PlaceCard({ place, onClick }) {
@@ -59,7 +60,19 @@ function PlaceCard({ place, onClick }) {
   displayImage = displayImage || fallbackImage;
 
   // =====================================
-  // Click Handler
+  // DISPLAY RATING
+  // Supports both Place and Business API
+  // =====================================
+
+  const rating =
+    place.averageRating ??
+    place.AverageRating ??
+    place.rating ??
+    place.Rating ??
+    0;
+
+  // =====================================
+  // CLICK HANDLER
   // =====================================
 
   const handleClick = () => {
@@ -120,7 +133,7 @@ function PlaceCard({ place, onClick }) {
             style={{ marginRight: "5px" }}
           />
 
-          {place.rating ?? 0}
+          {Number(rating).toFixed(1)}
         </span>
 
       </div>
@@ -129,3 +142,4 @@ function PlaceCard({ place, onClick }) {
 }
 
 export default PlaceCard;
+

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -536,31 +537,56 @@ function BusinessReviews() {
 
   const averageRating = () => {
 
-    if (!reviews.length) {
-      return Number(
-        business?.rating ?? 0
-      ).toFixed(1);
-    }
+    // =================================================
+    // GET BACKEND RATING
+    // =================================================
 
-    if (
-      business?.rating !== undefined &&
-      business?.rating !== null
-    ) {
-      return Number(
-        business.rating
-      ).toFixed(1);
-    }
-
-    const total =
-      reviews.reduce(
-        (sum, review) =>
-          sum + getRating(review),
+    const businessRating =
+      Number(
+        business?.averageRating ??
+        business?.AverageRating ??
+        business?.rating ??
+        business?.Rating ??
         0
       );
 
-    return (
-      total / reviews.length
-    ).toFixed(1);
+    // =================================================
+    // USE BACKEND RATING ONLY WHEN IT IS VALID
+    // =================================================
+
+    if (
+      businessRating > 0 &&
+      Number.isFinite(
+        businessRating
+      )
+    ) {
+      return businessRating.toFixed(1);
+    }
+
+    // =================================================
+    // FALLBACK:
+    // CALCULATE ACTUAL AVERAGE FROM REVIEWS
+    // =================================================
+
+    if (reviews.length > 0) {
+
+      const total =
+        reviews.reduce(
+          (sum, review) =>
+            sum + getRating(review),
+          0
+        );
+
+      return (
+        total / reviews.length
+      ).toFixed(1);
+    }
+
+    // =================================================
+    // NO RATING + NO REVIEWS
+    // =================================================
+
+    return "0.0";
   };
 
   // =====================================================
@@ -966,3 +992,4 @@ function BusinessReviews() {
 }
 
 export default BusinessReviews;
+

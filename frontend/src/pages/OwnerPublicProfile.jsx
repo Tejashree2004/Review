@@ -83,6 +83,16 @@ function OwnerPublicProfile() {
     useState("");
 
   // =====================================================
+  // REVIEW SUMMARY
+  // =====================================================
+
+  const [reviewSummary, setReviewSummary] =
+    useState({
+      averageRating: 0,
+      totalReviews: 0,
+    });
+
+  // =====================================================
   // REVIEW EXPANSION
   // =====================================================
 
@@ -281,6 +291,12 @@ function OwnerPublicProfile() {
             setBusiness(null);
             setPhotos([]);
             setReviews([]);
+
+            setReviewSummary({
+              averageRating: 0,
+              totalReviews: 0,
+            });
+
             return;
           }
 
@@ -414,11 +430,28 @@ function OwnerPublicProfile() {
             );
 
             // =============================================
+            // REVIEW API AVERAGE
+            //
+            // IMPORTANT:
+            // ReviewService calculates AverageRating
+            // using ALL reviews before pagination.
+            // Therefore this value is the actual
+            // business average, even though only
+            // first 3 reviews are displayed.
+            // =============================================
+
+            const apiAverageRating =
+              normalizeNumber(
+                reviewData?.averageRating ??
+                reviewData?.AverageRating
+              ) ?? 0;
+
+            // =============================================
             // TOTAL REVIEW COUNT
             // =============================================
 
-            const totalReviews =
-              Number(
+            const totalReviewsValue =
+              normalizeNumber(
                 reviewData?.totalReviews ??
                 reviewData?.TotalReviews ??
                 reviewData?.reviewCount ??
@@ -428,17 +461,41 @@ function OwnerPublicProfile() {
                 reviewData?.totalCount ??
                 reviewData?.TotalCount ??
                 ownerBusiness?.reviewCount ??
-                ownerBusiness?.ReviewCount ??
-                reviewList.length
+                ownerBusiness?.ReviewCount
               );
+
+            const totalReviews =
+              totalReviewsValue !== null
+                ? totalReviewsValue
+                : reviewList.length;
 
             console.log(
               "TOTAL BUSINESS REVIEWS:",
               totalReviews
             );
 
+            console.log(
+              "BUSINESS AVERAGE FROM REVIEW API:",
+              apiAverageRating
+            );
+
+            // =============================================
+            // SAVE REVIEW SUMMARY
+            // =============================================
+
+            setReviewSummary({
+              averageRating:
+                apiAverageRating,
+              totalReviews:
+                totalReviews,
+            });
+
             // =============================================
             // UPDATE BUSINESS REVIEW COUNT LOCALLY
+            //
+            // Do NOT overwrite the business rating here.
+            // The review API is now the source of truth
+            // for the displayed average rating.
             // =============================================
 
             setBusiness((previous) => {
@@ -449,17 +506,9 @@ function OwnerPublicProfile() {
               return {
                 ...previous,
                 reviewCount:
-                  Number.isFinite(
-                    totalReviews
-                  )
-                    ? totalReviews
-                    : reviewList.length,
+                  totalReviews,
                 ReviewCount:
-                  Number.isFinite(
-                    totalReviews
-                  )
-                    ? totalReviews
-                    : reviewList.length,
+                  totalReviews,
               };
             });
 
@@ -477,6 +526,11 @@ function OwnerPublicProfile() {
             );
 
             setReviews([]);
+
+            setReviewSummary({
+              averageRating: 0,
+              totalReviews: 0,
+            });
           } finally {
             setReviewsLoading(false);
           }
@@ -498,6 +552,11 @@ function OwnerPublicProfile() {
             setBusiness(null);
             setPhotos([]);
             setReviews([]);
+
+            setReviewSummary({
+              averageRating: 0,
+              totalReviews: 0,
+            });
           } else {
             setError(
               "Unable to load business profile."
@@ -652,6 +711,11 @@ function OwnerPublicProfile() {
 
   // =====================================================
   // RATING
+  //
+  // IMPORTANT:
+  // Review API AverageRating is the PRIMARY source.
+  // Business.Rating may contain an old/stale value,
+  // so it must NOT override the current review average.
   // =====================================================
 
   const ratedReviews =
@@ -673,36 +737,50 @@ function OwnerPublicProfile() {
   const backendRating =
     normalizeNumber(
       business?.rating ??
-        business?.Rating ??
-        business?.averageRating ??
-        business?.AverageRating
+      business?.Rating ??
+      business?.averageRating ??
+      business?.AverageRating
     ) ?? 0;
 
+  const reviewApiRating =
+    normalizeNumber(
+      reviewSummary?.averageRating
+    ) ?? 0;
+
+  // =====================================================
+  // FINAL RATING
+  //
+  // Priority:
+  // 1. Review API AverageRating
+  // 2. Business backend rating
+  // 3. Calculated rating from loaded reviews
+  // =====================================================
+
   const rating =
-    backendRating > 0
-      ? backendRating
-      : calculatedRating;
+    reviewApiRating > 0
+      ? reviewApiRating
+      : backendRating > 0
+        ? backendRating
+        : calculatedRating;
 
   // =====================================================
   // REVIEW COUNT
   // =====================================================
 
   const backendReviewCount =
-    Number(
+    normalizeNumber(
       business?.reviewCount ??
-        business?.ReviewCount ??
-        business?.totalReviews ??
-        business?.TotalReviews ??
-        0
-    );
+      business?.ReviewCount ??
+      business?.totalReviews ??
+      business?.TotalReviews
+    ) ?? 0;
 
   const reviewCount =
-    Number.isFinite(
-      backendReviewCount
-    ) &&
-    backendReviewCount > 0
-      ? backendReviewCount
-      : reviews.length;
+    reviewSummary?.totalReviews > 0
+      ? reviewSummary.totalReviews
+      : backendReviewCount > 0
+        ? backendReviewCount
+        : reviews.length;
 
   // =====================================================
   // PHOTO URL
@@ -1348,6 +1426,7 @@ function OwnerPublicProfile() {
 
         <section className="public-section public-photos-section">
           <div className="public-section-title">
+
             <h3>
               Photos
             </h3>
@@ -1390,7 +1469,9 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-section public-reviews-section">
+
           <div className="public-section-title">
+
             <div>
               <h3>
                 Customer Reviews
@@ -1417,9 +1498,9 @@ function OwnerPublicProfile() {
             </button>
           </div>
 
-          {/* =====================================================
+          {/* =================================================
               REVIEWS LOADING
-          ===================================================== */}
+          ================================================= */}
 
           {reviewsLoading ? (
             <div className="public-review-empty">
@@ -1634,6 +1715,7 @@ function OwnerPublicProfile() {
                         {(review?.ownerReply ||
                           review?.OwnerReply) && (
                           <div className="public-review-owner-reply">
+
                             <strong>
                               Business Owner Reply
                             </strong>
@@ -1644,6 +1726,7 @@ function OwnerPublicProfile() {
                             </p>
                           </div>
                         )}
+
                       </article>
                     );
                   }

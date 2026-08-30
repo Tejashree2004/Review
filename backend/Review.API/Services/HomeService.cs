@@ -1,3 +1,4 @@
+
 using Microsoft.EntityFrameworkCore;
 using Review.API.Data;
 using Review.API.Models;
@@ -33,8 +34,9 @@ namespace Review.API.Services
         //
         // Owner-created Business data is also added.
         //
-        // Both are returned in a common card-friendly
-        // response structure.
+        // Business Rating and ReviewCount are calculated
+        // directly from ReviewItem records so that the
+        // Home page always shows the actual average rating.
         // ==========================================
 
         public async Task<List<object>> GetTopRatedPlacesAsync()
@@ -61,10 +63,41 @@ namespace Review.API.Services
                 .Where(b =>
                     b.IsActive &&
                     b.IsApproved)
-                .OrderByDescending(b => b.Rating)
-                .ThenByDescending(b => b.CreatedAt)
+                .OrderByDescending(b => b.CreatedAt)
                 .Take(10)
                 .ToListAsync();
+
+            // ==========================================
+            // BUSINESS REVIEW AGGREGATES
+            // ==========================================
+            //
+            // Calculate actual average rating and
+            // review count from ReviewItem table.
+            //
+            // Only reviews having BusinessId are included.
+            // Place reviews are ignored.
+            // ==========================================
+
+            var businessReviewStats =
+                await _context.Reviews
+                    .AsNoTracking()
+                    .Where(r =>
+                        r.BusinessId.HasValue)
+                    .GroupBy(r =>
+                        r.BusinessId!.Value)
+                    .Select(group => new
+                    {
+                        BusinessId = group.Key,
+
+                        AverageRating =
+                            group.Average(r =>
+                                (double)r.Rating),
+
+                        ReviewCount =
+                            group.Count()
+                    })
+                    .ToDictionaryAsync(
+                        x => x.BusinessId);
 
             // ==========================================
             // COMMON HOME CARD LIST
@@ -139,6 +172,25 @@ namespace Review.API.Services
                     ?? string.Empty;
 
                 // ==========================================
+                // GET ACTUAL BUSINESS REVIEW STATS
+                // ==========================================
+
+                var hasReviews =
+                    businessReviewStats.TryGetValue(
+                        business.BusinessId,
+                        out var reviewStats);
+
+                var averageRating =
+                    hasReviews
+                        ? reviewStats!.AverageRating
+                        : 0;
+
+                var reviewCount =
+                    hasReviews
+                        ? reviewStats!.ReviewCount
+                        : 0;
+
+                // ==========================================
                 // ADD BUSINESS TO HOME CARD LIST
                 // ==========================================
 
@@ -160,9 +212,13 @@ namespace Review.API.Services
 
                     City = business.City,
 
-                    Rating = business.Rating,
+                    // Actual average calculated
+                    // from ReviewItem records
+                    Rating = averageRating,
 
-                    ReviewCount = business.ReviewCount,
+                    // Actual review count
+                    // from ReviewItem records
+                    ReviewCount = reviewCount,
 
                     // Primary business photo
                     ImageUrl = imageUrl,
@@ -205,3 +261,4 @@ namespace Review.API.Services
         }
     }
 }
+
