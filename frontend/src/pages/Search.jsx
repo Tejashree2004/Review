@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   useSearchParams,
@@ -29,7 +30,79 @@ function Search() {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [activeFilter, setActiveFilter] = useState("relevance");
+  const [activeFilter, setActiveFilter] =
+    useState("relevance");
+
+  // =====================================
+  // GET ACTUAL AVERAGE RATING
+  // =====================================
+
+  const getAverageRating = (item) => {
+    if (!item) {
+      return 0;
+    }
+
+    const possibleRatings = [
+      item.averageRating,
+      item.AverageRating,
+      item.avgRating,
+      item.AvgRating,
+      item.average,
+      item.Average,
+      item.rating,
+      item.Rating,
+      item.overallRating,
+      item.OverallRating,
+      item.businessRating,
+      item.BusinessRating,
+    ];
+
+    const validRating =
+      possibleRatings.find(
+        (value) =>
+          value !== null &&
+          value !== undefined &&
+          value !== "" &&
+          !Number.isNaN(Number(value))
+      );
+
+    return validRating !== undefined
+      ? Number(validRating)
+      : 0;
+  };
+
+  // =====================================
+  // GET REVIEW COUNT
+  // =====================================
+
+  const getReviewCount = (item) => {
+    if (!item) {
+      return 0;
+    }
+
+    const possibleCounts = [
+      item.reviewCount,
+      item.ReviewCount,
+      item.totalReviews,
+      item.TotalReviews,
+      item.reviewCount,
+      item.ReviewsCount,
+      item.reviewsCount,
+    ];
+
+    const validCount =
+      possibleCounts.find(
+        (value) =>
+          value !== null &&
+          value !== undefined &&
+          value !== "" &&
+          !Number.isNaN(Number(value))
+      );
+
+    return validCount !== undefined
+      ? Number(validCount)
+      : 0;
+  };
 
   // =====================================
   // SEARCH PLACES + BUSINESSES
@@ -69,77 +142,162 @@ function Search() {
 
         const data = await response.json();
 
-        console.log("Search Response:", data);
+        console.log(
+          "Search Response:",
+          data
+        );
 
         // =====================================
         // PLACES
         // =====================================
 
-        const backendPlaces = Array.isArray(data?.places)
-          ? data.places
-          : [];
+        const backendPlaces =
+          Array.isArray(data?.places)
+            ? data.places
+            : [];
 
         // =====================================
         // BUSINESSES
         // =====================================
 
-        const backendBusinesses = Array.isArray(
-          data?.businesses
-        )
-          ? data.businesses
-          : [];
+        const backendBusinesses =
+          Array.isArray(data?.businesses)
+            ? data.businesses
+            : [];
 
         // =====================================
         // NORMALIZE PLACES
         // =====================================
 
-        const formattedPlaces = backendPlaces.map(
-          (place) => ({
-            ...place,
+        const formattedPlaces =
+          backendPlaces.map((place) => {
+            const averageRating =
+              getAverageRating(place);
 
-            isBusiness: false,
-          })
-        );
+            const reviewCount =
+              getReviewCount(place);
+
+            console.log(
+              "SEARCH PLACE RATING:",
+              {
+                name:
+                  place.name ||
+                  place.Name,
+                averageRating,
+                reviewCount,
+                originalPlace:
+                  place,
+              }
+            );
+
+            return {
+              ...place,
+
+              // ---------------------------------
+              // NORMALIZED RATING
+              // ---------------------------------
+
+              averageRating:
+                averageRating,
+
+              rating:
+                averageRating,
+
+              // ---------------------------------
+              // NORMALIZED REVIEW COUNT
+              // ---------------------------------
+
+              reviewCount:
+                reviewCount,
+
+              isBusiness: false,
+            };
+          });
 
         // =====================================
         // NORMALIZE BUSINESSES
         // =====================================
 
         const formattedBusinesses =
-          backendBusinesses.map((business) => {
-            const primaryPhoto =
-              business.photos?.find(
-                (photo) => photo.isPrimary
+          backendBusinesses.map(
+            (business) => {
+              const primaryPhoto =
+                business.photos?.find(
+                  (photo) =>
+                    photo.isPrimary === true
+                );
+
+              const firstPhoto =
+                business.photos?.[0];
+
+              const averageRating =
+                getAverageRating(
+                  business
+                );
+
+              const reviewCount =
+                getReviewCount(
+                  business
+                );
+
+              console.log(
+                "SEARCH BUSINESS RATING:",
+                {
+                  name:
+                    business.businessName ||
+                    business.BusinessName,
+                  averageRating,
+                  reviewCount,
+                  originalBusiness:
+                    business,
+                }
               );
 
-            const firstPhoto =
-              business.photos?.[0];
+              return {
+                ...business,
 
-            return {
-              ...business,
+                placeId:
+                  `business-${business.businessId}`,
 
-              placeId: `business-${business.businessId}`,
+                name:
+                  business.businessName ||
+                  business.BusinessName,
 
-              name: business.businessName,
+                city:
+                  business.city ||
+                  business.City,
 
-              city: business.city,
+                imageUrl:
+                  primaryPhoto?.photoUrl ||
+                  firstPhoto?.photoUrl ||
+                  "",
 
-              imageUrl:
-                primaryPhoto?.photoUrl ||
-                firstPhoto?.photoUrl ||
-                "",
+                // ---------------------------------
+                // NORMALIZED RATING
+                // ---------------------------------
 
-              rating: business.rating,
+                averageRating:
+                  averageRating,
 
-              reviewCount:
-                business.reviewCount,
+                rating:
+                  averageRating,
 
-              openStatus:
-                business.isOpen,
+                // ---------------------------------
+                // NORMALIZED REVIEW COUNT
+                // ---------------------------------
 
-              isBusiness: true,
-            };
-          });
+                reviewCount:
+                  reviewCount,
+
+                openStatus:
+                  business.isOpen ??
+                  business.IsOpen ??
+                  false,
+
+                isBusiness: true,
+              };
+            }
+          );
 
         // =====================================
         // COMBINE
@@ -155,7 +313,9 @@ function Search() {
           combinedResults
         );
 
-        setPlaces(combinedResults);
+        setPlaces(
+          combinedResults
+        );
       } catch (error) {
         console.error(
           "Search Error:",
@@ -175,7 +335,9 @@ function Search() {
   // PLACE / BUSINESS CLICK
   // =====================================
 
-  const handlePlaceClick = (place) => {
+  const handlePlaceClick = (
+    place
+  ) => {
     console.log(
       "Selected Search Result:",
       place
@@ -207,7 +369,9 @@ function Search() {
   // =====================================
 
   const getFilteredPlaces = () => {
-    const result = [...places];
+    const result = [
+      ...places,
+    ];
 
     switch (activeFilter) {
       // ===================================
@@ -231,8 +395,16 @@ function Search() {
       case "rating":
         return result.sort(
           (a, b) =>
-            Number(b.rating || 0) -
-            Number(a.rating || 0)
+            Number(
+              b.averageRating ??
+              b.rating ??
+              0
+            ) -
+            Number(
+              a.averageRating ??
+              a.rating ??
+              0
+            )
         );
 
       // ===================================
@@ -242,8 +414,16 @@ function Search() {
       case "reviews":
         return result.sort(
           (a, b) =>
-            Number(b.reviewCount || 0) -
-            Number(a.reviewCount || 0)
+            Number(
+              b.reviewCount ||
+              b.ReviewCount ||
+              0
+            ) -
+            Number(
+              a.reviewCount ||
+              a.ReviewCount ||
+              0
+            )
         );
 
       // ===================================
@@ -277,7 +457,9 @@ function Search() {
 
       <button
         className="search-back-btn"
-        onClick={() => navigate(-1)}
+        onClick={() =>
+          navigate(-1)
+        }
         title="Go Back"
       >
         <FaArrowLeft />
@@ -304,11 +486,15 @@ function Search() {
               : ""
           }`}
           onClick={() =>
-            setActiveFilter("relevance")
+            setActiveFilter(
+              "relevance"
+            )
           }
         >
           <FaStar />
-          <span>Relevance</span>
+          <span>
+            Relevance
+          </span>
         </button>
 
         <button
@@ -322,7 +508,9 @@ function Search() {
           }
         >
           <FaLocationArrow />
-          <span>Near Me</span>
+          <span>
+            Near Me
+          </span>
         </button>
 
         <button
@@ -332,11 +520,15 @@ function Search() {
               : ""
           }`}
           onClick={() =>
-            setActiveFilter("rating")
+            setActiveFilter(
+              "rating"
+            )
           }
         >
           <FaStar />
-          <span>Rating</span>
+          <span>
+            Rating
+          </span>
         </button>
 
         <button
@@ -346,11 +538,15 @@ function Search() {
               : ""
           }`}
           onClick={() =>
-            setActiveFilter("reviews")
+            setActiveFilter(
+              "reviews"
+            )
           }
         >
           <FaCommentAlt />
-          <span>Reviews</span>
+          <span>
+            Reviews
+          </span>
         </button>
 
         <button
@@ -364,7 +560,9 @@ function Search() {
           }
         >
           <FaClock />
-          <span>Open Now</span>
+          <span>
+            Open Now
+          </span>
         </button>
 
       </div>
@@ -423,7 +621,8 @@ function Search() {
 
             <p>
               Try searching for another
-              restaurant, cafe, hotel or place.
+              restaurant, cafe, hotel or
+              place.
             </p>
 
           </div>
@@ -438,21 +637,25 @@ function Search() {
 
           <div className="search-results-list">
 
-            {filteredPlaces.map((place) => (
+            {filteredPlaces.map(
+              (place) => (
 
-              <div
-                className="search-place-card"
-                key={place.placeId}
-              >
+                <div
+                  className="search-place-card"
+                  key={place.placeId}
+                >
 
-                <PlaceCard
-                  place={place}
-                  onClick={handlePlaceClick}
-                />
+                  <PlaceCard
+                    place={place}
+                    onClick={
+                      handlePlaceClick
+                    }
+                  />
 
-              </div>
+                </div>
 
-            ))}
+              )
+            )}
 
           </div>
 
@@ -463,3 +666,4 @@ function Search() {
 }
 
 export default Search;
+

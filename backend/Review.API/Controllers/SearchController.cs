@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Review.API.Data;
@@ -208,27 +209,125 @@ namespace Review.API.Controllers
                 }
             }
 
-            // =================================================
+            // =====================================================
             // SORT AGAIN AFTER ABBREVIATION MATCHES
-            // =================================================
+            // =====================================================
 
             places = places
                 .OrderByDescending(x => x.Rating)
                 .ToList();
 
+            // =====================================================
+            // CALCULATE ACTUAL BUSINESS RATINGS
+            //
+            // IMPORTANT:
+            // Do NOT depend on Business.Rating / Business.ReviewCount.
+            //
+            // Actual values come from ReviewItem records.
+            // =====================================================
+
+            var businessIds = businesses
+                .Select(x => x.BusinessId)
+                .Distinct()
+                .ToList();
+
+            var businessRatingData =
+                await _context.Reviews
+                    .Where(r =>
+                        r.BusinessId.HasValue &&
+                        businessIds.Contains(
+                            r.BusinessId.Value))
+                    .GroupBy(r =>
+                        r.BusinessId!.Value)
+                    .Select(group => new
+                    {
+                        BusinessId = group.Key,
+
+                        AverageRating =
+                            group.Average(r =>
+                                (double)r.Rating),
+
+                        ReviewCount =
+                            group.Count()
+                    })
+                    .ToDictionaryAsync(
+                        x => x.BusinessId);
+
+            // =====================================================
+            // SORT BUSINESSES USING ACTUAL AVERAGE RATING
+            // =====================================================
+
             businesses = businesses
-                .OrderByDescending(x => x.Rating)
+                .OrderByDescending(b =>
+                    businessRatingData.ContainsKey(
+                        b.BusinessId)
+                        ? businessRatingData[
+                            b.BusinessId
+                          ].AverageRating
+                        : 0)
                 .ThenByDescending(x => x.CreatedAt)
                 .ToList();
 
-            // =================================================
+            // =====================================================
             // RETURN COMBINED RESULT
-            // =================================================
+            //
+            // IMPORTANT:
+            // Businesses are projected here so the frontend gets
+            // the calculated averageRating and reviewCount.
+            // =====================================================
+
+            var formattedBusinesses =
+                businesses.Select(business =>
+                {
+                    var ratingInfo =
+                        businessRatingData.TryGetValue(
+                            business.BusinessId,
+                            out var calculatedRating)
+                            ? calculatedRating
+                            : null;
+
+                    var averageRating =
+                        ratingInfo?.AverageRating ?? 0;
+
+                    var reviewCount =
+                        ratingInfo?.ReviewCount ?? 0;
+
+                    return new
+                    {
+                        business.BusinessId,
+                        business.OwnerId,
+                        business.Owner,
+                        business.CategoryId,
+                        business.Category,
+                        business.BusinessName,
+                        business.Description,
+                        business.Address,
+                        business.City,
+                        business.Pincode,
+                        business.PhoneNumber,
+                        business.Email,
+                        business.Website,
+                        business.IsActive,
+                        business.IsApproved,
+                        business.CreatedAt,
+                        business.UpdatedAt,
+                        business.IsOpen,
+                        business.Photos,
+
+                        // =========================================
+                        // ACTUAL REVIEW VALUES
+                        // =========================================
+
+                        Rating = averageRating,
+                        AverageRating = averageRating,
+                        ReviewCount = reviewCount
+                    };
+                }).ToList();
 
             return Ok(new
             {
                 Places = places,
-                Businesses = businesses
+                Businesses = formattedBusinesses
             });
         }
 
@@ -322,9 +421,101 @@ namespace Review.API.Controllers
                     x.IsApproved &&
                     x.City.ToLower()
                         .Contains(searchCity))
-                .OrderByDescending(x => x.Rating)
-                .ThenByDescending(x => x.CreatedAt)
                 .ToListAsync();
+
+            // =================================================
+            // CALCULATE ACTUAL BUSINESS RATINGS
+            // =================================================
+
+            var businessIds = businesses
+                .Select(x => x.BusinessId)
+                .Distinct()
+                .ToList();
+
+            var businessRatingData =
+                await _context.Reviews
+                    .Where(r =>
+                        r.BusinessId.HasValue &&
+                        businessIds.Contains(
+                            r.BusinessId.Value))
+                    .GroupBy(r =>
+                        r.BusinessId!.Value)
+                    .Select(group => new
+                    {
+                        BusinessId = group.Key,
+
+                        AverageRating =
+                            group.Average(r =>
+                                (double)r.Rating),
+
+                        ReviewCount =
+                            group.Count()
+                    })
+                    .ToDictionaryAsync(
+                        x => x.BusinessId);
+
+            // =================================================
+            // SORT BY ACTUAL AVERAGE
+            // =================================================
+
+            businesses = businesses
+                .OrderByDescending(b =>
+                    businessRatingData.ContainsKey(
+                        b.BusinessId)
+                        ? businessRatingData[
+                            b.BusinessId
+                          ].AverageRating
+                        : 0)
+                .ThenByDescending(x => x.CreatedAt)
+                .ToList();
+
+            // =================================================
+            // FORMAT BUSINESSES
+            // =================================================
+
+            var formattedBusinesses =
+                businesses.Select(business =>
+                {
+                    var ratingInfo =
+                        businessRatingData.TryGetValue(
+                            business.BusinessId,
+                            out var calculatedRating)
+                            ? calculatedRating
+                            : null;
+
+                    var averageRating =
+                        ratingInfo?.AverageRating ?? 0;
+
+                    var reviewCount =
+                        ratingInfo?.ReviewCount ?? 0;
+
+                    return new
+                    {
+                        business.BusinessId,
+                        business.OwnerId,
+                        business.Owner,
+                        business.CategoryId,
+                        business.Category,
+                        business.BusinessName,
+                        business.Description,
+                        business.Address,
+                        business.City,
+                        business.Pincode,
+                        business.PhoneNumber,
+                        business.Email,
+                        business.Website,
+                        business.IsActive,
+                        business.IsApproved,
+                        business.CreatedAt,
+                        business.UpdatedAt,
+                        business.IsOpen,
+                        business.Photos,
+
+                        Rating = averageRating,
+                        AverageRating = averageRating,
+                        ReviewCount = reviewCount
+                    };
+                }).ToList();
 
             // =================================================
             // RETURN
@@ -333,7 +524,7 @@ namespace Review.API.Controllers
             return Ok(new
             {
                 Places = places,
-                Businesses = businesses
+                Businesses = formattedBusinesses
             });
         }
 
@@ -391,9 +582,101 @@ namespace Review.API.Controllers
                     x.Category.CategoryName
                         .ToLower()
                         .Contains(searchCategory))
-                .OrderByDescending(x => x.Rating)
-                .ThenByDescending(x => x.CreatedAt)
                 .ToListAsync();
+
+            // =================================================
+            // CALCULATE ACTUAL BUSINESS RATINGS
+            // =================================================
+
+            var businessIds = businesses
+                .Select(x => x.BusinessId)
+                .Distinct()
+                .ToList();
+
+            var businessRatingData =
+                await _context.Reviews
+                    .Where(r =>
+                        r.BusinessId.HasValue &&
+                        businessIds.Contains(
+                            r.BusinessId.Value))
+                    .GroupBy(r =>
+                        r.BusinessId!.Value)
+                    .Select(group => new
+                    {
+                        BusinessId = group.Key,
+
+                        AverageRating =
+                            group.Average(r =>
+                                (double)r.Rating),
+
+                        ReviewCount =
+                            group.Count()
+                    })
+                    .ToDictionaryAsync(
+                        x => x.BusinessId);
+
+            // =================================================
+            // SORT BY ACTUAL AVERAGE
+            // =================================================
+
+            businesses = businesses
+                .OrderByDescending(b =>
+                    businessRatingData.ContainsKey(
+                        b.BusinessId)
+                        ? businessRatingData[
+                            b.BusinessId
+                          ].AverageRating
+                        : 0)
+                .ThenByDescending(x => x.CreatedAt)
+                .ToList();
+
+            // =================================================
+            // FORMAT BUSINESSES
+            // =================================================
+
+            var formattedBusinesses =
+                businesses.Select(business =>
+                {
+                    var ratingInfo =
+                        businessRatingData.TryGetValue(
+                            business.BusinessId,
+                            out var calculatedRating)
+                            ? calculatedRating
+                            : null;
+
+                    var averageRating =
+                        ratingInfo?.AverageRating ?? 0;
+
+                    var reviewCount =
+                        ratingInfo?.ReviewCount ?? 0;
+
+                    return new
+                    {
+                        business.BusinessId,
+                        business.OwnerId,
+                        business.Owner,
+                        business.CategoryId,
+                        business.Category,
+                        business.BusinessName,
+                        business.Description,
+                        business.Address,
+                        business.City,
+                        business.Pincode,
+                        business.PhoneNumber,
+                        business.Email,
+                        business.Website,
+                        business.IsActive,
+                        business.IsApproved,
+                        business.CreatedAt,
+                        business.UpdatedAt,
+                        business.IsOpen,
+                        business.Photos,
+
+                        Rating = averageRating,
+                        AverageRating = averageRating,
+                        ReviewCount = reviewCount
+                    };
+                }).ToList();
 
             // =================================================
             // RETURN
@@ -402,7 +685,7 @@ namespace Review.API.Controllers
             return Ok(new
             {
                 Places = places,
-                Businesses = businesses
+                Businesses = formattedBusinesses
             });
         }
 
@@ -542,3 +825,4 @@ namespace Review.API.Controllers
         }
     }
 }
+
