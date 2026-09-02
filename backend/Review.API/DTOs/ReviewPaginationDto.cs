@@ -1,3 +1,4 @@
+
 namespace Review.API.DTOs
 {
     public class ReviewPaginationDto
@@ -79,6 +80,12 @@ namespace Review.API.DTOs
 
         public string? BusinessName { get; set; }
 
+        public string? BusinessAddress { get; set; }
+
+        public string? BusinessCity { get; set; }
+
+        public string? BusinessPincode { get; set; }
+
         // =====================================================
         // OWNER REPLY
         // =====================================================
@@ -88,3 +95,4 @@ namespace Review.API.DTOs
         public DateTime? OwnerReplyAt { get; set; }
     }
 }
+

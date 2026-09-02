@@ -1,3 +1,4 @@
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Review.API.DTOs
@@ -41,3 +42,4 @@ namespace Review.API.DTOs
         public string Comment { get; set; } = string.Empty;
     }
 }
+

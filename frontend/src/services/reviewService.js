@@ -64,6 +64,39 @@ export const getUserPublicProfile = (
 };
 
 // =====================================================
+// GET ALL REVIEWS BY USER
+// =====================================================
+// Used on the public customer profile page.
+//
+// Returns the reviews written by the selected user,
+// including:
+// - ReviewId
+// - Rating
+// - Comment
+// - CreatedAt
+// - PlaceId
+// - PlaceName
+// - BusinessId
+// - BusinessName
+// =====================================================
+
+export const getUserReviews = (
+  userId,
+  page = 1,
+  pageSize = 10
+) => {
+  return axios.get(
+    `${API_BASE}/Review/my/${userId}`,
+    {
+      params: {
+        page,
+        pageSize,
+      },
+    }
+  );
+};
+
+// =====================================================
 // ADD REVIEW
 // =====================================================
 

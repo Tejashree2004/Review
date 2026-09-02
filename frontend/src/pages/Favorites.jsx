@@ -103,9 +103,7 @@ function Favorites() {
       localStorage.getItem("userId") ||
       localStorage.getItem("UserId");
 
-    return userId
-      ? Number(userId)
-      : null;
+    return userId ? Number(userId) : null;
   };
 
   // =====================================================
@@ -125,8 +123,7 @@ function Favorites() {
       if (!userId) {
         showDialog({
           title: "Login Required",
-          message:
-            "Please login first.",
+          message: "Please login first.",
           type: "warning",
           onConfirm: () => {
             navigate("/login");
@@ -136,26 +133,17 @@ function Favorites() {
         return;
       }
 
-      const response =
-        await getFavorites(userId);
+      const response = await getFavorites(userId);
 
-      console.log(
-        "Favorites:",
-        response.data
-      );
+      console.log("Favorites:", response.data);
 
-      const favoriteData =
-        Array.isArray(response.data)
-          ? response.data
-          : [];
+      const favoriteData = Array.isArray(response.data)
+        ? response.data
+        : [];
 
       setFavorites(favoriteData);
-
     } catch (error) {
-      console.error(
-        "Failed to load favorites:",
-        error
-      );
+      console.error("Failed to load favorites:", error);
 
       setFavorites([]);
 
@@ -166,7 +154,6 @@ function Favorites() {
           "Failed to load favorites. Please try again.",
         type: "error",
       });
-
     } finally {
       setLoading(false);
     }
@@ -179,8 +166,8 @@ function Favorites() {
   const isPlaceFavorite = (favorite) => {
     return Boolean(
       favorite.placeId ??
-      favorite.PlaceId ??
-      favorite.place
+        favorite.PlaceId ??
+        favorite.place
     );
   };
 
@@ -191,8 +178,8 @@ function Favorites() {
   const isBusinessFavorite = (favorite) => {
     return Boolean(
       favorite.businessId ??
-      favorite.BusinessId ??
-      favorite.business
+        favorite.BusinessId ??
+        favorite.business
     );
   };
 
@@ -258,96 +245,122 @@ function Favorites() {
   };
 
   // =====================================================
+  // GET AVERAGE RATING
+  // =====================================================
+  // IMPORTANT:
+  // Home / Business Details may return the calculated
+  // average using averageRating instead of rating.
+  //
+  // We support all common property variations here so
+  // Favorites always displays the actual calculated value.
+  // =====================================================
+
+  const getAverageRating = (item) => {
+    if (!item) {
+      return 0;
+    }
+
+    const rating =
+      item.averageRating ??
+      item.AverageRating ??
+      item.avgRating ??
+      item.AvgRating ??
+      item.rating ??
+      item.Rating ??
+      item.average ??
+      item.Average ??
+      0;
+
+    const numericRating = Number(rating);
+
+    return Number.isFinite(numericRating)
+      ? numericRating
+      : 0;
+  };
+
+  // =====================================================
   // REMOVE FAVORITE
   // =====================================================
 
-  const removeFavoriteFromBackend =
-    async (favorite) => {
-      try {
-        const userId = getUserId();
+  const removeFavoriteFromBackend = async (
+    favorite
+  ) => {
+    try {
+      const userId = getUserId();
 
-        if (!userId) {
-          return;
-        }
-
-        const placeId =
-          getPlaceId(favorite);
-
-        const businessId =
-          getBusinessId(favorite);
-
-        // ==========================================
-        // REMOVE PLACE
-        // ==========================================
-
-        if (
-          isPlaceFavorite(favorite) &&
-          placeId
-        ) {
-          await removeFavorite(
-            userId,
-            placeId
-          );
-        }
-
-        // ==========================================
-        // REMOVE BUSINESS
-        // ==========================================
-
-        else if (
-          isBusinessFavorite(favorite) &&
-          businessId
-        ) {
-          await removeBusinessFavorite(
-            userId,
-            businessId
-          );
-        }
-
-        // ==========================================
-        // REMOVE FROM UI
-        // ==========================================
-
-        const favoriteId =
-          getFavoriteId(favorite);
-
-        setFavorites(
-          (previous) =>
-            previous.filter(
-              (item) => {
-                const itemId =
-                  getFavoriteId(item);
-
-                if (
-                  favoriteId != null &&
-                  itemId != null
-                ) {
-                  return (
-                    itemId !==
-                    favoriteId
-                  );
-                }
-
-                return item !== favorite;
-              }
-            )
-        );
-
-      } catch (error) {
-        console.error(
-          "Failed to remove favorite:",
-          error
-        );
-
-        showDialog({
-          title: "Remove Failed",
-          message:
-            error.response?.data?.message ||
-            "Failed to remove favorite. Please try again.",
-          type: "error",
-        });
+      if (!userId) {
+        return;
       }
-    };
+
+      const placeId = getPlaceId(favorite);
+
+      const businessId = getBusinessId(favorite);
+
+      // ==========================================
+      // REMOVE PLACE
+      // ==========================================
+
+      if (
+        isPlaceFavorite(favorite) &&
+        placeId
+      ) {
+        await removeFavorite(
+          userId,
+          placeId
+        );
+      }
+
+      // ==========================================
+      // REMOVE BUSINESS
+      // ==========================================
+
+      else if (
+        isBusinessFavorite(favorite) &&
+        businessId
+      ) {
+        await removeBusinessFavorite(
+          userId,
+          businessId
+        );
+      }
+
+      // ==========================================
+      // REMOVE FROM UI
+      // ==========================================
+
+      const favoriteId =
+        getFavoriteId(favorite);
+
+      setFavorites((previous) =>
+        previous.filter((item) => {
+          const itemId =
+            getFavoriteId(item);
+
+          if (
+            favoriteId != null &&
+            itemId != null
+          ) {
+            return itemId !== favoriteId;
+          }
+
+          return item !== favorite;
+        })
+      );
+    } catch (error) {
+      console.error(
+        "Failed to remove favorite:",
+        error
+      );
+
+      showDialog({
+        title: "Remove Failed",
+        message:
+          error.response?.data?.message ||
+          "Failed to remove favorite. Please try again.",
+        type: "error",
+      });
+    }
+  };
 
   // =====================================================
   // REMOVE CONFIRMATION
@@ -356,24 +369,19 @@ function Favorites() {
   const handleRemoveFavorite = (
     favorite
   ) => {
-    const place =
-      getPlace(favorite);
+    const place = getPlace(favorite);
 
-    const business =
-      getBusiness(favorite);
+    const business = getBusiness(favorite);
 
-    const name =
-      isBusinessFavorite(favorite)
-        ? (
-            business?.businessName ??
-            business?.BusinessName ??
-            "this business"
-          )
-        : (
-            place?.name ??
-            place?.Name ??
-            "this place"
-          );
+    const name = isBusinessFavorite(
+      favorite
+    )
+      ? business?.businessName ??
+        business?.BusinessName ??
+        "this business"
+      : place?.name ??
+        place?.Name ??
+        "this place";
 
     showDialog({
       title: "Remove Favorite?",
@@ -398,8 +406,7 @@ function Favorites() {
   const handleFavoriteClick = (
     favorite
   ) => {
-    const placeId =
-      getPlaceId(favorite);
+    const placeId = getPlaceId(favorite);
 
     const businessId =
       getBusinessId(favorite);
@@ -419,9 +426,7 @@ function Favorites() {
       isPlaceFavorite(favorite) &&
       placeId
     ) {
-      navigate(
-        `/place/${placeId}`
-      );
+      navigate(`/place/${placeId}`);
     }
   };
 
@@ -432,13 +437,10 @@ function Favorites() {
   if (loading) {
     return (
       <MainLayout>
-
         <div className="favorites-page">
-
           <div className="favorites-loading">
             Loading Favorites...
           </div>
-
         </div>
 
         <DialogBox
@@ -449,14 +451,9 @@ function Favorites() {
           confirmText={dialog.confirmText}
           cancelText={dialog.cancelText}
           showCancel={dialog.showCancel}
-          onConfirm={
-            handleDialogConfirm
-          }
-          onCancel={
-            handleDialogCancel
-          }
+          onConfirm={handleDialogConfirm}
+          onCancel={handleDialogCancel}
         />
-
       </MainLayout>
     );
   }
@@ -467,7 +464,6 @@ function Favorites() {
 
   return (
     <MainLayout>
-
       <div className="favorites-page">
 
         {/* HEADER */}
@@ -485,7 +481,6 @@ function Favorites() {
           </button>
 
           <div>
-
             <h1>
               My Favorites
             </h1>
@@ -493,7 +488,6 @@ function Favorites() {
             <p>
               Places and businesses you saved
             </p>
-
           </div>
 
           <FaHeart className="favorites-header-heart" />
@@ -572,7 +566,13 @@ function Favorites() {
                             photo.isPrimary ||
                             photo.IsPrimary
                         )?.photoUrl ??
+                        business?.photos?.find(
+                          (photo) =>
+                            photo.isPrimary ||
+                            photo.IsPrimary
+                        )?.PhotoUrl ??
                         business?.photos?.[0]?.photoUrl ??
+                        business?.photos?.[0]?.PhotoUrl ??
                         "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600"
                       )
                     : (
@@ -581,30 +581,36 @@ function Favorites() {
                         "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600"
                       );
 
+                // ==========================================
+                // FIX:
+                // Use actual calculated average rating.
+                // ==========================================
+
                 const rating =
                   businessFavorite
-                    ? (
-                        business?.rating ??
-                        business?.Rating ??
-                        0
+                    ? getAverageRating(
+                        business
                       )
-                    : (
-                        place?.rating ??
-                        place?.Rating ??
-                        0
+                    : getAverageRating(
+                        place
                       );
 
                 const categoryName =
                   businessFavorite
                     ? (
                         business?.category?.categoryName ??
+                        business?.category?.CategoryName ??
                         business?.categoryName ??
+                        business?.CategoryName ??
                         business?.Category?.categoryName ??
+                        business?.Category?.CategoryName ??
                         "Business"
                       )
                     : (
                         place?.category?.categoryName ??
+                        place?.category?.CategoryName ??
                         place?.categoryName ??
+                        place?.CategoryName ??
                         "Place"
                       );
 
@@ -640,7 +646,6 @@ function Favorites() {
                   );
 
                 return (
-
                   <div
                     className="favorite-card"
                     key={
@@ -669,11 +674,9 @@ function Favorites() {
                       />
 
                       <div className="favorite-type-badge">
-
                         {businessFavorite
                           ? "Business"
                           : "Place"}
-
                       </div>
 
                       <button
@@ -750,7 +753,6 @@ function Favorites() {
             )}
 
           </div>
-
         )}
 
       </div>
@@ -765,12 +767,8 @@ function Favorites() {
         confirmText={dialog.confirmText}
         cancelText={dialog.cancelText}
         showCancel={dialog.showCancel}
-        onConfirm={
-          handleDialogConfirm
-        }
-        onCancel={
-          handleDialogCancel
-        }
+        onConfirm={handleDialogConfirm}
+        onCancel={handleDialogCancel}
       />
 
     </MainLayout>

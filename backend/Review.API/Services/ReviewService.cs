@@ -1,3 +1,4 @@
+
 using Microsoft.EntityFrameworkCore;
 using Review.API.Data;
 using Review.API.DTOs;
@@ -146,6 +147,15 @@ namespace Review.API.Services
                             x.BusinessId,
 
                         BusinessName =
+                            null,
+
+                        BusinessAddress =
+                            null,
+
+                        BusinessCity =
+                            null,
+
+                        BusinessPincode =
                             null,
 
                         OwnerReply =
@@ -335,6 +345,21 @@ namespace Review.API.Services
                                 ? x.Business.BusinessName
                                 : null,
 
+                        BusinessAddress =
+                            x.Business != null
+                                ? x.Business.Address
+                                : null,
+
+                        BusinessCity =
+                            x.Business != null
+                                ? x.Business.City
+                                : null,
+
+                        BusinessPincode =
+                            x.Business != null
+                                ? x.Business.Pincode
+                                : null,
+
                         OwnerReply =
                             x.OwnerReply,
 
@@ -481,6 +506,25 @@ namespace Review.API.Services
                                 ? x.Business.BusinessName
                                 : null,
 
+                        // =================================================
+                        // BUSINESS LOCATION
+                        // =================================================
+
+                        BusinessAddress =
+                            x.Business != null
+                                ? x.Business.Address
+                                : null,
+
+                        BusinessCity =
+                            x.Business != null
+                                ? x.Business.City
+                                : null,
+
+                        BusinessPincode =
+                            x.Business != null
+                                ? x.Business.Pincode
+                                : null,
+
                         OwnerReply =
                             x.OwnerReply,
 
@@ -531,18 +575,6 @@ namespace Review.API.Services
 
         // =====================================================
         // GET USER PUBLIC PROFILE + CLICKED REVIEW
-        // =====================================================
-        // IMPORTANT:
-        // The review must actually belong to the requested user.
-        //
-        // Example:
-        // userId   = 15
-        // reviewId = 82
-        //
-        // The query checks:
-        // ReviewId == 82 AND UserId == 15
-        //
-        // Therefore another user's review cannot be returned.
         // =====================================================
 
         public async Task<UserPublicProfileDto?>
@@ -662,3 +694,4 @@ namespace Review.API.Services
         }
     }
 }
+
