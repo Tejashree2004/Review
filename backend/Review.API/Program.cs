@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +22,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // =====================================
 
 builder.Services.AddControllers();
+
+// =====================================
+// HTTP Context Accessor
+// Required by ReviewService
+// =====================================
+
+builder.Services.AddHttpContextAccessor();
 
 // =====================================
 // Swagger
@@ -146,6 +154,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // =====================================
+// STATIC FILES
+// Required for review photos/videos
+// =====================================
+
+app.UseStaticFiles();
+
+// =====================================
 // CORS
 // =====================================
 
@@ -170,3 +185,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

@@ -44,5 +44,12 @@ namespace Review.API.DTOs
         public string? Comment { get; set; }
 
         public DateTime CreatedAt { get; set; }
+
+        // =====================================================
+        // REVIEW MEDIA
+        // =====================================================
+
+        public List<ReviewMediaDto> Media { get; set; }
+            = new List<ReviewMediaDto>();
     }
 }

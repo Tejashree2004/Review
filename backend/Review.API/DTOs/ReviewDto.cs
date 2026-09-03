@@ -1,5 +1,5 @@
-
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Review.API.DTOs
 {
@@ -40,6 +40,11 @@ namespace Review.API.DTOs
         [Required]
         [MaxLength(500)]
         public string Comment { get; set; } = string.Empty;
+
+        // =====================================================
+        // PHOTOS / VIDEOS
+        // =====================================================
+
+        public List<IFormFile>? Media { get; set; }
     }
 }
-

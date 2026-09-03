@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
 
     public DbSet<ReviewItem> Reviews => Set<ReviewItem>();
 
+    public DbSet<ReviewMedia> ReviewMedias => Set<ReviewMedia>();
+
     public DbSet<Favorite> Favorites => Set<Favorite>();
 
     public DbSet<Notification> Notifications => Set<Notification>();
@@ -131,6 +133,16 @@ public class AppDbContext : DbContext
             .HasOne(x => x.Business)
             .WithMany()
             .HasForeignKey(x => x.BusinessId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // =================================================
+        // REVIEW → MEDIA
+        // =================================================
+
+        modelBuilder.Entity<ReviewMedia>()
+            .HasOne(x => x.Review)
+            .WithMany(x => x.Media)
+            .HasForeignKey(x => x.ReviewId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // =================================================

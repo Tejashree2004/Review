@@ -1,4 +1,7 @@
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Review.API.DTOs;
 using Review.API.Models;
 using Review.API.Services;
 
@@ -218,25 +221,6 @@ namespace Review.API.Controllers
         // =====================================================
         // GET USER PUBLIC PROFILE + CLICKED REVIEW
         // =====================================================
-        //
-        // Example:
-        //
-        // GET /api/Review/user/15/review/82
-        //
-        // This returns:
-        // - Public user information
-        // - Only the clicked review
-        //
-        // IMPORTANT:
-        // The service verifies that Review #82 actually
-        // belongs to User #15.
-        //
-        // Private information such as:
-        // - PasswordHash
-        // - Email
-        // - Mobile number
-        // is NOT returned.
-        // =====================================================
 
         [HttpGet("user/{userId}/review/{reviewId}")]
         public async Task<IActionResult> GetUserPublicProfile(
@@ -245,10 +229,6 @@ namespace Review.API.Controllers
         {
             try
             {
-                // =================================================
-                // VALIDATE USER ID
-                // =================================================
-
                 if (userId <= 0)
                 {
                     return BadRequest(new
@@ -257,10 +237,6 @@ namespace Review.API.Controllers
                         message = "Invalid user ID."
                     });
                 }
-
-                // =================================================
-                // VALIDATE REVIEW ID
-                // =================================================
 
                 if (reviewId <= 0)
                 {
@@ -271,22 +247,11 @@ namespace Review.API.Controllers
                     });
                 }
 
-                // =================================================
-                // GET USER + CLICKED REVIEW
-                // =================================================
-
                 var result =
                     await _reviewService
                         .GetUserPublicProfileAsync(
                             userId,
                             reviewId);
-
-                // =================================================
-                // USER / REVIEW NOT FOUND
-                //
-                // This also covers the case where the review
-                // exists but belongs to another user.
-                // =================================================
 
                 if (result == null)
                 {
@@ -297,10 +262,6 @@ namespace Review.API.Controllers
                             "User or review not found."
                     });
                 }
-
-                // =================================================
-                // SUCCESS
-                // =================================================
 
                 return Ok(new
                 {
@@ -323,16 +284,21 @@ namespace Review.API.Controllers
         }
 
         // =====================================================
-        // ADD REVIEW
+        // ADD REVIEW WITH PHOTOS / VIDEOS
         // =====================================================
 
         [HttpPost]
+        [RequestSizeLimit(300_000_000)]
         public async Task<IActionResult> AddReview(
-            [FromBody] ReviewItem review)
+            [FromForm] ReviewDto reviewDto)
         {
             try
             {
-                if (review.UserId <= 0)
+                // =====================================================
+                // BASIC VALIDATION
+                // =====================================================
+
+                if (reviewDto.UserId <= 0)
                 {
                     return BadRequest(new
                     {
@@ -341,8 +307,8 @@ namespace Review.API.Controllers
                     });
                 }
 
-                if (review.Rating < 1 ||
-                    review.Rating > 5)
+                if (reviewDto.Rating < 1 ||
+                    reviewDto.Rating > 5)
                 {
                     return BadRequest(new
                     {
@@ -352,8 +318,8 @@ namespace Review.API.Controllers
                     });
                 }
 
-                if (!review.PlaceId.HasValue &&
-                    !review.BusinessId.HasValue)
+                if (!reviewDto.PlaceId.HasValue &&
+                    !reviewDto.BusinessId.HasValue)
                 {
                     return BadRequest(new
                     {
@@ -363,16 +329,195 @@ namespace Review.API.Controllers
                     });
                 }
 
+                if (string.IsNullOrWhiteSpace(
+                    reviewDto.Comment))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message =
+                            "Review comment is required."
+                    });
+                }
+
+                if (reviewDto.Comment.Length > 500)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message =
+                            "Review comment cannot exceed 500 characters."
+                    });
+                }
+
+                // =====================================================
+                // MEDIA VALIDATION
+                // =====================================================
+
+                var mediaFiles =
+                    reviewDto.Media ?? new List<IFormFile>();
+
+                if (mediaFiles.Count > 5)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message =
+                            "You can upload a maximum of 5 photos or videos."
+                    });
+                }
+
+                foreach (var file in mediaFiles)
+                {
+                    if (file == null ||
+                        file.Length <= 0)
+                    {
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message =
+                                "One of the selected media files is invalid."
+                        });
+                    }
+
+                    var extension =
+                        Path.GetExtension(file.FileName)
+                            .ToLowerInvariant();
+
+                    var imageExtensions =
+                        new[]
+                        {
+                            ".jpg",
+                            ".jpeg",
+                            ".png",
+                            ".webp"
+                        };
+
+                    var videoExtensions =
+                        new[]
+                        {
+                            ".mp4",
+                            ".mov",
+                            ".webm"
+                        };
+
+                    var isImage =
+                        imageExtensions.Contains(extension);
+
+                    var isVideo =
+                        videoExtensions.Contains(extension);
+
+                    if (!isImage && !isVideo)
+                    {
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message =
+                                $"Unsupported media format: {extension}"
+                        });
+                    }
+
+                    var maxSize =
+                        isImage
+                            ? 5 * 1024 * 1024
+                            : 50 * 1024 * 1024;
+
+                    if (file.Length > maxSize)
+                    {
+                        return BadRequest(new
+                        {
+                            success = false,
+                            message =
+                                isImage
+                                    ? "Each image must be 5 MB or smaller."
+                                    : "Each video must be 50 MB or smaller."
+                        });
+                    }
+                }
+
+                // =====================================================
+                // SAVE REVIEW
+                // =====================================================
+
                 var result =
                     await _reviewService
-                        .AddReviewAsync(review);
+                        .AddReviewAsync(
+                            reviewDto);
+
+                // =====================================================
+                // CREATE SAFE RESPONSE
+                // =====================================================
+                //
+                // IMPORTANT:
+                //
+                // Do NOT return the ReviewItem EF entity directly.
+                //
+                // ReviewItem contains navigation properties:
+                //
+                // ReviewItem
+                //      -> Media
+                //          -> Review
+                //              -> Media
+                //                  -> Review
+                //
+                // This creates a circular JSON reference.
+                //
+                // We therefore return only the fields required by
+                // the frontend.
+                //
+                // This also prevents sensitive User entity fields
+                // such as PasswordHash from being returned.
+                // =====================================================
+
+                var response = new
+                {
+                    reviewId = result.ReviewId,
+
+                    rating = result.Rating,
+
+                    comment = result.Comment,
+
+                    createdAt = result.CreatedAt,
+
+                    userId = result.UserId,
+
+                    placeId = result.PlaceId,
+
+                    businessId = result.BusinessId,
+
+                    media = result.Media?
+                        .Select(media => new
+                        {
+                            reviewMediaId =
+                                media.ReviewMediaId,
+
+                            reviewId =
+                                media.ReviewId,
+
+                            mediaUrl =
+                                media.MediaUrl,
+
+                            mediaType =
+                                media.MediaType,
+
+                            createdAt =
+                                media.CreatedAt
+                        })
+                        .ToList()
+                };
+
+                // =====================================================
+                // SUCCESS RESPONSE
+                // =====================================================
 
                 return Ok(new
                 {
                     success = true,
+
                     message =
                         "Review added successfully.",
-                    data = result
+
+                    data = response
                 });
             }
             catch (Exception ex)
@@ -436,3 +581,4 @@ namespace Review.API.Controllers
         }
     }
 }
+

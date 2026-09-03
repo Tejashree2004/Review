@@ -23,6 +23,10 @@ import {
   FaCommentAlt,
   FaMapMarkedAlt,
   FaPen,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+  FaPlay,
 } from "react-icons/fa";
 
 import DialogBox from "../components/DialogBox";
@@ -113,6 +117,63 @@ function BusinessDetails() {
   }, [reviews]);
 
   // =====================================================
+  // REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const [selectedReviewMedia, setSelectedReviewMedia] =
+    useState(null);
+
+  const [selectedMediaIndex, setSelectedMediaIndex] =
+    useState(0);
+
+  // =====================================================
+  // REVIEW MEDIA KEYBOARD CONTROLS
+  // =====================================================
+
+  useEffect(() => {
+    if (!selectedReviewMedia) {
+      return;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeReviewMediaViewer();
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        showNextMedia();
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        showPreviousMedia();
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        previousOverflow;
+    };
+  }, [selectedReviewMedia]);
+
+  // =====================================================
   // DIALOG
   // =====================================================
 
@@ -172,9 +233,12 @@ function BusinessDetails() {
   // =====================================================
 
   const [totalReviews, setTotalReviews] = useState(0);
+
   const [currentReviewPage, setCurrentReviewPage] =
     useState(1);
+
   const [reviewPageSize] = useState(10);
+
   const [hasMoreReviews, setHasMoreReviews] =
     useState(false);
 
@@ -869,6 +933,230 @@ function BusinessDetails() {
   };
 
   // =====================================================
+  // GET REVIEW MEDIA
+  // =====================================================
+
+  const getReviewMedia = (
+    review
+  ) => {
+    const media =
+      review.Media ??
+      review.media ??
+      [];
+
+    return Array.isArray(media)
+      ? media
+      : [];
+  };
+
+  // =====================================================
+  // GET MEDIA URL
+  // =====================================================
+
+  const getMediaUrl = (
+    mediaUrl
+  ) => {
+    if (!mediaUrl) {
+      return "";
+    }
+
+    const cleanUrl =
+      String(mediaUrl).trim();
+
+    if (!cleanUrl) {
+      return "";
+    }
+
+    if (
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://")
+    ) {
+      return cleanUrl;
+    }
+
+    return `http://localhost:5213${
+      cleanUrl.startsWith("/")
+        ? cleanUrl
+        : `/${cleanUrl}`
+    }`;
+  };
+
+  // =====================================================
+  // CHECK MEDIA TYPE
+  // =====================================================
+
+  const isVideoMedia = (
+    media
+  ) => {
+    const mediaType =
+      String(
+        media?.MediaType ??
+        media?.mediaType ??
+        ""
+      )
+        .toLowerCase()
+        .trim();
+
+    const mediaUrl =
+      String(
+        media?.MediaUrl ??
+        media?.mediaUrl ??
+        ""
+      )
+        .toLowerCase()
+        .split("?")[0];
+
+    if (
+      mediaType.includes("video")
+    ) {
+      return true;
+    }
+
+    return [
+      ".mp4",
+      ".webm",
+      ".mov",
+      ".avi",
+      ".m4v",
+    ].some((extension) =>
+      mediaUrl.endsWith(extension)
+    );
+  };
+
+  // =====================================================
+  // PREPARE VALID REVIEW MEDIA
+  // =====================================================
+
+  const getValidReviewMedia = (
+    review
+  ) => {
+    const reviewMedia =
+      getReviewMedia(review);
+
+    return reviewMedia
+      .map(
+        (
+          media,
+          mediaIndex
+        ) => {
+          const rawUrl =
+            media?.MediaUrl ??
+            media?.mediaUrl ??
+            "";
+
+          const resolvedUrl =
+            getMediaUrl(rawUrl);
+
+          const mediaId =
+            media?.ReviewMediaId ??
+            media?.reviewMediaId ??
+            `${getReviewId(
+              review,
+              0
+            )}-media-${mediaIndex}`;
+
+          return {
+            ...media,
+            mediaIndex,
+            resolvedUrl,
+            mediaId,
+          };
+        }
+      )
+      .filter(
+        (media) =>
+          Boolean(
+            media.resolvedUrl
+          )
+      );
+  };
+
+  // =====================================================
+  // OPEN REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const openReviewMediaViewer = (
+    mediaList,
+    startIndex = 0
+  ) => {
+    if (
+      !Array.isArray(mediaList) ||
+      mediaList.length === 0
+    ) {
+      return;
+    }
+
+    const safeStartIndex =
+      Math.min(
+        Math.max(
+          Number(startIndex) || 0,
+          0
+        ),
+        mediaList.length - 1
+      );
+
+    setSelectedReviewMedia(
+      mediaList
+    );
+
+    setSelectedMediaIndex(
+      safeStartIndex
+    );
+  };
+
+  // =====================================================
+  // CLOSE REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const closeReviewMediaViewer =
+    () => {
+      setSelectedReviewMedia(
+        null
+      );
+
+      setSelectedMediaIndex(
+        0
+      );
+    };
+
+  // =====================================================
+  // SHOW NEXT MEDIA
+  // =====================================================
+
+  const showNextMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedMediaIndex(
+      (previous) =>
+        (previous + 1) %
+        selectedReviewMedia.length
+    );
+  };
+
+  // =====================================================
+  // SHOW PREVIOUS MEDIA
+  // =====================================================
+
+  const showPreviousMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedMediaIndex(
+      (previous) =>
+        previous === 0
+          ? selectedReviewMedia.length - 1
+          : previous - 1
+    );
+  };
+
+  // =====================================================
   // CALCULATE ACTUAL AVERAGE RATING
   // =====================================================
 
@@ -943,6 +1231,32 @@ function BusinessDetails() {
 
     return "0.0";
   };
+
+  // =====================================================
+  // CURRENT MODAL MEDIA
+  // =====================================================
+
+  const currentMedia =
+    selectedReviewMedia?.[
+      selectedMediaIndex
+    ];
+
+  const currentMediaUrl =
+    currentMedia
+      ? currentMedia.resolvedUrl ||
+        getMediaUrl(
+          currentMedia?.MediaUrl ??
+          currentMedia?.mediaUrl ??
+          ""
+        )
+      : "";
+
+  const currentMediaIsVideo =
+    currentMedia
+      ? isVideoMedia(
+          currentMedia
+        )
+      : false;
 
   // =====================================================
   // LOADING
@@ -1384,6 +1698,36 @@ function BusinessDetails() {
                         index
                       );
 
+                    // =============================================
+                    // ALL MEDIA
+                    // =============================================
+
+                    const validReviewMedia =
+                      getValidReviewMedia(
+                        review
+                      );
+
+                    // =============================================
+                    // ONLY FIRST 2 MEDIA ARE VISIBLE
+                    // =============================================
+
+                    const visibleMedia =
+                      validReviewMedia.slice(
+                        0,
+                        2
+                      );
+
+                    // =============================================
+                    // HOW MANY MEDIA REMAIN
+                    // =============================================
+
+                    const remainingMediaCount =
+                      Math.max(
+                        validReviewMedia.length -
+                          2,
+                        0
+                      );
+
                     const isExpanded =
                       Boolean(
                         expandedReviews[
@@ -1422,9 +1766,19 @@ function BusinessDetails() {
                                 )
                               }
                               title="View Profile"
-                              style={{
-                                cursor:
-                                  "pointer",
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(
+                                event
+                              ) => {
+                                if (
+                                  event.key ===
+                                  "Enter"
+                                ) {
+                                  handleReviewerProfileClick(
+                                    review
+                                  );
+                                }
                               }}
                             >
 
@@ -1506,6 +1860,126 @@ function BusinessDetails() {
                         )}
 
                         {/* ==========================================
+                            REVIEW MEDIA
+                            ONLY 2 PREVIEWS
+                        ========================================== */}
+
+                        {validReviewMedia.length >
+                          0 && (
+
+                          <div className="review-media-gallery">
+
+                            {visibleMedia.map(
+                              (
+                                media,
+                                mediaIndex
+                              ) => {
+
+                                const mediaId =
+                                  media?.mediaId ??
+                                  media?.ReviewMediaId ??
+                                  media?.reviewMediaId ??
+                                  `${reviewId}-media-${media.mediaIndex}`;
+
+                                const isLastVisible =
+                                  mediaIndex ===
+                                    1 &&
+                                  remainingMediaCount >
+                                    0;
+
+                                return (
+                                  <button
+                                    type="button"
+                                    className="review-media-item"
+                                    key={mediaId}
+                                    onClick={() =>
+                                      openReviewMediaViewer(
+                                        validReviewMedia,
+                                        media.mediaIndex
+                                      )
+                                    }
+                                    aria-label={
+                                      isLastVisible
+                                        ? `View ${remainingMediaCount} more review media`
+                                        : `View review media ${
+                                            mediaIndex +
+                                            1
+                                          }`
+                                    }
+                                  >
+
+                                    {isVideoMedia(
+                                      media
+                                    ) ? (
+                                      <video
+                                        className="review-media-video"
+                                        src={
+                                          media.resolvedUrl
+                                        }
+                                        muted
+                                        playsInline
+                                        preload="metadata"
+                                      />
+                                    ) : (
+                                      <img
+                                        className="review-media-image"
+                                        src={
+                                          media.resolvedUrl
+                                        }
+                                        alt={`Review media ${
+                                          mediaIndex +
+                                          1
+                                        }`}
+                                        loading="lazy"
+                                        onError={(
+                                          event
+                                        ) => {
+                                          console.error(
+                                            "Review image failed to load:",
+                                            media.resolvedUrl
+                                          );
+
+                                          event.currentTarget.style.display =
+                                            "none";
+                                        }}
+                                      />
+                                    )}
+
+                                    {/* =================================
+                                        VIDEO PLAY ICON
+                                    ================================= */}
+
+                                    {isVideoMedia(
+                                      media
+                                    ) && (
+                                      <span className="review-media-play-icon">
+                                        <FaPlay />
+                                      </span>
+                                    )}
+
+                                    {/* =================================
+                                        +N MORE OVERLAY
+                                    ================================= */}
+
+                                    {isLastVisible && (
+                                      <span className="review-media-more-overlay">
+
+                                        <span className="review-media-more-count">
+                                          +{remainingMediaCount} More
+                                        </span>
+
+                                      </span>
+                                    )}
+
+                                  </button>
+                                );
+                              }
+                            )}
+
+                          </div>
+                        )}
+
+                        {/* ==========================================
                             OWNER REPLY
                         ========================================== */}
 
@@ -1558,9 +2032,143 @@ function BusinessDetails() {
 
       </div>
 
-      {/* =================================================
+      {/* =====================================================
+          REVIEW MEDIA VIEWER MODAL
+      ===================================================== */}
+
+      {selectedReviewMedia &&
+        currentMediaUrl && (
+
+          <div
+            className="review-media-modal"
+            onClick={
+              closeReviewMediaViewer
+            }
+          >
+
+            {/* =============================================
+                CLOSE BUTTON
+            ============================================= */}
+
+            <button
+              type="button"
+              className="review-media-modal-close"
+              onClick={
+                closeReviewMediaViewer
+              }
+              aria-label="Close media viewer"
+            >
+              <FaTimes />
+            </button>
+
+            {/* =============================================
+                MODAL CONTENT
+            ============================================= */}
+
+            <div
+              className="review-media-modal-content"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
+
+              {/* =========================================
+                  PREVIOUS BUTTON
+              ========================================= */}
+
+              {selectedReviewMedia.length >
+                1 && (
+
+                <button
+                  type="button"
+                  className="review-media-modal-nav review-media-modal-prev"
+                  onClick={
+                    showPreviousMedia
+                  }
+                  aria-label="Previous media"
+                >
+                  <FaChevronLeft />
+                </button>
+
+              )}
+
+              {/* =========================================
+                  MEDIA
+              ========================================= */}
+
+              <div className="review-media-modal-viewer">
+
+                {currentMediaIsVideo ? (
+
+                  <video
+                    className="review-media-modal-video"
+                    src={
+                      currentMediaUrl
+                    }
+                    controls
+                    autoPlay
+                    playsInline
+                  />
+
+                ) : (
+
+                  <img
+                    className="review-media-modal-image"
+                    src={
+                      currentMediaUrl
+                    }
+                    alt={`Review media ${
+                      selectedMediaIndex +
+                      1
+                    }`}
+                  />
+
+                )}
+
+              </div>
+
+              {/* =========================================
+                  NEXT BUTTON
+              ========================================= */}
+
+              {selectedReviewMedia.length >
+                1 && (
+
+                <button
+                  type="button"
+                  className="review-media-modal-nav review-media-modal-next"
+                  onClick={
+                    showNextMedia
+                  }
+                  aria-label="Next media"
+                >
+                  <FaChevronRight />
+                </button>
+
+              )}
+
+              {/* =========================================
+                  MEDIA COUNTER
+              ========================================= */}
+
+              <div className="review-media-modal-counter">
+
+                {selectedMediaIndex + 1}
+
+                {" / "}
+
+                {selectedReviewMedia.length}
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+      {/* =====================================================
           STANDARD DIALOG
-      ================================================= */}
+      ===================================================== */}
 
       <DialogBox
         isOpen={dialog.isOpen}

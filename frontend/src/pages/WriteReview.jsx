@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -5,6 +6,9 @@ import {
   FaArrowLeft,
   FaStar,
   FaPaperPlane,
+  FaImages,
+  FaTimes,
+  FaVideo,
 } from "react-icons/fa";
 
 import MainLayout from "../layouts/MainLayout";
@@ -20,10 +24,16 @@ function WriteReview() {
   const navigate = useNavigate();
 
   const [rating, setRating] = useState(0);
+
   const [hoverRating, setHoverRating] =
     useState(0);
+
   const [comment, setComment] =
     useState("");
+
+  const [media, setMedia] =
+    useState([]);
+
   const [loading, setLoading] =
     useState(false);
 
@@ -77,14 +87,14 @@ function WriteReview() {
   };
 
   // ==========================================
-  // Determine Review Type
+  // DETERMINE REVIEW TYPE
   // ==========================================
 
   const isBusinessReview =
     Boolean(businessId);
 
   // ==========================================
-  // Get User ID
+  // GET USER ID
   // ==========================================
 
   const getUserId = () => {
@@ -98,7 +108,127 @@ function WriteReview() {
   };
 
   // ==========================================
-  // Submit Review
+  // MEDIA VALIDATION
+  // ==========================================
+
+  const validateMedia = (file) => {
+    const imageTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+    ];
+
+    const videoTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/webm",
+    ];
+
+    const isImage =
+      imageTypes.includes(file.type);
+
+    const isVideo =
+      videoTypes.includes(file.type);
+
+    if (!isImage && !isVideo) {
+      return "Only JPG, JPEG, PNG, WEBP, MP4, MOV or WEBM files are allowed.";
+    }
+
+    const maxSize =
+      isImage
+        ? 5 * 1024 * 1024
+        : 50 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      return isImage
+        ? "Each image must be 5 MB or smaller."
+        : "Each video must be 50 MB or smaller.";
+    }
+
+    return null;
+  };
+
+  // ==========================================
+  // HANDLE MEDIA SELECT
+  // ==========================================
+
+  const handleMediaChange = (e) => {
+    const selectedFiles =
+      Array.from(
+        e.target.files || []
+      );
+
+    if (
+      selectedFiles.length === 0
+    ) {
+      return;
+    }
+
+    const availableSlots =
+      5 - media.length;
+
+    if (availableSlots <= 0) {
+      showDialog(
+        "Media Limit",
+        "You can upload a maximum of 5 photos or videos.",
+        "warning"
+      );
+
+      e.target.value = "";
+      return;
+    }
+
+    const filesToAdd =
+      selectedFiles.slice(
+        0,
+        availableSlots
+      );
+
+    const validFiles = [];
+
+    for (const file of filesToAdd) {
+      const error =
+        validateMedia(file);
+
+      if (error) {
+        showDialog(
+          "Invalid Media",
+          `${file.name}: ${error}`,
+          "warning"
+        );
+
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    if (validFiles.length > 0) {
+      setMedia((previous) => [
+        ...previous,
+        ...validFiles,
+      ]);
+    }
+
+    e.target.value = "";
+  };
+
+  // ==========================================
+  // REMOVE MEDIA
+  // ==========================================
+
+  const removeMedia = (index) => {
+    setMedia((previous) =>
+      previous.filter(
+        (_, fileIndex) =>
+          fileIndex !== index
+      )
+    );
+  };
+
+  // ==========================================
+  // SUBMIT REVIEW
   // ==========================================
 
   const handleSubmit = async (e) => {
@@ -106,7 +236,9 @@ function WriteReview() {
 
     const userId = getUserId();
 
-    // Login Check
+    // ==========================================
+    // LOGIN CHECK
+    // ==========================================
 
     if (!userId) {
       showDialog(
@@ -119,7 +251,9 @@ function WriteReview() {
       return;
     }
 
-    // Rating Check
+    // ==========================================
+    // RATING CHECK
+    // ==========================================
 
     if (rating === 0) {
       showDialog(
@@ -131,7 +265,9 @@ function WriteReview() {
       return;
     }
 
-    // Comment Check
+    // ==========================================
+    // COMMENT CHECK
+    // ==========================================
 
     if (!comment.trim()) {
       showDialog(
@@ -143,7 +279,9 @@ function WriteReview() {
       return;
     }
 
-    // ID Check
+    // ==========================================
+    // ID CHECK
+    // ==========================================
 
     if (!placeId && !businessId) {
       showDialog(
@@ -158,7 +296,9 @@ function WriteReview() {
     try {
       setLoading(true);
 
+      // ==========================================
       // REVIEW DATA
+      // ==========================================
 
       const reviewData = {
         userId: userId,
@@ -174,18 +314,94 @@ function WriteReview() {
         ...(businessId && {
           businessId: Number(businessId),
         }),
+
+        media: media,
       };
 
       console.log(
-        "Submitting Review:",
+        "=========================================="
+      );
+
+      console.log(
+        "SUBMITTING REVIEW"
+      );
+
+      console.log(
+        "=========================================="
+      );
+
+      console.log(
+        "User ID:",
+        reviewData.userId
+      );
+
+      console.log(
+        "Rating:",
+        reviewData.rating
+      );
+
+      console.log(
+        "Comment:",
+        reviewData.comment
+      );
+
+      console.log(
+        "Place ID:",
+        reviewData.placeId
+      );
+
+      console.log(
+        "Business ID:",
+        reviewData.businessId
+      );
+
+      console.log(
+        "Media Count:",
+        reviewData.media?.length || 0
+      );
+
+      if (
+        reviewData.media &&
+        reviewData.media.length > 0
+      ) {
+        reviewData.media.forEach(
+          (file, index) => {
+            console.log(
+              `Media ${index + 1}:`,
+              {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                sizeMB: (
+                  file.size /
+                  (1024 * 1024)
+                ).toFixed(2),
+              }
+            );
+          }
+        );
+      }
+
+      console.log(
+        "Full Review Data:",
         reviewData
       );
 
-      // SAVE REVIEW
+      console.log(
+        "=========================================="
+      );
 
-      await addReview(reviewData);
+      // ==========================================
+      // SAVE REVIEW + MEDIA
+      // ==========================================
 
+      await addReview(
+        reviewData
+      );
+
+      // ==========================================
       // SUCCESS
+      // ==========================================
 
       showDialog(
         "Review Added",
@@ -204,26 +420,131 @@ function WriteReview() {
         }
       );
     } catch (error) {
+      // ==========================================
+      // DETAILED ERROR DEBUGGING
+      // ==========================================
+
       console.error(
-        "Failed to add review:",
+        "=========================================="
+      );
+
+      console.error(
+        "REVIEW SUBMISSION FAILED"
+      );
+
+      console.error(
+        "=========================================="
+      );
+
+      console.error(
+        "Axios Error:",
         error
       );
 
-      if (
+      console.error(
+        "Status:",
+        error.response?.status
+      );
+
+      console.error(
+        "Status Text:",
+        error.response?.statusText
+      );
+
+      console.error(
+        "Server Response:",
+        error.response?.data
+      );
+
+      console.error(
+        "Server Message:",
         error.response?.data?.message
+      );
+
+      console.error(
+        "Server Error:",
+        error.response?.data?.error
+      );
+
+      console.error(
+        "Validation Errors:",
+        error.response?.data?.errors
+      );
+
+      console.error(
+        "Response Headers:",
+        error.response?.headers
+      );
+
+      console.error(
+        "Request URL:",
+        error.config?.url
+      );
+
+      console.error(
+        "Request Method:",
+        error.config?.method
+      );
+
+      console.error(
+        "Request Content-Type:",
+        error.config?.headers?.["Content-Type"]
+      );
+
+      console.error(
+        "=========================================="
+      );
+
+      // ==========================================
+      // PREPARE USER MESSAGE
+      // ==========================================
+
+      const responseData =
+        error.response?.data;
+
+      let errorMessage =
+        "Failed to add review. Please try again.";
+
+      if (
+        responseData?.message
       ) {
-        showDialog(
-          "Review Failed",
-          error.response.data.message,
-          "error"
-        );
-      } else {
-        showDialog(
-          "Review Failed",
-          "Failed to add review. Please try again.",
-          "error"
-        );
+        errorMessage =
+          responseData.message;
+      } else if (
+        responseData?.error
+      ) {
+        errorMessage =
+          responseData.error;
+      } else if (
+        responseData?.errors
+      ) {
+        const validationErrors =
+          responseData.errors;
+
+        if (
+          typeof validationErrors ===
+          "object"
+        ) {
+          const messages = Object.values(
+            validationErrors
+          )
+            .flat()
+            .filter(Boolean);
+
+          if (
+            messages.length > 0
+          ) {
+            errorMessage =
+              messages.join("\n");
+          }
+        }
       }
+
+      showDialog(
+        "Review Failed",
+        errorMessage,
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -340,6 +661,133 @@ function WriteReview() {
 
             </div>
 
+            {/* ===================================== */}
+            {/* MEDIA UPLOAD */}
+            {/* ===================================== */}
+
+            <div className="review-media-section">
+
+              <div className="review-media-header">
+
+                <div>
+                  <label>
+                    Photos & Videos
+                  </label>
+
+                  <p>
+                    Add photos or videos to your review
+                  </p>
+                </div>
+
+                <span className="media-count">
+                  {media.length}/5
+                </span>
+
+              </div>
+
+              <label
+                htmlFor="review-media"
+                className={
+                  media.length >= 5
+                    ? "media-upload-btn disabled"
+                    : "media-upload-btn"
+                }
+              >
+                <FaImages />
+
+                <span>
+                  Add Photos & Videos
+                </span>
+              </label>
+
+              <input
+                id="review-media"
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+                multiple
+                onChange={handleMediaChange}
+                disabled={
+                  media.length >= 5
+                }
+                hidden
+              />
+
+              <p className="media-help-text">
+                Up to 5 files • Images max 5 MB • Videos max 50 MB
+              </p>
+
+              {/* ================================= */}
+              {/* MEDIA PREVIEW */}
+              {/* ================================= */}
+
+              {media.length > 0 && (
+                <div className="review-media-preview">
+
+                  {media.map(
+                    (file, index) => {
+
+                      const previewUrl =
+                        URL.createObjectURL(
+                          file
+                        );
+
+                      const isVideo =
+                        file.type.startsWith(
+                          "video/"
+                        );
+
+                      return (
+                        <div
+                          className="review-media-item"
+                          key={`${file.name}-${index}`}
+                        >
+
+                          {isVideo ? (
+                            <div className="video-preview-wrapper">
+
+                              <video
+                                src={previewUrl}
+                                className="review-media-preview-content"
+                                controls
+                              />
+
+                              <span className="video-label">
+                                <FaVideo />
+                                Video
+                              </span>
+
+                            </div>
+                          ) : (
+                            <img
+                              src={previewUrl}
+                              alt={`Review media ${index + 1}`}
+                              className="review-media-preview-content"
+                            />
+                          )}
+
+                          <button
+                            type="button"
+                            className="remove-media-btn"
+                            onClick={() =>
+                              removeMedia(
+                                index
+                              )
+                            }
+                            title="Remove media"
+                          >
+                            <FaTimes />
+                          </button>
+
+                        </div>
+                      );
+                    }
+                  )}
+
+                </div>
+              )}
+
+            </div>
+
             {/* Submit */}
 
             <button
@@ -379,3 +827,4 @@ function WriteReview() {
 }
 
 export default WriteReview;
+

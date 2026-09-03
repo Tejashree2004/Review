@@ -134,3 +134,4 @@ C:\Users\sonav\OneDrive\Desktop\Review\backend\Review.API\obj\Debug\net10.0\refi
 C:\Users\sonav\OneDrive\Desktop\Review\backend\Review.API\obj\Debug\net10.0\Review.API.pdb
 C:\Users\sonav\OneDrive\Desktop\Review\backend\Review.API\obj\Debug\net10.0\Review.API.genruntimeconfig.cache
 C:\Users\sonav\OneDrive\Desktop\Review\backend\Review.API\obj\Debug\net10.0\ref\Review.API.dll
+C:\Users\sonav\OneDrive\Desktop\Review\backend\Review.API\bin\Debug\net10.0\Review.API.staticwebassets.runtime.json

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import {
   useNavigate,
   useParams,
@@ -19,6 +25,9 @@ import {
   FaMapMarkerAlt,
   FaStore,
   FaChevronDown,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 
 import "../styles/UserPublicProfile.css";
@@ -44,17 +53,21 @@ function UserPublicProfile() {
   // PROFILE STATE
   // =====================================================
 
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] =
+    useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
   // =====================================================
   // ALL USER REVIEWS STATE
   // =====================================================
 
-  const [userReviews, setUserReviews] = useState([]);
+  const [userReviews, setUserReviews] =
+    useState([]);
 
   const [reviewsLoading, setReviewsLoading] =
     useState(true);
@@ -90,21 +103,23 @@ function UserPublicProfile() {
 
   // =====================================================
   // WORD-BASED TRUNCATED COMMENTS
-  //
-  // Stores the exact text that can fit within
-  // two rendered lines without cutting a word.
   // =====================================================
 
   const [truncatedReviews, setTruncatedReviews] =
     useState({});
 
-  /*
-   * Ref points to the actual comment paragraph.
-   *
-   * We use a hidden measurement element to determine
-   * how many COMPLETE words can fit in two lines.
-   */
-  const commentRefs = useRef({});
+  const commentRefs =
+    useRef({});
+
+  // =====================================================
+  // REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const [selectedReviewMedia, setSelectedReviewMedia] =
+    useState(null);
+
+  const [selectedMediaIndex, setSelectedMediaIndex] =
+    useState(0);
 
   // =====================================================
   // LOAD USER PUBLIC PROFILE
@@ -126,19 +141,6 @@ function UserPublicProfile() {
 
   // =====================================================
   // MEASURE COMMENTS
-  //
-  // IMPORTANT:
-  //
-  // We do NOT use CSS line-clamp to cut the actual text.
-  //
-  // Instead:
-  //
-  // 1. Check whether the complete comment exceeds 2 lines.
-  // 2. If it does, find the maximum COMPLETE words that
-  //    fit inside exactly 2 lines.
-  // 3. Add "..." after that complete word.
-  //
-  // Therefore words are never cut in the middle.
   // =====================================================
 
   useEffect(() => {
@@ -173,7 +175,10 @@ function UserPublicProfile() {
                   review?.ReviewId ??
                   `review-${index}`;
 
-                return String(currentId) === String(id);
+                return (
+                  String(currentId) ===
+                  String(id)
+                );
               }
             );
 
@@ -197,7 +202,9 @@ function UserPublicProfile() {
           }
 
           const computedStyle =
-            window.getComputedStyle(element);
+            window.getComputedStyle(
+              element
+            );
 
           let lineHeight =
             parseFloat(
@@ -214,15 +221,10 @@ function UserPublicProfile() {
               fontSize * 1.7;
           }
 
-          // -------------------------------------------------
-          // Create hidden measurement container.
-          //
-          // It copies the exact width/font/line-height
-          // of the visible comment text.
-          // -------------------------------------------------
-
           const measurement =
-            document.createElement("div");
+            document.createElement(
+              "div"
+            );
 
           measurement.style.position =
             "fixed";
@@ -294,10 +296,6 @@ function UserPublicProfile() {
           const fullText =
             `"${originalComment.trim()}"`;
 
-          // -------------------------------------------------
-          // Check complete comment height.
-          // -------------------------------------------------
-
           measurement.textContent =
             fullText;
 
@@ -314,27 +312,10 @@ function UserPublicProfile() {
           measuredLongReviews[id] =
             isLong;
 
-          // -------------------------------------------------
-          // Short comment:
-          //
-          // Keep it exactly as it is.
-          // -------------------------------------------------
-
           if (!isLong) {
             measurement.remove();
-
             return;
           }
-
-          // -------------------------------------------------
-          // LONG COMMENT
-          //
-          // Find the maximum COMPLETE words that fit
-          // inside two lines together with "...".
-          //
-          // Binary search makes this efficient even for
-          // very long reviews.
-          // -------------------------------------------------
 
           const words =
             originalComment
@@ -356,22 +337,11 @@ function UserPublicProfile() {
               );
             };
 
-          // -------------------------------------------------
-          // First make sure at least one word is tested.
-          // -------------------------------------------------
-
           if (
             !fitsInTwoLines(
               words[0]
             )
           ) {
-            /*
-             * Extremely narrow screens can theoretically
-             * make even one word + "..." too tall.
-             *
-             * In that case we still keep the first complete
-             * word instead of cutting it.
-             */
             bestText =
               words[0];
           } else {
@@ -383,7 +353,10 @@ function UserPublicProfile() {
 
               const candidate =
                 words
-                  .slice(0, middle)
+                  .slice(
+                    0,
+                    middle
+                  )
                   .join(" ");
 
               if (
@@ -403,10 +376,6 @@ function UserPublicProfile() {
             }
           }
 
-          // -------------------------------------------------
-          // Store word-safe truncated text.
-          // -------------------------------------------------
-
           measuredTruncatedReviews[id] =
             bestText;
 
@@ -425,13 +394,11 @@ function UserPublicProfile() {
       }
     };
 
-    // Wait for DOM layout.
     const frame =
       requestAnimationFrame(
         measureComments
       );
 
-    // Recalculate when viewport changes.
     const handleResize = () => {
       if (resizeFrame) {
         cancelAnimationFrame(
@@ -450,7 +417,6 @@ function UserPublicProfile() {
       handleResize
     );
 
-    // Recalculate after fonts are ready.
     if (
       document.fonts &&
       document.fonts.ready
@@ -467,7 +433,9 @@ function UserPublicProfile() {
     return () => {
       cancelled = true;
 
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(
+        frame
+      );
 
       if (resizeFrame) {
         cancelAnimationFrame(
@@ -483,213 +451,284 @@ function UserPublicProfile() {
   }, [userReviews]);
 
   // =====================================================
+  // REVIEW MEDIA KEYBOARD CONTROLS
+  // =====================================================
+
+  useEffect(() => {
+    if (!selectedReviewMedia) {
+      return;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeReviewMediaViewer();
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        showNextMedia();
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        showPreviousMedia();
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        previousOverflow;
+    };
+  }, [selectedReviewMedia]);
+
+  // =====================================================
   // LOAD PROFILE
   // =====================================================
 
-  const loadUserPublicProfile = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadUserPublicProfile =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      if (!userId || !reviewId) {
+        if (
+          !userId ||
+          !reviewId
+        ) {
+          setError(
+            "Invalid user or review information."
+          );
+
+          return;
+        }
+
+        const response =
+          await getUserPublicProfile(
+            userId,
+            reviewId
+          );
+
+        console.log(
+          "USER PUBLIC PROFILE API:",
+          response.data
+        );
+
+        const responseData =
+          response.data?.data ??
+          response.data?.Data ??
+          response.data;
+
+        if (!responseData) {
+          setError(
+            "User profile or review not found."
+          );
+
+          return;
+        }
+
+        setProfile(
+          responseData
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load user public profile:",
+          error
+        );
+
+        setProfile(null);
+
         setError(
-          "Invalid user or review information."
+          error.response?.data?.message ||
+            "Failed to load user profile."
         );
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      const response =
-        await getUserPublicProfile(
-          userId,
-          reviewId
-        );
-
-      console.log(
-        "USER PUBLIC PROFILE API:",
-        response.data
-      );
-
-      const responseData =
-        response.data?.data ??
-        response.data?.Data ??
-        response.data;
-
-      if (!responseData) {
-        setError(
-          "User profile or review not found."
-        );
-        return;
-      }
-
-      setProfile(responseData);
-    } catch (error) {
-      console.error(
-        "Failed to load user public profile:",
-        error
-      );
-
-      setProfile(null);
-
-      setError(
-        error.response?.data?.message ||
-          "Failed to load user profile."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   // =====================================================
   // LOAD ALL REVIEWS BY USER
   // =====================================================
 
-  const loadUserReviews = async (
-    page = 1,
-    replace = false
-  ) => {
-    try {
-      if (replace) {
-        setReviewsLoading(true);
-        setReviewsError("");
-      } else {
-        setLoadingMoreReviews(true);
-      }
-
-      const response =
-        await getUserReviews(
-          userId,
-          page,
-          reviewsPageSize
-        );
-
-      console.log(
-        "USER ALL REVIEWS API:",
-        response.data
-      );
-
-      const responseData =
-        response.data?.data ??
-        response.data?.Data ??
-        response.data;
-
-      if (!responseData) {
+  const loadUserReviews =
+    async (
+      page = 1,
+      replace = false
+    ) => {
+      try {
         if (replace) {
-          setUserReviews([]);
+          setReviewsLoading(true);
+          setReviewsError("");
+        } else {
+          setLoadingMoreReviews(
+            true
+          );
         }
 
-        setHasMoreReviews(false);
-        return;
-      }
+        const response =
+          await getUserReviews(
+            userId,
+            page,
+            reviewsPageSize
+          );
 
-      const incomingReviews =
-        responseData?.reviews ??
-        responseData?.Reviews ??
-        [];
-
-      const totalPages =
-        responseData?.totalPages ??
-        responseData?.TotalPages ??
-        0;
-
-      const hasMore =
-        responseData?.hasMore ??
-        responseData?.HasMore ??
-        page < totalPages;
-
-      if (replace) {
-        setUserReviews(
-          incomingReviews
+        console.log(
+          "USER ALL REVIEWS API:",
+          response.data
         );
-      } else {
-        setUserReviews(
-          (previousReviews) => {
-            const existingIds =
-              new Set(
-                previousReviews.map(
-                  (review) =>
-                    review?.reviewId ??
-                    review?.ReviewId
-                )
-              );
 
-            const newReviews =
-              incomingReviews.filter(
-                (review) => {
-                  const id =
-                    review?.reviewId ??
-                    review?.ReviewId;
+        const responseData =
+          response.data?.data ??
+          response.data?.Data ??
+          response.data;
 
-                  return !existingIds.has(
-                    id
-                  );
-                }
-              );
-
-            return [
-              ...previousReviews,
-              ...newReviews,
-            ];
+        if (!responseData) {
+          if (replace) {
+            setUserReviews([]);
           }
+
+          setHasMoreReviews(
+            false
+          );
+
+          return;
+        }
+
+        const incomingReviews =
+          responseData?.reviews ??
+          responseData?.Reviews ??
+          [];
+
+        const totalPages =
+          responseData?.totalPages ??
+          responseData?.TotalPages ??
+          0;
+
+        const hasMore =
+          responseData?.hasMore ??
+          responseData?.HasMore ??
+          page < totalPages;
+
+        if (replace) {
+          setUserReviews(
+            incomingReviews
+          );
+        } else {
+          setUserReviews(
+            (previousReviews) => {
+              const existingIds =
+                new Set(
+                  previousReviews.map(
+                    (review) =>
+                      review?.reviewId ??
+                      review?.ReviewId
+                  )
+                );
+
+              const newReviews =
+                incomingReviews.filter(
+                  (review) => {
+                    const id =
+                      review?.reviewId ??
+                      review?.ReviewId;
+
+                    return !existingIds.has(
+                      id
+                    );
+                  }
+                );
+
+              return [
+                ...previousReviews,
+                ...newReviews,
+              ];
+            }
+          );
+        }
+
+        setReviewsPage(
+          page
+        );
+
+        setHasMoreReviews(
+          hasMore
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load user's reviews:",
+          error
+        );
+
+        if (replace) {
+          setReviewsError(
+            error.response?.data?.message ||
+              "Failed to load user's reviews."
+          );
+        }
+      } finally {
+        setReviewsLoading(
+          false
+        );
+
+        setLoadingMoreReviews(
+          false
         );
       }
-
-      setReviewsPage(page);
-      setHasMoreReviews(hasMore);
-    } catch (error) {
-      console.error(
-        "Failed to load user's reviews:",
-        error
-      );
-
-      if (replace) {
-        setReviewsError(
-          error.response?.data?.message ||
-            "Failed to load user's reviews."
-        );
-      }
-    } finally {
-      setReviewsLoading(false);
-      setLoadingMoreReviews(false);
-    }
-  };
+    };
 
   // =====================================================
   // LOAD MORE REVIEWS
   // =====================================================
 
-  const handleLoadMoreReviews = () => {
-    if (
-      loadingMoreReviews ||
-      !hasMoreReviews
-    ) {
-      return;
-    }
+  const handleLoadMoreReviews =
+    () => {
+      if (
+        loadingMoreReviews ||
+        !hasMoreReviews
+      ) {
+        return;
+      }
 
-    loadUserReviews(
-      reviewsPage + 1,
-      false
-    );
-  };
+      loadUserReviews(
+        reviewsPage + 1,
+        false
+      );
+    };
 
   // =====================================================
   // TOGGLE REVIEW COMMENT
   // =====================================================
 
-  const handleToggleReview = (
-    reviewKey
-  ) => {
-    if (!reviewKey) {
-      return;
-    }
+  const handleToggleReview =
+    (reviewKey) => {
+      if (!reviewKey) {
+        return;
+      }
 
-    setExpandedReviews(
-      (previous) => ({
-        ...previous,
-        [reviewKey]:
-          !previous[reviewKey],
-      })
-    );
-  };
+      setExpandedReviews(
+        (previous) => ({
+          ...previous,
+          [reviewKey]:
+            !previous[reviewKey],
+        })
+      );
+    };
 
   // =====================================================
   // GET USER
@@ -708,7 +747,8 @@ function UserPublicProfile() {
   // =====================================================
 
   const getUserName = () => {
-    const user = getUser();
+    const user =
+      getUser();
 
     return (
       user?.fullName ??
@@ -722,7 +762,8 @@ function UserPublicProfile() {
   // =====================================================
 
   const getUserCreatedAt = () => {
-    const user = getUser();
+    const user =
+      getUser();
 
     return (
       user?.createdAt ??
@@ -784,6 +825,240 @@ function UserPublicProfile() {
       review?.createdAt ??
       review?.CreatedAt ??
       null
+    );
+  };
+
+  // =====================================================
+  // GET REVIEW MEDIA
+  // =====================================================
+
+  const getReviewMedia = (
+    review
+  ) => {
+    const media =
+      review?.media ??
+      review?.Media ??
+      [];
+
+    return Array.isArray(media)
+      ? media
+      : [];
+  };
+
+  // =====================================================
+  // GET MEDIA URL
+  // =====================================================
+
+  const getMediaUrl = (
+    mediaUrl
+  ) => {
+    if (!mediaUrl) {
+      return "";
+    }
+
+    const cleanUrl =
+      String(
+        mediaUrl
+      ).trim();
+
+    if (!cleanUrl) {
+      return "";
+    }
+
+    if (
+      cleanUrl.startsWith(
+        "http://"
+      ) ||
+      cleanUrl.startsWith(
+        "https://"
+      )
+    ) {
+      return cleanUrl;
+    }
+
+    return `http://localhost:5213${
+      cleanUrl.startsWith("/")
+        ? cleanUrl
+        : `/${cleanUrl}`
+    }`;
+  };
+
+  // =====================================================
+  // CHECK VIDEO MEDIA
+  // =====================================================
+
+  const isVideoMedia = (
+    media
+  ) => {
+    const mediaType =
+      String(
+        media?.mediaType ??
+          media?.MediaType ??
+          ""
+      )
+        .toLowerCase()
+        .trim();
+
+    const mediaUrl =
+      String(
+        media?.mediaUrl ??
+          media?.MediaUrl ??
+          ""
+      )
+        .toLowerCase()
+        .split("?")[0];
+
+    if (
+      mediaType.includes(
+        "video"
+      )
+    ) {
+      return true;
+    }
+
+    return [
+      ".mp4",
+      ".webm",
+      ".mov",
+      ".avi",
+      ".m4v",
+    ].some((extension) =>
+      mediaUrl.endsWith(
+        extension
+      )
+    );
+  };
+
+  // =====================================================
+  // PREPARE VALID REVIEW MEDIA
+  // =====================================================
+
+  const getValidReviewMedia = (
+    review
+  ) => {
+    const reviewMedia =
+      getReviewMedia(
+        review
+      );
+
+    return reviewMedia
+      .map(
+        (
+          media,
+          mediaIndex
+        ) => {
+          const rawUrl =
+            media?.mediaUrl ??
+            media?.MediaUrl ??
+            "";
+
+          const resolvedUrl =
+            getMediaUrl(
+              rawUrl
+            );
+
+          const mediaId =
+            media?.reviewMediaId ??
+            media?.ReviewMediaId ??
+            `review-media-${mediaIndex}`;
+
+          return {
+            ...media,
+            mediaIndex,
+            resolvedUrl,
+            mediaId,
+          };
+        }
+      )
+      .filter(
+        (media) =>
+          Boolean(
+            media.resolvedUrl
+          )
+      );
+  };
+
+  // =====================================================
+  // OPEN REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const openReviewMediaViewer = (
+    mediaList,
+    startIndex = 0
+  ) => {
+    if (
+      !Array.isArray(
+        mediaList
+      ) ||
+      mediaList.length === 0
+    ) {
+      return;
+    }
+
+    setSelectedReviewMedia(
+      mediaList
+    );
+
+    setSelectedMediaIndex(
+      Math.min(
+        Math.max(
+          startIndex,
+          0
+        ),
+        mediaList.length - 1
+      )
+    );
+  };
+
+  // =====================================================
+  // CLOSE REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const closeReviewMediaViewer =
+    () => {
+      setSelectedReviewMedia(
+        null
+      );
+
+      setSelectedMediaIndex(
+        0
+      );
+    };
+
+  // =====================================================
+  // NEXT MEDIA
+  // =====================================================
+
+  const showNextMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedMediaIndex(
+      (previous) =>
+        (previous + 1) %
+        selectedReviewMedia.length
+    );
+  };
+
+  // =====================================================
+  // PREVIOUS MEDIA
+  // =====================================================
+
+  const showPreviousMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedMediaIndex(
+      (previous) =>
+        previous === 0
+          ? selectedReviewMedia.length - 1
+          : previous - 1
     );
   };
 
@@ -905,17 +1180,20 @@ function UserPublicProfile() {
       "";
 
     const cleanAddress =
-      typeof address === "string"
+      typeof address ===
+      "string"
         ? address.trim()
         : "";
 
     const cleanCity =
-      typeof city === "string"
+      typeof city ===
+      "string"
         ? city.trim()
         : "";
 
     const cleanPincode =
-      typeof pincode === "string"
+      typeof pincode ===
+      "string"
         ? pincode.trim()
         : "";
 
@@ -925,7 +1203,8 @@ function UserPublicProfile() {
     ].filter(Boolean);
 
     if (
-      primaryLocation.length > 0
+      primaryLocation.length >
+      0
     ) {
       return primaryLocation.join(
         ", "
@@ -965,10 +1244,14 @@ function UserPublicProfile() {
     review
   ) => {
     const businessName =
-      getBusinessName(review);
+      getBusinessName(
+        review
+      );
 
     const placeName =
-      getPlaceName(review);
+      getPlaceName(
+        review
+      );
 
     return (
       businessName ||
@@ -985,10 +1268,14 @@ function UserPublicProfile() {
     review
   ) => {
     const businessId =
-      getBusinessId(review);
+      getBusinessId(
+        review
+      );
 
     const placeId =
-      getPlaceId(review);
+      getPlaceId(
+        review
+      );
 
     if (businessId) {
       return "business";
@@ -1013,7 +1300,9 @@ function UserPublicProfile() {
     }
 
     const date =
-      new Date(dateValue);
+      new Date(
+        dateValue
+      );
 
     if (
       Number.isNaN(
@@ -1083,10 +1372,14 @@ function UserPublicProfile() {
     review
   ) => {
     const businessId =
-      getBusinessId(review);
+      getBusinessId(
+        review
+      );
 
     const placeId =
-      getPlaceId(review);
+      getPlaceId(
+        review
+      );
 
     if (businessId) {
       navigate(
@@ -1102,6 +1395,32 @@ function UserPublicProfile() {
       );
     }
   };
+
+  // =====================================================
+  // CURRENT MODAL MEDIA
+  // =====================================================
+
+  const currentMedia =
+    selectedReviewMedia?.[
+      selectedMediaIndex
+    ];
+
+  const currentMediaUrl =
+    currentMedia
+      ? currentMedia.resolvedUrl ||
+        getMediaUrl(
+          currentMedia?.mediaUrl ??
+            currentMedia?.MediaUrl ??
+            ""
+        )
+      : "";
+
+  const currentMediaIsVideo =
+    currentMedia
+      ? isVideoMedia(
+          currentMedia
+        )
+      : false;
 
   // =====================================================
   // LOADING
@@ -1360,7 +1679,10 @@ function UserPublicProfile() {
               <div className="user-public-all-reviews-list">
 
                 {userReviews.map(
-                  (review, index) => {
+                  (
+                    review,
+                    index
+                  ) => {
 
                     const itemId =
                       getReviewItemId(
@@ -1436,10 +1758,34 @@ function UserPublicProfile() {
                         reviewKey
                       ];
 
+                    // =================================================
+                    // REVIEW MEDIA
+                    // =================================================
+
+                    const validReviewMedia =
+                      getValidReviewMedia(
+                        review
+                      );
+
+                    const visibleMedia =
+                      validReviewMedia.slice(
+                        0,
+                        2
+                      );
+
+                    const remainingMediaCount =
+                      Math.max(
+                        validReviewMedia.length -
+                          2,
+                        0
+                      );
+
                     return (
                       <div
                         className="user-public-history-card"
-                        key={reviewKey}
+                        key={
+                          reviewKey
+                        }
                       >
 
                         {/* =================================
@@ -1549,10 +1895,6 @@ function UserPublicProfile() {
                             }
                           >
 
-                            {/* =================================
-                                SHORT / FULL COMMENT
-                            ================================= */}
-
                             {!isLong ||
                             isExpanded ? (
                               <span className="user-public-history-comment-text">
@@ -1568,10 +1910,6 @@ function UserPublicProfile() {
                                 }..."`}
                               </span>
                             )}
-
-                            {/* =================================
-                                VIEW MORE / VIEW LESS
-                            ================================= */}
 
                             {itemComment &&
                               isLong && (
@@ -1596,6 +1934,97 @@ function UserPublicProfile() {
                           </p>
 
                         </div>
+
+                        {/* =================================================
+                            REVIEW MEDIA PREVIEW
+                            ONLY FIRST 2 MEDIA ARE SHOWN
+                        ================================================= */}
+
+                        {validReviewMedia.length >
+                          0 && (
+                          <div className="public-review-media-gallery">
+
+                            {visibleMedia.map(
+                              (
+                                media,
+                                mediaIndex
+                              ) => {
+
+                                const mediaId =
+                                  media?.mediaId ??
+                                  `${reviewKey}-media-${media.mediaIndex}`;
+
+                                const isLastVisible =
+                                  mediaIndex ===
+                                    1 &&
+                                  remainingMediaCount >
+                                    0;
+
+                                return (
+                                  <button
+                                    type="button"
+                                    className="public-review-media-item"
+                                    key={
+                                      mediaId
+                                    }
+                                    onClick={() =>
+                                      openReviewMediaViewer(
+                                        validReviewMedia,
+                                        media.mediaIndex
+                                      )
+                                    }
+                                    aria-label={
+                                      isLastVisible
+                                        ? `View ${remainingMediaCount} more review media`
+                                        : `View review media ${mediaIndex + 1}`
+                                    }
+                                  >
+
+                                    {isVideoMedia(
+                                      media
+                                    ) ? (
+                                      <video
+                                        className="public-review-media-video"
+                                        src={
+                                          media.resolvedUrl
+                                        }
+                                        muted
+                                        playsInline
+                                        preload="metadata"
+                                      />
+                                    ) : (
+                                      <img
+                                        className="public-review-media-image"
+                                        src={
+                                          media.resolvedUrl
+                                        }
+                                        alt={`Review media ${
+                                          mediaIndex +
+                                          1
+                                        }`}
+                                        loading="lazy"
+                                      />
+                                    )}
+
+                                    {/* + MORE OVERLAY */}
+
+                                    {isLastVisible && (
+                                      <span className="public-review-media-more-overlay">
+
+                                        <span className="public-review-media-more-count">
+                                          +{remainingMediaCount} More
+                                        </span>
+
+                                      </span>
+                                    )}
+
+                                  </button>
+                                );
+                              }
+                            )}
+
+                          </div>
+                        )}
 
                         {/* =================================
                             VIEW BUSINESS / PLACE
@@ -1666,8 +2095,121 @@ function UserPublicProfile() {
         </div>
 
       </div>
+
+      {/* =====================================================
+          REVIEW MEDIA VIEWER MODAL
+      ===================================================== */}
+
+      {selectedReviewMedia &&
+        currentMediaUrl && (
+          <div
+            className="public-review-media-modal"
+            onClick={
+              closeReviewMediaViewer
+            }
+          >
+
+            {/* CLOSE */}
+
+            <button
+              type="button"
+              className="public-review-media-modal-close"
+              onClick={
+                closeReviewMediaViewer
+              }
+              aria-label="Close media viewer"
+            >
+              <FaTimes />
+            </button>
+
+            <div
+              className="public-review-media-modal-content"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
+
+              {/* PREVIOUS */}
+
+              {selectedReviewMedia.length >
+                1 && (
+                <button
+                  type="button"
+                  className="public-review-media-nav public-review-media-prev"
+                  onClick={
+                    showPreviousMedia
+                  }
+                  aria-label="Previous media"
+                >
+                  <FaChevronLeft />
+                </button>
+              )}
+
+              {/* CURRENT MEDIA */}
+
+              <div className="public-review-media-modal-image-wrapper">
+
+                {currentMediaIsVideo ? (
+                  <video
+                    className="public-review-media-modal-video"
+                    src={
+                      currentMediaUrl
+                    }
+                    controls
+                    autoPlay
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    className="public-review-media-modal-image"
+                    src={
+                      currentMediaUrl
+                    }
+                    alt={`Review media ${
+                      selectedMediaIndex +
+                      1
+                    }`}
+                  />
+                )}
+
+              </div>
+
+              {/* NEXT */}
+
+              {selectedReviewMedia.length >
+                1 && (
+                <button
+                  type="button"
+                  className="public-review-media-nav public-review-media-next"
+                  onClick={
+                    showNextMedia
+                  }
+                  aria-label="Next media"
+                >
+                  <FaChevronRight />
+                </button>
+              )}
+
+              {/* COUNTER */}
+
+              <div className="public-review-media-counter">
+
+                {selectedMediaIndex + 1}
+
+                {" / "}
+
+                {selectedReviewMedia.length}
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
     </MainLayout>
   );
 }
 
 export default UserPublicProfile;
+

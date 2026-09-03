@@ -172,6 +172,215 @@
 }
 
 /* ==========================
+   REVIEW MEDIA
+========================== */
+
+.review-media-section {
+  margin-bottom: 28px;
+}
+
+.review-media-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 14px;
+}
+
+.review-media-header label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.review-media-header p {
+  margin: 0;
+
+  color: #888888;
+
+  font-size: 13px;
+}
+
+.media-count {
+  color: #aaaaaa;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ==========================
+   MEDIA UPLOAD BUTTON
+========================== */
+
+.media-upload-btn {
+  width: 100%;
+
+  min-height: 54px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  box-sizing: border-box;
+
+  background: #111111;
+
+  border: 1px dashed #4a4a4a;
+  border-radius: 14px;
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.25s;
+}
+
+.media-upload-btn:hover {
+  background: #1d1d1d;
+
+  border-color: #ffffff;
+}
+
+.media-upload-btn.disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+
+  pointer-events: none;
+}
+
+.media-help-text {
+  margin: 9px 0 0;
+
+  color: #777777;
+
+  font-size: 12px;
+}
+
+/* ==========================
+   MEDIA PREVIEW
+========================== */
+
+.review-media-preview {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-top: 18px;
+}
+
+.review-media-item {
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio: 1 / 1;
+
+  overflow: hidden;
+
+  background: #0d0d0d;
+
+  border: 1px solid #2d2d2d;
+
+  border-radius: 14px;
+}
+
+.review-media-preview-content {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.video-preview-wrapper {
+  width: 100%;
+  height: 100%;
+
+  position: relative;
+}
+
+.video-preview-wrapper video {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.video-label {
+  position: absolute;
+
+  left: 8px;
+  bottom: 8px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 5px 8px;
+
+  background: rgba(0, 0, 0, 0.75);
+
+  border-radius: 7px;
+
+  color: #ffffff;
+
+  font-size: 11px;
+}
+
+/* ==========================
+   REMOVE MEDIA BUTTON
+========================== */
+
+.remove-media-btn {
+  position: absolute;
+
+  top: 7px;
+  right: 7px;
+
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.8);
+
+  border: 1px solid #555555;
+  border-radius: 50%;
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  z-index: 2;
+}
+
+.remove-media-btn:hover {
+  background: #ffffff;
+
+  color: #000000;
+}
+
+/* ==========================
    Submit Button
 ========================== */
 
@@ -251,6 +460,13 @@
   .comment-section textarea {
     min-height: 150px;
   }
+
+  .review-media-preview {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+  }
 }
 
 /* ==========================
@@ -273,5 +489,24 @@
 
   .submit-review-btn {
     height: 50px;
+  }
+
+  .review-media-header {
+    align-items: flex-start;
+  }
+
+  .review-media-header label {
+    font-size: 16px;
+  }
+
+  .media-upload-btn {
+    min-height: 50px;
+
+    font-size: 14px;
+  }
+
+  .review-media-preview {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
   }
 }

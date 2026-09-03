@@ -1,5 +1,5 @@
 /* =====================================================
-USER PUBLIC PROFILE PAGE
+   USER PUBLIC PROFILE PAGE
 ===================================================== */
 
 .user-public-profile-page {
@@ -13,8 +13,9 @@ USER PUBLIC PROFILE PAGE
   background: #000000;
 }
 
+
 /* =====================================================
-BACK BUTTON
+   BACK BUTTON
 ===================================================== */
 
 .user-public-profile-back-btn {
@@ -49,8 +50,9 @@ BACK BUTTON
   transform: translateX(-2px);
 }
 
+
 /* =====================================================
-PROFILE HEADER
+   PROFILE HEADER
 ===================================================== */
 
 .user-public-profile-header {
@@ -112,8 +114,9 @@ PROFILE HEADER
   font-size: 14px;
 }
 
+
 /* =====================================================
-PROFILE DIVIDER
+   PROFILE DIVIDER
 ===================================================== */
 
 .user-public-profile-divider {
@@ -126,8 +129,9 @@ PROFILE DIVIDER
   margin: 30px 0 0;
 }
 
+
 /* =====================================================
-ALL REVIEWS SECTION
+   ALL REVIEWS SECTION
 ===================================================== */
 
 .user-public-all-reviews-section {
@@ -138,8 +142,9 @@ ALL REVIEWS SECTION
   padding-top: 0;
 }
 
+
 /* =====================================================
-ALL REVIEWS HEADING
+   ALL REVIEWS HEADING
 ===================================================== */
 
 .user-public-all-reviews-heading {
@@ -200,8 +205,9 @@ ALL REVIEWS HEADING
   line-height: 1.5;
 }
 
+
 /* =====================================================
-REVIEW COUNT
+   REVIEW COUNT
 ===================================================== */
 
 .user-public-review-count {
@@ -262,8 +268,9 @@ REVIEW COUNT
   letter-spacing: 0.7px;
 }
 
+
 /* =====================================================
-ALL REVIEWS LIST
+   ALL REVIEWS LIST
 ===================================================== */
 
 .user-public-all-reviews-list {
@@ -274,8 +281,9 @@ ALL REVIEWS LIST
   gap: 20px;
 }
 
+
 /* =====================================================
-REVIEW HISTORY CARD
+   REVIEW HISTORY CARD
 ===================================================== */
 
 .user-public-history-card {
@@ -305,8 +313,9 @@ REVIEW HISTORY CARD
   transform: translateY(-2px);
 }
 
+
 /* =====================================================
-BUSINESS HEADER
+   BUSINESS HEADER
 ===================================================== */
 
 .user-public-history-top {
@@ -402,8 +411,9 @@ BUSINESS HEADER
   line-height: 1.4;
 }
 
+
 /* =====================================================
-REVIEW META
+   REVIEW META
 ===================================================== */
 
 .user-public-history-meta {
@@ -457,8 +467,9 @@ REVIEW META
   transform: translateY(-50%);
 }
 
+
 /* =====================================================
-STARS
+   STARS
 ===================================================== */
 
 .public-profile-stars {
@@ -481,8 +492,9 @@ STARS
   font-size: 18px;
 }
 
+
 /* =====================================================
-HISTORY RATING
+   HISTORY RATING
 ===================================================== */
 
 .user-public-history-rating {
@@ -503,8 +515,9 @@ HISTORY RATING
   font-weight: 600;
 }
 
+
 /* =====================================================
-HISTORY COMMENT WRAPPER
+   HISTORY COMMENT WRAPPER
 ===================================================== */
 
 .user-public-history-comment-wrapper {
@@ -515,13 +528,9 @@ HISTORY COMMENT WRAPPER
   min-width: 0;
 }
 
+
 /* =====================================================
-HISTORY COMMENT
-
-The comment itself is allowed to grow naturally.
-
-We no longer use CSS line-clamp for the actual text
-because truncation is handled word-by-word in JSX.
+   HISTORY COMMENT
 ===================================================== */
 
 .user-public-history-comment {
@@ -552,8 +561,9 @@ because truncation is handled word-by-word in JSX.
   overflow-wrap: break-word;
 }
 
+
 /* =====================================================
-COMMENT TEXT
+   COMMENT TEXT
 ===================================================== */
 
 .user-public-history-comment-text {
@@ -572,14 +582,9 @@ COMMENT TEXT
   white-space: normal;
 }
 
+
 /* =====================================================
-COLLAPSED COMMENT
-
-The JSX already contains a word-safe string such as:
-
-"I have been going to this gym for quite some time..."
-
-Therefore the browser is NOT allowed to cut a word.
+   COLLAPSED COMMENT
 ===================================================== */
 
 .user-public-history-comment.is-collapsed
@@ -587,12 +592,9 @@ Therefore the browser is NOT allowed to cut a word.
   display: inline;
 }
 
+
 /* =====================================================
-VIEW MORE
-
-View More stays directly after the truncated text.
-
-It is NOT positioned below the comment.
+   VIEW MORE
 ===================================================== */
 
 .user-public-history-comment.is-collapsed
@@ -622,8 +624,9 @@ It is NOT positioned below the comment.
   text-decoration: none;
 }
 
+
 /* =====================================================
-EXPANDED COMMENT
+   EXPANDED COMMENT
 ===================================================== */
 
 .user-public-history-comment.is-expanded
@@ -635,10 +638,9 @@ EXPANDED COMMENT
   overflow: visible;
 }
 
-/* =====================================================
-VIEW LESS
 
-Appears directly after the complete comment.
+/* =====================================================
+   VIEW LESS
 ===================================================== */
 
 .user-public-history-comment.is-expanded
@@ -668,8 +670,9 @@ Appears directly after the complete comment.
   text-decoration: none;
 }
 
+
 /* =====================================================
-VIEW MORE / VIEW LESS HOVER
+   VIEW MORE / VIEW LESS HOVER
 ===================================================== */
 
 .user-public-history-comment-toggle:hover {
@@ -690,8 +693,523 @@ VIEW MORE / VIEW LESS HOVER
   text-underline-offset: 3px;
 }
 
+
 /* =====================================================
-VIEW BUSINESS / PLACE BUTTON
+   REVIEW MEDIA GALLERY
+   ONLY 2 PREVIEWS ARE DISPLAYED BY JSX
+===================================================== */
+
+.public-review-media-gallery {
+  width: 100%;
+
+  margin-top: 18px;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 125px);
+
+  gap: 10px;
+
+  max-width: 260px;
+}
+
+
+/* =====================================================
+   REVIEW MEDIA ITEM
+===================================================== */
+
+.public-review-media-item {
+  position: relative;
+
+  width: 125px;
+  height: 125px;
+
+  padding: 0;
+  margin: 0;
+
+  overflow: hidden;
+
+  border-radius: 12px;
+
+  border: 1px solid #333333;
+
+  background: #0d0d0d;
+
+  color: #ffffff;
+
+  display: block;
+
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  box-sizing: border-box;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.public-review-media-item:hover {
+  transform: translateY(-2px);
+
+  border-color: #666666;
+}
+
+.public-review-media-item:focus {
+  outline: none;
+}
+
+.public-review-media-item:focus-visible {
+  outline: 2px solid #ffffff;
+
+  outline-offset: 3px;
+}
+
+
+/* =====================================================
+   REVIEW IMAGE
+===================================================== */
+
+.public-review-media-image {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  background: #0d0d0d;
+}
+
+
+/* =====================================================
+   REVIEW VIDEO
+===================================================== */
+
+.public-review-media-video {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  background: #000000;
+}
+
+
+/* =====================================================
+   + MORE OVERLAY
+===================================================== */
+
+.public-review-media-more-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background:
+    rgba(0, 0, 0, 0.62);
+
+  pointer-events: none;
+
+  transition:
+    background-color 0.2s ease;
+}
+
+.public-review-media-item:hover
+  .public-review-media-more-overlay {
+  background:
+    rgba(0, 0, 0, 0.72);
+}
+
+
+/* =====================================================
+   + MORE TEXT
+===================================================== */
+
+.public-review-media-more-count {
+  color: #ffffff;
+
+  font-size: 18px;
+
+  line-height: 1.2;
+
+  font-weight: 700;
+
+  text-align: center;
+
+  letter-spacing: 0.1px;
+
+  text-shadow:
+    0 2px 8px
+    rgba(0, 0, 0, 0.7);
+}
+
+
+/* =====================================================
+   REVIEW MEDIA MODAL
+===================================================== */
+
+.public-review-media-modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  width: 100%;
+  height: 100%;
+
+  padding: 24px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background:
+    rgba(0, 0, 0, 0.88);
+
+  animation:
+    publicReviewMediaModalFadeIn
+    0.2s ease;
+}
+
+
+/* =====================================================
+   MODAL CONTENT
+===================================================== */
+
+.public-review-media-modal-content {
+  position: relative;
+
+  width: min(
+    1000px,
+    100%
+  );
+
+  max-height: 90vh;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  background: #080808;
+
+  border: 1px solid #333333;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 20px 60px
+    rgba(0, 0, 0, 0.7);
+
+  animation:
+    publicReviewMediaModalScaleIn
+    0.2s ease;
+}
+
+
+/* =====================================================
+   MODAL MEDIA WRAPPER
+===================================================== */
+
+.public-review-media-modal-image-wrapper {
+  width: 100%;
+
+  height: 80vh;
+
+  min-height: 400px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 50px 70px;
+
+  box-sizing: border-box;
+
+  background: #000000;
+}
+
+
+/* =====================================================
+   MODAL IMAGE
+===================================================== */
+
+.public-review-media-modal-image {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+
+  background: #000000;
+
+  user-select: none;
+}
+
+
+/* =====================================================
+   MODAL VIDEO
+===================================================== */
+
+.public-review-media-modal-video {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
+
+  background: #000000;
+
+  user-select: none;
+}
+
+
+/* =====================================================
+   MODAL CLOSE BUTTON
+===================================================== */
+
+.public-review-media-modal-close {
+  position: absolute;
+
+  top: 14px;
+  right: 14px;
+
+  z-index: 30;
+
+  width: 42px;
+  height: 42px;
+
+  padding: 0;
+
+  border: 1px solid #444444;
+
+  border-radius: 50%;
+
+  background:
+    rgba(0, 0, 0, 0.78);
+
+  color: #ffffff;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 17px;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.public-review-media-modal-close:hover {
+  background: #ffffff;
+
+  color: #000000;
+
+  border-color: #ffffff;
+
+  transform: scale(1.05);
+}
+
+.public-review-media-modal-close:focus {
+  outline: none;
+}
+
+.public-review-media-modal-close:focus-visible {
+  outline: 2px solid #ffffff;
+
+  outline-offset: 3px;
+}
+
+
+/* =====================================================
+   MODAL PREVIOUS / NEXT BUTTONS
+===================================================== */
+
+.public-review-media-nav {
+  position: absolute;
+
+  top: 50%;
+
+  transform:
+    translateY(-50%);
+
+  z-index: 25;
+
+  width: 44px;
+  height: 44px;
+
+  padding: 0;
+
+  border: 1px solid #444444;
+
+  border-radius: 50%;
+
+  background:
+    rgba(0, 0, 0, 0.76);
+
+  color: #ffffff;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 17px;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.public-review-media-prev {
+  left: 14px;
+}
+
+.public-review-media-next {
+  right: 14px;
+}
+
+.public-review-media-nav:hover {
+  background: #ffffff;
+
+  color: #000000;
+
+  border-color: #ffffff;
+}
+
+.public-review-media-prev:hover {
+  transform:
+    translateY(-50%)
+    translateX(-2px);
+}
+
+.public-review-media-next:hover {
+  transform:
+    translateY(-50%)
+    translateX(2px);
+}
+
+.public-review-media-nav:focus {
+  outline: none;
+}
+
+.public-review-media-nav:focus-visible {
+  outline: 2px solid #ffffff;
+
+  outline-offset: 3px;
+}
+
+
+/* =====================================================
+   MEDIA COUNTER
+===================================================== */
+
+.public-review-media-counter {
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 14px;
+
+  z-index: 25;
+
+  transform:
+    translateX(-50%);
+
+  padding: 6px 12px;
+
+  border: 1px solid #333333;
+
+  border-radius: 20px;
+
+  background:
+    rgba(0, 0, 0, 0.78);
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  line-height: 1.2;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  user-select: none;
+}
+
+
+/* =====================================================
+   MEDIA MODAL ANIMATIONS
+===================================================== */
+
+@keyframes publicReviewMediaModalFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes publicReviewMediaModalScaleIn {
+  from {
+    opacity: 0;
+
+    transform:
+      scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      scale(1);
+  }
+}
+
+
+/* =====================================================
+   VIEW BUSINESS / PLACE BUTTON
 ===================================================== */
 
 .user-public-history-view-btn {
@@ -738,8 +1256,9 @@ VIEW BUSINESS / PLACE BUTTON
   transform: rotate(-90deg);
 }
 
+
 /* =====================================================
-LOAD MORE
+   LOAD MORE
 ===================================================== */
 
 .user-public-load-more-wrapper {
@@ -811,8 +1330,9 @@ LOAD MORE
   opacity: 0.65;
 }
 
+
 /* =====================================================
-LOADING
+   LOADING
 ===================================================== */
 
 .user-public-profile-loading {
@@ -849,8 +1369,9 @@ LOADING
   font-size: 14px;
 }
 
+
 /* =====================================================
-PROFILE ERROR
+   PROFILE ERROR
 ===================================================== */
 
 .user-public-profile-error {
@@ -929,8 +1450,9 @@ PROFILE ERROR
   border-color: #ffffff;
 }
 
+
 /* =====================================================
-ALL REVIEWS ERROR
+   ALL REVIEWS ERROR
 ===================================================== */
 
 .user-public-all-reviews-error {
@@ -987,8 +1509,9 @@ ALL REVIEWS ERROR
   border-color: #ffffff;
 }
 
+
 /* =====================================================
-NO REVIEWS
+   NO REVIEWS
 ===================================================== */
 
 .user-public-no-reviews {
@@ -1041,8 +1564,9 @@ NO REVIEWS
   line-height: 1.5;
 }
 
+
 /* =====================================================
-TABLET
+   TABLET
 ===================================================== */
 
 @media (max-width: 768px) {
@@ -1091,10 +1615,68 @@ TABLET
   .user-public-history-card {
     padding: 20px;
   }
+
+
+  /* ================================================
+     TABLET MEDIA
+  ================================================ */
+
+  .public-review-media-gallery {
+    margin-top: 15px;
+
+    grid-template-columns:
+      repeat(2, 120px);
+
+    gap: 9px;
+
+    max-width: 249px;
+  }
+
+  .public-review-media-item {
+    width: 120px;
+    height: 120px;
+
+    border-radius: 11px;
+  }
+
+  .public-review-media-modal {
+    padding: 20px;
+  }
+
+  .public-review-media-modal-content {
+    max-height: 88vh;
+
+    border-radius: 14px;
+  }
+
+  .public-review-media-modal-image-wrapper {
+    height: 76vh;
+
+    min-height: 350px;
+
+    padding: 45px 60px;
+  }
+
+  .public-review-media-nav {
+    width: 42px;
+    height: 42px;
+
+    font-size: 16px;
+  }
+
+  .public-review-media-prev {
+    left: 12px;
+  }
+
+  .public-review-media-next {
+    right: 12px;
+  }
+
 }
 
+
 /* =====================================================
-MOBILE
+   MOBILE
 ===================================================== */
 
 @media (max-width: 520px) {
@@ -1255,6 +1837,7 @@ MOBILE
     font-size: 16px;
   }
 
+
   /* ================================================
      MOBILE COMMENT
   ================================================ */
@@ -1299,6 +1882,100 @@ MOBILE
     margin-left: 4px;
   }
 
+
+  /* ================================================
+     MOBILE REVIEW MEDIA
+  ================================================ */
+
+  .public-review-media-gallery {
+    margin-top: 15px;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 8px;
+
+    max-width: 100%;
+  }
+
+  .public-review-media-item {
+    width: 100%;
+    height: auto;
+
+    aspect-ratio: 1 / 1;
+
+    border-radius: 10px;
+  }
+
+  .public-review-media-more-count {
+    font-size: 16px;
+  }
+
+
+  /* ================================================
+     MOBILE MEDIA MODAL
+  ================================================ */
+
+  .public-review-media-modal {
+    padding: 12px;
+  }
+
+  .public-review-media-modal-content {
+    width: 100%;
+
+    max-height: 92vh;
+
+    border-radius: 13px;
+  }
+
+  .public-review-media-modal-image-wrapper {
+    width: 100%;
+
+    height: 76vh;
+
+    min-height: 280px;
+
+    padding: 48px 48px 52px;
+  }
+
+  .public-review-media-modal-close {
+    top: 10px;
+    right: 10px;
+
+    width: 38px;
+    height: 38px;
+
+    font-size: 15px;
+  }
+
+  .public-review-media-nav {
+    width: 38px;
+    height: 38px;
+
+    font-size: 14px;
+  }
+
+  .public-review-media-prev {
+    left: 9px;
+  }
+
+  .public-review-media-next {
+    right: 9px;
+  }
+
+  .public-review-media-counter {
+    bottom: 10px;
+
+    padding: 5px 10px;
+
+    font-size: 12px;
+  }
+
+
+  /* ================================================
+     MOBILE BUSINESS BUTTON
+  ================================================ */
+
   .user-public-history-view-btn {
     width: 100%;
 
@@ -1306,6 +1983,11 @@ MOBILE
 
     padding: 10px 18px;
   }
+
+
+  /* ================================================
+     LOAD MORE
+  ================================================ */
 
   .user-public-load-more-wrapper {
     margin: 24px 0 32px;
@@ -1322,10 +2004,12 @@ MOBILE
 
     font-size: 14px;
   }
+
 }
 
+
 /* =====================================================
-VERY SMALL MOBILE
+   VERY SMALL MOBILE
 ===================================================== */
 
 @media (max-width: 360px) {
@@ -1416,4 +2100,63 @@ VERY SMALL MOBILE
 
     margin-left: 4px;
   }
+
+
+  /* ================================================
+     VERY SMALL MOBILE MEDIA
+  ================================================ */
+
+  .public-review-media-gallery {
+    gap: 7px;
+  }
+
+  .public-review-media-item {
+    border-radius: 8px;
+  }
+
+  .public-review-media-more-count {
+    font-size: 14px;
+  }
+
+  .public-review-media-modal {
+    padding: 8px;
+  }
+
+  .public-review-media-modal-content {
+    border-radius: 10px;
+  }
+
+  .public-review-media-modal-image-wrapper {
+    height: 78vh;
+
+    min-height: 250px;
+
+    padding: 46px 42px 50px;
+  }
+
+  .public-review-media-modal-close {
+    width: 34px;
+    height: 34px;
+
+    top: 8px;
+    right: 8px;
+
+    font-size: 13px;
+  }
+
+  .public-review-media-nav {
+    width: 34px;
+    height: 34px;
+
+    font-size: 12px;
+  }
+
+  .public-review-media-prev {
+    left: 7px;
+  }
+
+  .public-review-media-next {
+    right: 7px;
+  }
+
 }

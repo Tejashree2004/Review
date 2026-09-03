@@ -24,6 +24,8 @@ import {
   FaChevronRight,
   FaEdit,
   FaStore,
+  FaTimes,
+  FaChevronLeft,
 } from "react-icons/fa";
 
 import "../styles/OwnerPublicProfile.css";
@@ -60,50 +62,42 @@ const SAMPLE_PHOTOS = [
 function OwnerPublicProfile() {
   const navigate = useNavigate();
 
-  const {
-    businessId: routeBusinessId,
-  } = useParams();
+  const { businessId: routeBusinessId } = useParams();
 
-  const [business, setBusiness] =
-    useState(null);
-
-  const [photos, setPhotos] =
-    useState([]);
-
-  const [reviews, setReviews] =
-    useState([]);
-
-  const [reviewsLoading, setReviewsLoading] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
+  const [business, setBusiness] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // =====================================================
   // REVIEW SUMMARY
   // =====================================================
 
-  const [reviewSummary, setReviewSummary] =
-    useState({
-      averageRating: 0,
-      totalReviews: 0,
-    });
+  const [reviewSummary, setReviewSummary] = useState({
+    averageRating: 0,
+    totalReviews: 0,
+  });
 
   // =====================================================
   // REVIEW EXPANSION
   // =====================================================
 
-  const [expandedReviews, setExpandedReviews] =
-    useState({});
+  const [expandedReviews, setExpandedReviews] = useState({});
+  const [reviewMoreStates, setReviewMoreStates] = useState({});
 
-  const [reviewMoreStates, setReviewMoreStates] =
-    useState({});
+  const reviewCommentRefs = useRef({});
 
-  const reviewCommentRefs =
-    useRef({});
+  // =====================================================
+  // REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const [selectedReviewMedia, setSelectedReviewMedia] =
+    useState(null);
+
+  const [selectedMediaIndex, setSelectedMediaIndex] =
+    useState(0);
 
   // =====================================================
   // TOKEN
@@ -135,17 +129,12 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const normalizeNumber = (value) => {
-    if (
-      value === null ||
-      value === undefined
-    ) {
+    if (value === null || value === undefined) {
       return null;
     }
 
     if (typeof value === "number") {
-      return Number.isFinite(value)
-        ? value
-        : null;
+      return Number.isFinite(value) ? value : null;
     }
 
     if (typeof value === "string") {
@@ -155,10 +144,7 @@ function OwnerPublicProfile() {
         return null;
       }
 
-      const match =
-        cleaned.match(
-          /(\d+(?:\.\d+)?)/
-        );
+      const match = cleaned.match(/(\d+(?:\.\d+)?)/);
 
       if (!match) {
         return null;
@@ -166,9 +152,7 @@ function OwnerPublicProfile() {
 
       const parsed = Number(match[1]);
 
-      return Number.isFinite(parsed)
-        ? parsed
-        : null;
+      return Number.isFinite(parsed) ? parsed : null;
     }
 
     return null;
@@ -179,10 +163,7 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const getReviewRating = (review) => {
-    if (
-      !review ||
-      typeof review !== "object"
-    ) {
+    if (!review || typeof review !== "object") {
       return 0;
     }
 
@@ -198,8 +179,7 @@ function OwnerPublicProfile() {
     ];
 
     for (const value of values) {
-      const parsed =
-        normalizeNumber(value);
+      const parsed = normalizeNumber(value);
 
       if (
         parsed !== null &&
@@ -214,364 +194,526 @@ function OwnerPublicProfile() {
   };
 
   // =====================================================
+  // REVIEW MEDIA
+  // =====================================================
+
+  const getReviewMedia = (review) => {
+    const media =
+      review?.media ??
+      review?.Media ??
+      [];
+
+    return Array.isArray(media) ? media : [];
+  };
+
+  // =====================================================
+  // REVIEW MEDIA URL
+  // =====================================================
+
+  const getMediaUrl = (mediaUrl) => {
+    if (!mediaUrl) {
+      return "";
+    }
+
+    const cleanUrl = String(mediaUrl).trim();
+
+    if (!cleanUrl) {
+      return "";
+    }
+
+    if (
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://")
+    ) {
+      return cleanUrl;
+    }
+
+    return `http://localhost:5213${
+      cleanUrl.startsWith("/")
+        ? cleanUrl
+        : `/${cleanUrl}`
+    }`;
+  };
+
+  // =====================================================
+  // CHECK REVIEW VIDEO
+  // =====================================================
+
+  const isVideoMedia = (media) => {
+    const mediaType = (
+      media?.mediaType ??
+      media?.MediaType ??
+      ""
+    )
+      .toString()
+      .toLowerCase()
+      .trim();
+
+    const mediaUrl = (
+      media?.mediaUrl ??
+      media?.MediaUrl ??
+      ""
+    )
+      .toString()
+      .toLowerCase()
+      .split("?")[0];
+
+    return (
+      mediaType.includes("video") ||
+      mediaType === ".mp4" ||
+      mediaType === ".webm" ||
+      mediaType === ".mov" ||
+      mediaType === ".avi" ||
+      mediaType === ".m4v" ||
+      mediaUrl.endsWith(".mp4") ||
+      mediaUrl.endsWith(".webm") ||
+      mediaUrl.endsWith(".mov") ||
+      mediaUrl.endsWith(".avi") ||
+      mediaUrl.endsWith(".m4v")
+    );
+  };
+
+  // =====================================================
+  // OPEN REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const openReviewMediaViewer = (
+    mediaList,
+    startIndex = 0
+  ) => {
+    if (
+      !Array.isArray(mediaList) ||
+      mediaList.length === 0
+    ) {
+      return;
+    }
+
+    setSelectedReviewMedia(mediaList);
+    setSelectedMediaIndex(startIndex);
+  };
+
+  // =====================================================
+  // CLOSE REVIEW MEDIA VIEWER
+  // =====================================================
+
+  const closeReviewMediaViewer = () => {
+    setSelectedReviewMedia(null);
+    setSelectedMediaIndex(0);
+  };
+
+  // =====================================================
+  // NEXT MEDIA
+  // =====================================================
+
+  const showNextMedia = () => {
+    if (!selectedReviewMedia?.length) {
+      return;
+    }
+
+    setSelectedMediaIndex(
+      (previous) =>
+        (previous + 1) %
+        selectedReviewMedia.length
+    );
+  };
+
+  // =====================================================
+  // PREVIOUS MEDIA
+  // =====================================================
+
+  const showPreviousMedia = () => {
+    if (!selectedReviewMedia?.length) {
+      return;
+    }
+
+    setSelectedMediaIndex(
+      (previous) =>
+        previous === 0
+          ? selectedReviewMedia.length - 1
+          : previous - 1
+    );
+  };
+
+  // =====================================================
+  // KEYBOARD CONTROLS
+  // =====================================================
+
+  useEffect(() => {
+    if (!selectedReviewMedia) {
+      return;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeReviewMediaViewer();
+      }
+
+      if (event.key === "ArrowRight") {
+        showNextMedia();
+      }
+
+      if (event.key === "ArrowLeft") {
+        showPreviousMedia();
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        previousOverflow;
+    };
+  }, [selectedReviewMedia]);
+
+  // =====================================================
   // LOAD SELECTED BUSINESS
   // =====================================================
 
   useEffect(() => {
-    const loadPublicProfile =
-      async () => {
-        try {
-          setLoading(true);
-          setError("");
+    const loadPublicProfile = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-          const token = getToken();
+        const token = getToken();
 
-          if (!token) {
-            setError(
-              "Please login again."
+        if (!token) {
+          setError("Please login again.");
+          return;
+        }
+
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+
+        let ownerBusiness = null;
+
+        // =================================================
+        // SELECTED BUSINESS
+        // =================================================
+
+        if (routeBusinessId) {
+          const businessResponse =
+            await axios.get(
+              `${API_BASE}/owner/business/${routeBusinessId}`,
+              config
             );
-            return;
-          }
 
-          const config = {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          };
+          ownerBusiness =
+            getResponseData(
+              businessResponse
+            );
+        }
 
-          let ownerBusiness = null;
+        // =================================================
+        // OLD ROUTE
+        // =================================================
 
-          // ===============================================
-          // SELECTED BUSINESS
-          // ===============================================
+        else {
+          const businessResponse =
+            await axios.get(
+              `${API_BASE}/owner/business`,
+              config
+            );
 
-          if (routeBusinessId) {
-            const businessResponse =
-              await axios.get(
-                `${API_BASE}/owner/business/${routeBusinessId}`,
-                config
-              );
+          const businessData =
+            getResponseData(
+              businessResponse
+            );
 
-            ownerBusiness =
-              getResponseData(
-                businessResponse
-              );
-          }
+          ownerBusiness =
+            Array.isArray(businessData)
+              ? businessData[0]
+              : businessData;
+        }
 
-          // ===============================================
-          // OLD ROUTE
-          // ===============================================
+        // =================================================
+        // NO BUSINESS
+        // =================================================
 
-          else {
-            const businessResponse =
-              await axios.get(
-                `${API_BASE}/owner/business`,
-                config
-              );
+        if (!ownerBusiness) {
+          setBusiness(null);
+          setPhotos([]);
+          setReviews([]);
 
-            const businessData =
-              getResponseData(
-                businessResponse
-              );
+          setReviewSummary({
+            averageRating: 0,
+            totalReviews: 0,
+          });
 
-            ownerBusiness =
-              Array.isArray(
-                businessData
-              )
-                ? businessData[0]
-                : businessData;
-          }
+          return;
+        }
 
-          // ===============================================
-          // NO BUSINESS
-          // ===============================================
+        console.log(
+          "SELECTED OWNER BUSINESS:",
+          ownerBusiness
+        );
 
-          if (!ownerBusiness) {
-            setBusiness(null);
-            setPhotos([]);
-            setReviews([]);
+        setBusiness(ownerBusiness);
 
-            setReviewSummary({
-              averageRating: 0,
-              totalReviews: 0,
-            });
+        const businessId =
+          ownerBusiness?.businessId ??
+          ownerBusiness?.BusinessId ??
+          ownerBusiness?.id ??
+          ownerBusiness?.Id;
 
-            return;
+        if (!businessId) {
+          setError("Business ID not found.");
+          return;
+        }
+
+        // =================================================
+        // PHOTOS
+        // =================================================
+
+        try {
+          const photoResponse =
+            await axios.get(
+              `${API_BASE}/owner/photos/business/${businessId}`,
+              config
+            );
+
+          const data =
+            getResponseData(
+              photoResponse
+            );
+
+          setPhotos(
+            Array.isArray(data)
+              ? data
+              : []
+          );
+        } catch (photoError) {
+          console.error(
+            "Business photos loading error:",
+            photoError
+          );
+
+          setPhotos([]);
+        }
+
+        // =================================================
+        // REVIEWS
+        // =================================================
+
+        try {
+          setReviewsLoading(true);
+
+          const reviewResponse =
+            await axios.get(
+              `${API_BASE}/Review/business/${businessId}`,
+              {
+                ...config,
+                params: {
+                  page: 1,
+                  pageSize: 3,
+                },
+              }
+            );
+
+          console.log(
+            "BUSINESS REVIEWS API RESPONSE:",
+            reviewResponse.data
+          );
+
+          const reviewData =
+            getResponseData(
+              reviewResponse
+            );
+
+          // =================================================
+          // REVIEW LIST
+          // =================================================
+
+          let reviewList = [];
+
+          if (Array.isArray(reviewData)) {
+            reviewList = reviewData;
+          } else if (
+            Array.isArray(
+              reviewData?.reviews
+            )
+          ) {
+            reviewList =
+              reviewData.reviews;
+          } else if (
+            Array.isArray(
+              reviewData?.Reviews
+            )
+          ) {
+            reviewList =
+              reviewData.Reviews;
+          } else if (
+            Array.isArray(
+              reviewData?.items
+            )
+          ) {
+            reviewList =
+              reviewData.items;
+          } else if (
+            Array.isArray(
+              reviewData?.Items
+            )
+          ) {
+            reviewList =
+              reviewData.Items;
           }
 
           console.log(
-            "SELECTED OWNER BUSINESS:",
-            ownerBusiness
+            "BUSINESS REVIEWS:",
+            reviewList
           );
 
-          setBusiness(
-            ownerBusiness
+          // =================================================
+          // CHECK MEDIA
+          // =================================================
+
+          reviewList.forEach(
+            (review, index) => {
+              console.log(
+                `REVIEW ${index + 1} MEDIA:`,
+                getReviewMedia(review)
+              );
+            }
           );
 
-          const businessId =
-            ownerBusiness?.businessId ??
-            ownerBusiness?.BusinessId ??
-            ownerBusiness?.id ??
-            ownerBusiness?.Id;
+          // =================================================
+          // REVIEW API AVERAGE
+          // =================================================
 
-          if (!businessId) {
-            setError(
-              "Business ID not found."
-            );
-            return;
-          }
+          const apiAverageRating =
+            normalizeNumber(
+              reviewData?.averageRating ??
+              reviewData?.AverageRating
+            ) ?? 0;
 
-          // ===============================================
-          // PHOTOS
-          // ===============================================
+          // =================================================
+          // TOTAL REVIEW COUNT
+          // =================================================
 
-          try {
-            const photoResponse =
-              await axios.get(
-                `${API_BASE}/owner/photos/business/${businessId}`,
-                config
-              );
-
-            const data =
-              getResponseData(
-                photoResponse
-              );
-
-            setPhotos(
-              Array.isArray(data)
-                ? data
-                : []
-            );
-          } catch (photoError) {
-            console.error(
-              "Business photos loading error:",
-              photoError
+          const totalReviewsValue =
+            normalizeNumber(
+              reviewData?.totalReviews ??
+              reviewData?.TotalReviews ??
+              reviewData?.reviewCount ??
+              reviewData?.ReviewCount ??
+              reviewData?.total ??
+              reviewData?.Total ??
+              reviewData?.totalCount ??
+              reviewData?.TotalCount ??
+              ownerBusiness?.reviewCount ??
+              ownerBusiness?.ReviewCount
             );
 
-            setPhotos([]);
-          }
+          const totalReviews =
+            totalReviewsValue !== null
+              ? totalReviewsValue
+              : reviewList.length;
 
-          // ===============================================
-          // REVIEWS
-          // ===============================================
+          // =================================================
+          // SAVE REVIEW SUMMARY
+          // =================================================
 
-          try {
-            setReviewsLoading(true);
+          setReviewSummary({
+            averageRating:
+              apiAverageRating,
+            totalReviews:
+              totalReviews,
+          });
 
-            const reviewResponse =
-              await axios.get(
-                `${API_BASE}/Review/business/${businessId}`,
-                {
-                  ...config,
-                  params: {
-                    page: 1,
-                    pageSize: 3,
-                  },
-                }
-              );
+          // =================================================
+          // UPDATE BUSINESS REVIEW COUNT
+          // =================================================
 
-            console.log(
-              "BUSINESS REVIEWS API RESPONSE:",
-              reviewResponse.data
-            );
-
-            const reviewData =
-              getResponseData(
-                reviewResponse
-              );
-
-            // =============================================
-            // REVIEW LIST
-            // =============================================
-
-            let reviewList = [];
-
-            if (
-              Array.isArray(
-                reviewData
-              )
-            ) {
-              reviewList =
-                reviewData;
-            } else if (
-              Array.isArray(
-                reviewData?.reviews
-              )
-            ) {
-              reviewList =
-                reviewData.reviews;
-            } else if (
-              Array.isArray(
-                reviewData?.Reviews
-              )
-            ) {
-              reviewList =
-                reviewData.Reviews;
-            } else if (
-              Array.isArray(
-                reviewData?.items
-              )
-            ) {
-              reviewList =
-                reviewData.items;
-            } else if (
-              Array.isArray(
-                reviewData?.Items
-              )
-            ) {
-              reviewList =
-                reviewData.Items;
+          setBusiness((previous) => {
+            if (!previous) {
+              return previous;
             }
 
-            console.log(
-              "BUSINESS REVIEWS:",
-              reviewList
-            );
-
-            // =============================================
-            // REVIEW API AVERAGE
-            //
-            // IMPORTANT:
-            // ReviewService calculates AverageRating
-            // using ALL reviews before pagination.
-            // Therefore this value is the actual
-            // business average, even though only
-            // first 3 reviews are displayed.
-            // =============================================
-
-            const apiAverageRating =
-              normalizeNumber(
-                reviewData?.averageRating ??
-                reviewData?.AverageRating
-              ) ?? 0;
-
-            // =============================================
-            // TOTAL REVIEW COUNT
-            // =============================================
-
-            const totalReviewsValue =
-              normalizeNumber(
-                reviewData?.totalReviews ??
-                reviewData?.TotalReviews ??
-                reviewData?.reviewCount ??
-                reviewData?.ReviewCount ??
-                reviewData?.total ??
-                reviewData?.Total ??
-                reviewData?.totalCount ??
-                reviewData?.TotalCount ??
-                ownerBusiness?.reviewCount ??
-                ownerBusiness?.ReviewCount
-              );
-
-            const totalReviews =
-              totalReviewsValue !== null
-                ? totalReviewsValue
-                : reviewList.length;
-
-            console.log(
-              "TOTAL BUSINESS REVIEWS:",
-              totalReviews
-            );
-
-            console.log(
-              "BUSINESS AVERAGE FROM REVIEW API:",
-              apiAverageRating
-            );
-
-            // =============================================
-            // SAVE REVIEW SUMMARY
-            // =============================================
-
-            setReviewSummary({
-              averageRating:
-                apiAverageRating,
-              totalReviews:
+            return {
+              ...previous,
+              reviewCount:
                 totalReviews,
-            });
+              ReviewCount:
+                totalReviews,
+            };
+          });
 
-            // =============================================
-            // UPDATE BUSINESS REVIEW COUNT LOCALLY
-            //
-            // Do NOT overwrite the business rating here.
-            // The review API is now the source of truth
-            // for the displayed average rating.
-            // =============================================
+          // =================================================
+          // ONLY FIRST 3 REVIEWS
+          // =================================================
 
-            setBusiness((previous) => {
-              if (!previous) {
-                return previous;
-              }
-
-              return {
-                ...previous,
-                reviewCount:
-                  totalReviews,
-                ReviewCount:
-                  totalReviews,
-              };
-            });
-
-            // =============================================
-            // ONLY FIRST 3 REVIEWS DISPLAYED
-            // =============================================
-
-            setReviews(
-              reviewList.slice(0, 3)
-            );
-          } catch (reviewError) {
-            console.error(
-              "Business reviews loading error:",
-              reviewError
-            );
-
-            setReviews([]);
-
-            setReviewSummary({
-              averageRating: 0,
-              totalReviews: 0,
-            });
-          } finally {
-            setReviewsLoading(false);
-          }
-        } catch (err) {
+          setReviews(
+            reviewList.slice(0, 3)
+          );
+        } catch (reviewError) {
           console.error(
-            "Public profile loading error:",
-            err
+            "Business reviews loading error:",
+            reviewError
           );
 
-          if (
-            err.response?.status === 401
-          ) {
-            setError(
-              "Your session has expired. Please login again."
-            );
-          } else if (
-            err.response?.status === 404
-          ) {
-            setBusiness(null);
-            setPhotos([]);
-            setReviews([]);
+          setReviews([]);
 
-            setReviewSummary({
-              averageRating: 0,
-              totalReviews: 0,
-            });
-          } else {
-            setError(
-              "Unable to load business profile."
-            );
-          }
+          setReviewSummary({
+            averageRating: 0,
+            totalReviews: 0,
+          });
         } finally {
-          setLoading(false);
+          setReviewsLoading(false);
         }
-      };
+      } catch (err) {
+        console.error(
+          "Public profile loading error:",
+          err
+        );
+
+        if (
+          err.response?.status === 401
+        ) {
+          setError(
+            "Your session has expired. Please login again."
+          );
+        } else if (
+          err.response?.status === 404
+        ) {
+          setBusiness(null);
+          setPhotos([]);
+          setReviews([]);
+
+          setReviewSummary({
+            averageRating: 0,
+            totalReviews: 0,
+          });
+        } else {
+          setError(
+            "Unable to load business profile."
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
     loadPublicProfile();
   }, [routeBusinessId]);
 
   // =====================================================
-  // CHECK WHICH REVIEWS ACTUALLY NEED VIEW MORE
+  // CHECK WHICH REVIEWS NEED VIEW MORE
   // =====================================================
 
   useEffect(() => {
@@ -711,11 +853,6 @@ function OwnerPublicProfile() {
 
   // =====================================================
   // RATING
-  //
-  // IMPORTANT:
-  // Review API AverageRating is the PRIMARY source.
-  // Business.Rating may contain an old/stale value,
-  // so it must NOT override the current review average.
   // =====================================================
 
   const ratedReviews =
@@ -746,15 +883,6 @@ function OwnerPublicProfile() {
     normalizeNumber(
       reviewSummary?.averageRating
     ) ?? 0;
-
-  // =====================================================
-  // FINAL RATING
-  //
-  // Priority:
-  // 1. Review API AverageRating
-  // 2. Business backend rating
-  // 3. Calculated rating from loaded reviews
-  // =====================================================
 
   const rating =
     reviewApiRating > 0
@@ -798,30 +926,26 @@ function OwnerPublicProfile() {
 
   const uploadedPhotos =
     photos
-      .map(
-        (photo, index) => {
-          const url =
-            getPhotoUrl(photo);
+      .map((photo, index) => {
+        const url =
+          getPhotoUrl(photo);
 
-          if (!url) {
-            return null;
-          }
-
-          return {
-            id:
-              photo?.businessPhotoId ??
-              photo?.BusinessPhotoId ??
-              `uploaded-${index}`,
-
-            url,
-
-            alt:
-              photo?.caption ??
-              photo?.Caption ??
-              `${businessName} photo`,
-          };
+        if (!url) {
+          return null;
         }
-      )
+
+        return {
+          id:
+            photo?.businessPhotoId ??
+            photo?.BusinessPhotoId ??
+            `uploaded-${index}`,
+          url,
+          alt:
+            photo?.caption ??
+            photo?.Caption ??
+            `${businessName} photo`,
+        };
+      })
       .filter(Boolean);
 
   const displayPhotos = [
@@ -837,20 +961,12 @@ function OwnerPublicProfile() {
   // REVIEW USER NAME
   // =====================================================
 
-  const getReviewUserName = (
-    review
-  ) => {
-    if (
-      typeof review?.User ===
-      "string"
-    ) {
+  const getReviewUserName = (review) => {
+    if (typeof review?.User === "string") {
       return review.User;
     }
 
-    if (
-      typeof review?.user ===
-      "string"
-    ) {
+    if (typeof review?.user === "string") {
       return review.user;
     }
 
@@ -871,9 +987,7 @@ function OwnerPublicProfile() {
   // REVIEW USER ID
   // =====================================================
 
-  const getReviewUserId = (
-    review
-  ) => {
+  const getReviewUserId = (review) => {
     return (
       review?.userId ??
       review?.UserId ??
@@ -925,20 +1039,7 @@ function OwnerPublicProfile() {
         index
       );
 
-    console.log(
-      "CLICKED REVIEW USER:",
-      {
-        userId,
-        reviewId,
-        review,
-      }
-    );
-
     if (!userId) {
-      console.warn(
-        "Reviewer UserId not found:",
-        review
-      );
       return;
     }
 
@@ -946,10 +1047,6 @@ function OwnerPublicProfile() {
       reviewId === null ||
       reviewId === undefined
     ) {
-      console.warn(
-        "ReviewId not found:",
-        review
-      );
       return;
     }
 
@@ -962,31 +1059,26 @@ function OwnerPublicProfile() {
   // REVIEW COMMENT
   // =====================================================
 
-  const getReviewComment =
-    (review) =>
-      review?.comment ??
-      review?.Comment ??
-      "";
+  const getReviewComment = (review) =>
+    review?.comment ??
+    review?.Comment ??
+    "";
 
   // =====================================================
   // REVIEW DATE
   // =====================================================
 
-  const getReviewDate =
-    (review) =>
-      review?.createdAt ??
-      review?.CreatedAt ??
-      null;
+  const getReviewDate = (review) =>
+    review?.createdAt ??
+    review?.CreatedAt ??
+    null;
 
-  const formatReviewDate = (
-    date
-  ) => {
+  const formatReviewDate = (date) => {
     if (!date) {
       return "";
     }
 
-    const parsed =
-      new Date(date);
+    const parsed = new Date(date);
 
     if (
       Number.isNaN(
@@ -1074,9 +1166,7 @@ function OwnerPublicProfile() {
         `/owner/reviews/business/${businessId}`
       );
     } else {
-      navigate(
-        "/owner/reviews"
-      );
+      navigate("/owner/reviews");
     }
   };
 
@@ -1086,9 +1176,7 @@ function OwnerPublicProfile() {
         `/owner/business/${businessId}`
       );
     } else {
-      navigate(
-        "/owner/business"
-      );
+      navigate("/owner/business");
     }
   };
 
@@ -1132,9 +1220,7 @@ function OwnerPublicProfile() {
           </button>
 
           <div className="public-header-title">
-            <span>
-              REVIO
-            </span>
+            <span>REVIO</span>
 
             <h1>
               Public Profile
@@ -1188,9 +1274,7 @@ function OwnerPublicProfile() {
           </button>
 
           <div className="public-header-title">
-            <span>
-              REVIO
-            </span>
+            <span>REVIO</span>
 
             <h1>
               Public Profile
@@ -1227,6 +1311,32 @@ function OwnerPublicProfile() {
   }
 
   // =====================================================
+  // CURRENT MODAL MEDIA
+  // =====================================================
+
+  const currentMedia =
+    selectedReviewMedia?.[
+      selectedMediaIndex
+    ];
+
+  const currentMediaUrl =
+    currentMedia
+      ? getMediaUrl(
+          currentMedia?.resolvedUrl ??
+          currentMedia?.mediaUrl ??
+          currentMedia?.MediaUrl ??
+          ""
+        )
+      : "";
+
+  const currentMediaIsVideo =
+    currentMedia
+      ? isVideoMedia(
+          currentMedia
+        )
+      : false;
+
+  // =====================================================
   // UI
   // =====================================================
 
@@ -1250,9 +1360,7 @@ function OwnerPublicProfile() {
         </button>
 
         <div className="public-header-title">
-          <span>
-            REVIO
-          </span>
+          <span>REVIO</span>
 
           <h1>
             Public Profile
@@ -1304,36 +1412,21 @@ function OwnerPublicProfile() {
             <div className="public-rating">
               <FaStar />
 
-              {rating > 0 ? (
-                <>
-                  <strong>
-                    {rating.toFixed(1)}
-                  </strong>
+              <strong>
+                {rating > 0
+                  ? rating.toFixed(1)
+                  : "New"}
+              </strong>
 
-                  <span>
-                    ({reviewCount}{" "}
-                    {reviewCount === 1
-                      ? "Review"
-                      : "Reviews"}
-                    )
-                  </span>
-                </>
-              ) : (
-                <>
-                  <strong>
-                    New
-                  </strong>
-
-                  <span>
-                    ({reviewCount}{" "}
-                    {reviewCount === 1
-                      ? "Review"
-                      : "Reviews"}
-                    )
-                  </span>
-                </>
-              )}
+              <span>
+                ({reviewCount}{" "}
+                {reviewCount === 1
+                  ? "Review"
+                  : "Reviews"}
+                )
+              </span>
             </div>
+
           </div>
 
           {(address || city) && (
@@ -1384,9 +1477,7 @@ function OwnerPublicProfile() {
             <a
               className="public-info-item public-website"
               href={
-                website.startsWith(
-                  "http"
-                )
+                website.startsWith("http")
                   ? website
                   : `https://${website}`
               }
@@ -1399,9 +1490,7 @@ function OwnerPublicProfile() {
                 {website}
               </span>
 
-              <FaChevronRight
-                className="website-arrow"
-              />
+              <FaChevronRight className="website-arrow" />
             </a>
           )}
         </section>
@@ -1426,14 +1515,12 @@ function OwnerPublicProfile() {
 
         <section className="public-section public-photos-section">
           <div className="public-section-title">
-
             <h3>
               Photos
             </h3>
 
             <span>
-              {displayPhotos.length}{" "}
-              Photos
+              {displayPhotos.length} Photos
             </span>
           </div>
 
@@ -1496,6 +1583,7 @@ function OwnerPublicProfile() {
             >
               View All
             </button>
+
           </div>
 
           {/* =================================================
@@ -1511,9 +1599,8 @@ function OwnerPublicProfile() {
               </p>
             </div>
           ) : reviews.length > 0 ? (
-            <div className="public-review-list">
 
-              {/* Only preview first 3 reviews here. */}
+            <div className="public-review-list">
 
               {reviews
                 .slice(0, 3)
@@ -1522,6 +1609,7 @@ function OwnerPublicProfile() {
                     review,
                     index
                   ) => {
+
                     const reviewRating =
                       getReviewRating(
                         review
@@ -1553,6 +1641,66 @@ function OwnerPublicProfile() {
                         review
                       );
 
+                    // =================================================
+                    // ALL REVIEW MEDIA
+                    // =================================================
+
+                    const reviewMedia =
+                      getReviewMedia(
+                        review
+                      );
+
+                    // =================================================
+                    // ONLY MEDIA WITH VALID URL
+                    // =================================================
+
+                    const validReviewMedia =
+                      reviewMedia
+                        .map(
+                          (
+                            media,
+                            mediaIndex
+                          ) => ({
+                            ...media,
+
+                            mediaIndex,
+
+                            resolvedUrl:
+                              getMediaUrl(
+                                media?.mediaUrl ??
+                                media?.MediaUrl ??
+                                ""
+                              ),
+                          })
+                        )
+                        .filter(
+                          (
+                            media
+                          ) =>
+                            media.resolvedUrl
+                        );
+
+                    // =================================================
+                    // ONLY FIRST 2 MEDIA FOR PREVIEW
+                    // =================================================
+
+                    const visibleMedia =
+                      validReviewMedia.slice(
+                        0,
+                        2
+                      );
+
+                    // =================================================
+                    // HOW MANY MEDIA REMAIN
+                    // =================================================
+
+                    const remainingMediaCount =
+                      Math.max(
+                        validReviewMedia.length -
+                          2,
+                        0
+                      );
+
                     const isExpanded =
                       Boolean(
                         expandedReviews[
@@ -1570,9 +1718,7 @@ function OwnerPublicProfile() {
                     return (
                       <article
                         className="public-review-card"
-                        key={
-                          reviewId
-                        }
+                        key={reviewId}
                       >
 
                         {/* =================================================
@@ -1580,8 +1726,6 @@ function OwnerPublicProfile() {
                         ================================================= */}
 
                         <div className="public-review-top">
-
-                          {/* PROFILE AVATAR */}
 
                           <button
                             type="button"
@@ -1592,25 +1736,14 @@ function OwnerPublicProfile() {
                                 index
                               )
                             }
-                            title={
-                              userId
-                                ? `View ${userName}'s profile`
-                                : "Reviewer profile unavailable"
-                            }
-                            disabled={
-                              !userId
-                            }
+                            disabled={!userId}
                           >
                             <span>
                               {userName
-                                .charAt(
-                                  0
-                                )
+                                .charAt(0)
                                 .toUpperCase()}
                             </span>
                           </button>
-
-                          {/* REVIEWER NAME + DATE */}
 
                           <button
                             type="button"
@@ -1621,14 +1754,7 @@ function OwnerPublicProfile() {
                                 index
                               )
                             }
-                            disabled={
-                              !userId
-                            }
-                            title={
-                              userId
-                                ? `View ${userName}'s profile`
-                                : "Reviewer profile unavailable"
-                            }
+                            disabled={!userId}
                           >
                             <strong>
                               {userName}
@@ -1643,29 +1769,26 @@ function OwnerPublicProfile() {
                             )}
                           </button>
 
-                          {/* RATING */}
-
                           <div className="public-review-rating">
                             {renderStars(
                               reviewRating
                             )}
                           </div>
+
                         </div>
 
                         {/* =================================================
-                            ACTUAL SUBMITTED RATING
+                            RATING VALUE
                         ================================================= */}
 
                         {reviewRating > 0 && (
-                          <div
-                            className="public-review-rating-value"
-                          >
+                          <div className="public-review-rating-value">
                             {reviewRating}/5
                           </div>
                         )}
 
                         {/* =================================================
-                            ACTUAL SUBMITTED COMMENT
+                            COMMENT
                         ================================================= */}
 
                         {comment && (
@@ -1686,10 +1809,6 @@ function OwnerPublicProfile() {
                               "{comment}"
                             </p>
 
-                            {/* View More appears ONLY
-                                when comment is actually
-                                longer than 2 lines. */}
-
                             {showViewMore && (
                               <button
                                 type="button"
@@ -1705,6 +1824,93 @@ function OwnerPublicProfile() {
                                   : "View more"}
                               </button>
                             )}
+
+                          </div>
+                        )}
+
+                        {/* =================================================
+                            REVIEW MEDIA PREVIEW
+
+                            IMPORTANT:
+                            ONLY 2 MEDIA ARE RENDERED HERE.
+                        ================================================= */}
+
+                        {validReviewMedia.length > 0 && (
+                          <div className="public-review-media-gallery">
+
+                            {visibleMedia.map(
+                              (
+                                media,
+                                mediaIndex
+                              ) => {
+
+                                const mediaId =
+                                  media?.reviewMediaId ??
+                                  media?.ReviewMediaId ??
+                                  `${reviewId}-media-${mediaIndex}`;
+
+                                const isLastVisible =
+                                  mediaIndex === 1 &&
+                                  remainingMediaCount > 0;
+
+                                return (
+                                  <button
+                                    type="button"
+                                    className="public-review-media-item"
+                                    key={mediaId}
+                                    onClick={() =>
+                                      openReviewMediaViewer(
+                                        validReviewMedia,
+                                        media.mediaIndex
+                                      )
+                                    }
+                                    aria-label={
+                                      isLastVisible
+                                        ? `View ${remainingMediaCount} more review media`
+                                        : `View review media ${mediaIndex + 1}`
+                                    }
+                                  >
+
+                                    {isVideoMedia(
+                                      media
+                                    ) ? (
+                                      <video
+                                        className="public-review-media-video"
+                                        src={
+                                          media.resolvedUrl
+                                        }
+                                        muted
+                                        playsInline
+                                        preload="metadata"
+                                      />
+                                    ) : (
+                                      <img
+                                        className="public-review-media-image"
+                                        src={
+                                          media.resolvedUrl
+                                        }
+                                        alt={`Review media ${
+                                          mediaIndex + 1
+                                        }`}
+                                        loading="lazy"
+                                      />
+                                    )}
+
+                                    {/* =================================================
+                                        + MORE OVERLAY
+                                    ================================================= */}
+
+                                    {isLastVisible && (
+                                      <span className="public-review-media-more">
+                                        +{remainingMediaCount} More
+                                      </span>
+                                    )}
+
+                                  </button>
+                                );
+                              }
+                            )}
+
                           </div>
                         )}
 
@@ -1724,6 +1930,7 @@ function OwnerPublicProfile() {
                               {review?.ownerReply ||
                                 review?.OwnerReply}
                             </p>
+
                           </div>
                         )}
 
@@ -1731,8 +1938,11 @@ function OwnerPublicProfile() {
                     );
                   }
                 )}
+
             </div>
+
           ) : (
+
             <div className="public-review-empty">
               <FaStar />
 
@@ -1748,7 +1958,9 @@ function OwnerPublicProfile() {
                 will appear here.
               </span>
             </div>
+
           )}
+
         </section>
 
         {/* =====================================================
@@ -1799,6 +2011,114 @@ function OwnerPublicProfile() {
         </button>
 
       </main>
+
+      {/* =====================================================
+          REVIEW MEDIA VIEWER MODAL
+      ===================================================== */}
+
+      {selectedReviewMedia &&
+        currentMediaUrl && (
+
+          <div
+            className="public-review-media-modal"
+            onClick={
+              closeReviewMediaViewer
+            }
+          >
+
+            {/* CLOSE */}
+
+            <button
+              type="button"
+              className="public-review-media-modal-close"
+              onClick={
+                closeReviewMediaViewer
+              }
+              aria-label="Close media viewer"
+            >
+              <FaTimes />
+            </button>
+
+            <div
+              className="public-review-media-modal-content"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            >
+
+              {/* PREVIOUS */}
+
+              {selectedReviewMedia.length >
+                1 && (
+                <button
+                  type="button"
+                  className="public-review-media-nav public-review-media-prev"
+                  onClick={
+                    showPreviousMedia
+                  }
+                  aria-label="Previous media"
+                >
+                  <FaChevronLeft />
+                </button>
+              )}
+
+              {/* CURRENT MEDIA */}
+
+              <div className="public-review-media-modal-image-wrapper">
+
+                {currentMediaIsVideo ? (
+                  <video
+                    className="public-review-media-modal-video"
+                    src={
+                      currentMediaUrl
+                    }
+                    controls
+                    autoPlay
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    className="public-review-media-modal-image"
+                    src={
+                      currentMediaUrl
+                    }
+                    alt={`Review media ${
+                      selectedMediaIndex + 1
+                    }`}
+                  />
+                )}
+
+              </div>
+
+              {/* NEXT */}
+
+              {selectedReviewMedia.length >
+                1 && (
+                <button
+                  type="button"
+                  className="public-review-media-nav public-review-media-next"
+                  onClick={
+                    showNextMedia
+                  }
+                  aria-label="Next media"
+                >
+                  <FaChevronRight />
+                </button>
+              )}
+
+              {/* COUNTER */}
+
+              <div className="public-review-media-counter">
+                {selectedMediaIndex + 1}
+                {" / "}
+                {selectedReviewMedia.length}
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
     </div>
   );
 }

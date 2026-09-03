@@ -58,6 +58,13 @@ namespace Review.API.Models
         public Business? Business { get; set; }
 
         // ==========================================
+        // REVIEW MEDIA
+        // ==========================================
+
+        public List<ReviewMedia> Media { get; set; }
+            = new List<ReviewMedia>();
+
+        // ==========================================
         // OWNER REPLY
         // ==========================================
 

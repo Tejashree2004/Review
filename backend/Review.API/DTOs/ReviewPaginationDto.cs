@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 
 namespace Review.API.DTOs
 {
@@ -87,6 +89,13 @@ namespace Review.API.DTOs
         public string? BusinessPincode { get; set; }
 
         // =====================================================
+        // REVIEW MEDIA
+        // =====================================================
+
+        public List<ReviewMediaDto> Media { get; set; }
+            = new List<ReviewMediaDto>();
+
+        // =====================================================
         // OWNER REPLY
         // =====================================================
 
@@ -95,4 +104,3 @@ namespace Review.API.DTOs
         public DateTime? OwnerReplyAt { get; set; }
     }
 }
-

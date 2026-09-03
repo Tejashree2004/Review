@@ -9,10 +9,96 @@ namespace Review.API.Services
     public class ReviewService
     {
         private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ReviewService(AppDbContext context)
+        public ReviewService(
+            AppDbContext context,
+            IWebHostEnvironment environment,
+            IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _environment = environment;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        // =====================================================
+        // MEDIA URL
+        // =====================================================
+
+        private string BuildMediaUrl(string relativeUrl)
+        {
+            var request = _httpContextAccessor.HttpContext?.Request;
+
+            if (request == null)
+            {
+                return relativeUrl;
+            }
+
+            return $"{request.Scheme}://{request.Host}{relativeUrl}";
+        }
+
+        // =====================================================
+        // GET UPLOAD DIRECTORY
+        // =====================================================
+
+        private string GetReviewUploadDirectory()
+        {
+            var webRootPath = _environment.WebRootPath;
+
+            if (string.IsNullOrWhiteSpace(webRootPath))
+            {
+                webRootPath = Path.Combine(
+                    _environment.ContentRootPath,
+                    "wwwroot"
+                );
+            }
+
+            var uploadDirectory = Path.Combine(
+                webRootPath,
+                "uploads",
+                "reviews"
+            );
+
+            Directory.CreateDirectory(uploadDirectory);
+
+            return uploadDirectory;
+        }
+
+        // =====================================================
+        // GET MEDIA TYPE
+        // =====================================================
+
+        private string GetMediaType(string extension)
+        {
+            var imageExtensions = new[]
+            {
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp"
+            };
+
+            var videoExtensions = new[]
+            {
+                ".mp4",
+                ".mov",
+                ".webm"
+            };
+
+            if (imageExtensions.Contains(extension))
+            {
+                return "image";
+            }
+
+            if (videoExtensions.Contains(extension))
+            {
+                return "video";
+            }
+
+            throw new InvalidOperationException(
+                "Unsupported media type."
+            );
         }
 
         // =====================================================
@@ -38,6 +124,7 @@ namespace Review.API.Services
                 .AsNoTracking()
                 .Include(x => x.User)
                 .Include(x => x.Place)
+                .Include(x => x.Media)
                 .Where(x => x.PlaceId == placeId);
 
             // =================================================
@@ -49,11 +136,12 @@ namespace Review.API.Services
                 rating.Value <= 5)
             {
                 query = query.Where(
-                    x => x.Rating == rating.Value);
+                    x => x.Rating == rating.Value
+                );
             }
 
             // =================================================
-            // TOTAL
+            // TOTAL REVIEWS
             // =================================================
 
             var totalReviews =
@@ -65,29 +153,35 @@ namespace Review.API.Services
 
             var averageRating =
                 totalReviews > 0
-                    ? await query
-                        .AverageAsync(x => (double)x.Rating)
+                    ? await query.AverageAsync(
+                        x => (double)x.Rating
+                    )
                     : 0;
 
             var fiveStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 5);
+                    x => x.Rating == 5
+                );
 
             var fourStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 4);
+                    x => x.Rating == 4
+                );
 
             var threeStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 3);
+                    x => x.Rating == 3
+                );
 
             var twoStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 2);
+                    x => x.Rating == 2
+                );
 
             var oneStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 1);
+                    x => x.Rating == 1
+                );
 
             // =================================================
             // TOTAL PAGES
@@ -98,7 +192,8 @@ namespace Review.API.Services
                     ? 0
                     : (int)Math.Ceiling(
                         totalReviews /
-                        (double)pageSize);
+                        (double)pageSize
+                    );
 
             // =================================================
             // REVIEWS
@@ -107,11 +202,14 @@ namespace Review.API.Services
             var reviews =
                 await query
                     .OrderByDescending(
-                        x => x.CreatedAt)
+                        x => x.CreatedAt
+                    )
                     .ThenByDescending(
-                        x => x.ReviewId)
+                        x => x.ReviewId
+                    )
                     .Skip(
-                        (page - 1) * pageSize)
+                        (page - 1) * pageSize
+                    )
                     .Take(pageSize)
                     .Select(x => new ReviewItemDto
                     {
@@ -158,6 +256,29 @@ namespace Review.API.Services
                         BusinessPincode =
                             null,
 
+                        Media =
+                            x.Media
+                                .OrderBy(
+                                    m => m.CreatedAt
+                                )
+                                .Select(
+                                    m => new ReviewMediaDto
+                                    {
+                                        ReviewMediaId =
+                                            m.ReviewMediaId,
+
+                                        MediaUrl =
+                                            m.MediaUrl,
+
+                                        MediaType =
+                                            m.MediaType,
+
+                                        CreatedAt =
+                                            m.CreatedAt
+                                    }
+                                )
+                                .ToList(),
+
                         OwnerReply =
                             x.OwnerReply,
 
@@ -165,6 +286,25 @@ namespace Review.API.Services
                             x.OwnerReplyAt
                     })
                     .ToListAsync();
+
+            // =================================================
+            // BUILD FULL MEDIA URL
+            // =================================================
+
+            foreach (var review in reviews)
+            {
+                foreach (var media in review.Media)
+                {
+                    media.MediaUrl =
+                        BuildMediaUrl(
+                            media.MediaUrl
+                        );
+                }
+            }
+
+            // =================================================
+            // RETURN
+            // =================================================
 
             return new ReviewPaginationDto
             {
@@ -189,7 +329,8 @@ namespace Review.API.Services
                 AverageRating =
                     Math.Round(
                         averageRating,
-                        1),
+                        1
+                    ),
 
                 FiveStarCount =
                     fiveStarCount,
@@ -232,8 +373,10 @@ namespace Review.API.Services
                 .AsNoTracking()
                 .Include(x => x.User)
                 .Include(x => x.Business)
+                .Include(x => x.Media)
                 .Where(
-                    x => x.BusinessId == businessId);
+                    x => x.BusinessId == businessId
+                );
 
             // =================================================
             // RATING FILTER
@@ -244,11 +387,12 @@ namespace Review.API.Services
                 rating.Value <= 5)
             {
                 query = query.Where(
-                    x => x.Rating == rating.Value);
+                    x => x.Rating == rating.Value
+                );
             }
 
             // =================================================
-            // TOTAL
+            // TOTAL REVIEWS
             // =================================================
 
             var totalReviews =
@@ -260,30 +404,35 @@ namespace Review.API.Services
 
             var averageRating =
                 totalReviews > 0
-                    ? await query
-                        .AverageAsync(
-                            x => (double)x.Rating)
+                    ? await query.AverageAsync(
+                        x => (double)x.Rating
+                    )
                     : 0;
 
             var fiveStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 5);
+                    x => x.Rating == 5
+                );
 
             var fourStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 4);
+                    x => x.Rating == 4
+                );
 
             var threeStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 3);
+                    x => x.Rating == 3
+                );
 
             var twoStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 2);
+                    x => x.Rating == 2
+                );
 
             var oneStarCount =
                 await query.CountAsync(
-                    x => x.Rating == 1);
+                    x => x.Rating == 1
+                );
 
             // =================================================
             // TOTAL PAGES
@@ -294,7 +443,8 @@ namespace Review.API.Services
                     ? 0
                     : (int)Math.Ceiling(
                         totalReviews /
-                        (double)pageSize);
+                        (double)pageSize
+                    );
 
             // =================================================
             // REVIEWS
@@ -303,11 +453,14 @@ namespace Review.API.Services
             var reviews =
                 await query
                     .OrderByDescending(
-                        x => x.CreatedAt)
+                        x => x.CreatedAt
+                    )
                     .ThenByDescending(
-                        x => x.ReviewId)
+                        x => x.ReviewId
+                    )
                     .Skip(
-                        (page - 1) * pageSize)
+                        (page - 1) * pageSize
+                    )
                     .Take(pageSize)
                     .Select(x => new ReviewItemDto
                     {
@@ -360,6 +513,29 @@ namespace Review.API.Services
                                 ? x.Business.Pincode
                                 : null,
 
+                        Media =
+                            x.Media
+                                .OrderBy(
+                                    m => m.CreatedAt
+                                )
+                                .Select(
+                                    m => new ReviewMediaDto
+                                    {
+                                        ReviewMediaId =
+                                            m.ReviewMediaId,
+
+                                        MediaUrl =
+                                            m.MediaUrl,
+
+                                        MediaType =
+                                            m.MediaType,
+
+                                        CreatedAt =
+                                            m.CreatedAt
+                                    }
+                                )
+                                .ToList(),
+
                         OwnerReply =
                             x.OwnerReply,
 
@@ -367,6 +543,25 @@ namespace Review.API.Services
                             x.OwnerReplyAt
                     })
                     .ToListAsync();
+
+            // =================================================
+            // BUILD FULL MEDIA URL
+            // =================================================
+
+            foreach (var review in reviews)
+            {
+                foreach (var media in review.Media)
+                {
+                    media.MediaUrl =
+                        BuildMediaUrl(
+                            media.MediaUrl
+                        );
+                }
+            }
+
+            // =================================================
+            // RETURN
+            // =================================================
 
             return new ReviewPaginationDto
             {
@@ -391,7 +586,8 @@ namespace Review.API.Services
                 AverageRating =
                     Math.Round(
                         averageRating,
-                        1),
+                        1
+                    ),
 
                 FiveStarCount =
                     fiveStarCount,
@@ -434,8 +630,10 @@ namespace Review.API.Services
                 .Include(x => x.User)
                 .Include(x => x.Place)
                 .Include(x => x.Business)
+                .Include(x => x.Media)
                 .Where(
-                    x => x.UserId == userId);
+                    x => x.UserId == userId
+                );
 
             // =================================================
             // TOTAL REVIEWS
@@ -453,7 +651,8 @@ namespace Review.API.Services
                     ? 0
                     : (int)Math.Ceiling(
                         totalReviews /
-                        (double)pageSize);
+                        (double)pageSize
+                    );
 
             // =================================================
             // MY REVIEWS
@@ -462,11 +661,14 @@ namespace Review.API.Services
             var reviews =
                 await query
                     .OrderByDescending(
-                        x => x.CreatedAt)
+                        x => x.CreatedAt
+                    )
                     .ThenByDescending(
-                        x => x.ReviewId)
+                        x => x.ReviewId
+                    )
                     .Skip(
-                        (page - 1) * pageSize)
+                        (page - 1) * pageSize
+                    )
                     .Take(pageSize)
                     .Select(x => new ReviewItemDto
                     {
@@ -506,10 +708,6 @@ namespace Review.API.Services
                                 ? x.Business.BusinessName
                                 : null,
 
-                        // =================================================
-                        // BUSINESS LOCATION
-                        // =================================================
-
                         BusinessAddress =
                             x.Business != null
                                 ? x.Business.Address
@@ -525,6 +723,29 @@ namespace Review.API.Services
                                 ? x.Business.Pincode
                                 : null,
 
+                        Media =
+                            x.Media
+                                .OrderBy(
+                                    m => m.CreatedAt
+                                )
+                                .Select(
+                                    m => new ReviewMediaDto
+                                    {
+                                        ReviewMediaId =
+                                            m.ReviewMediaId,
+
+                                        MediaUrl =
+                                            m.MediaUrl,
+
+                                        MediaType =
+                                            m.MediaType,
+
+                                        CreatedAt =
+                                            m.CreatedAt
+                                    }
+                                )
+                                .ToList(),
+
                         OwnerReply =
                             x.OwnerReply,
 
@@ -532,6 +753,25 @@ namespace Review.API.Services
                             x.OwnerReplyAt
                     })
                     .ToListAsync();
+
+            // =================================================
+            // BUILD FULL MEDIA URL
+            // =================================================
+
+            foreach (var review in reviews)
+            {
+                foreach (var media in review.Media)
+                {
+                    media.MediaUrl =
+                        BuildMediaUrl(
+                            media.MediaUrl
+                        );
+                }
+            }
+
+            // =================================================
+            // RETURN
+            // =================================================
 
             return new ReviewPaginationDto
             {
@@ -591,15 +831,18 @@ namespace Review.API.Services
             var result =
                 await _context.Reviews
                     .AsNoTracking()
+                    .Include(x => x.User)
+                    .Include(x => x.Media)
                     .Where(x =>
                         x.ReviewId == reviewId &&
-                        x.UserId == userId)
+                        x.UserId == userId
+                    )
                     .Select(x => new UserPublicProfileDto
                     {
                         User = new UserPublicProfileInfoDto
                         {
                             Id =
-                                x.User.Id,
+                                x.User!.Id,
 
                             FullName =
                                 x.User.FullName,
@@ -620,27 +863,193 @@ namespace Review.API.Services
                                 x.Comment,
 
                             CreatedAt =
-                                x.CreatedAt
+                                x.CreatedAt,
+
+                            Media =
+                                x.Media
+                                    .OrderBy(
+                                        m => m.CreatedAt
+                                    )
+                                    .Select(
+                                        m => new ReviewMediaDto
+                                        {
+                                            ReviewMediaId =
+                                                m.ReviewMediaId,
+
+                                            MediaUrl =
+                                                m.MediaUrl,
+
+                                            MediaType =
+                                                m.MediaType,
+
+                                            CreatedAt =
+                                                m.CreatedAt
+                                        }
+                                    )
+                                    .ToList()
                         }
                     })
                     .FirstOrDefaultAsync();
+
+            // =================================================
+            // BUILD FULL MEDIA URL
+            // =================================================
+
+            if (result != null)
+            {
+                foreach (var media in result.Review.Media)
+                {
+                    media.MediaUrl =
+                        BuildMediaUrl(
+                            media.MediaUrl
+                        );
+                }
+            }
 
             return result;
         }
 
         // =====================================================
-        // ADD REVIEW
+        // ADD REVIEW WITH PHOTOS / VIDEOS
         // =====================================================
 
         public async Task<ReviewItem> AddReviewAsync(
-            ReviewItem review)
+            ReviewDto reviewDto)
         {
+            var review = new ReviewItem
+            {
+                UserId =
+                    reviewDto.UserId,
+
+                Rating =
+                    reviewDto.Rating,
+
+                Comment =
+                    reviewDto.Comment.Trim(),
+
+                PlaceId =
+                    reviewDto.PlaceId,
+
+                BusinessId =
+                    reviewDto.BusinessId,
+
+                CreatedAt =
+                    DateTime.UtcNow
+            };
+
             _context.Reviews.Add(review);
 
             await _context.SaveChangesAsync();
 
+            var mediaFiles =
+                reviewDto.Media ??
+                new List<IFormFile>();
+
+            var savedFiles =
+                new List<string>();
+
+            try
+            {
+                // =================================================
+                // SAVE MEDIA FILES
+                // =================================================
+
+                if (mediaFiles.Count > 0)
+                {
+                    var uploadDirectory =
+                        GetReviewUploadDirectory();
+
+                    foreach (var file in mediaFiles)
+                    {
+                        var extension =
+                            Path.GetExtension(
+                                file.FileName
+                            ).ToLowerInvariant();
+
+                        var mediaType =
+                            GetMediaType(extension);
+
+                        var fileName =
+                            $"{Guid.NewGuid():N}{extension}";
+
+                        var filePath =
+                            Path.Combine(
+                                uploadDirectory,
+                                fileName
+                            );
+
+                        await using (
+                            var stream =
+                                new FileStream(
+                                    filePath,
+                                    FileMode.Create
+                                ))
+                        {
+                            await file.CopyToAsync(
+                                stream
+                            );
+                        }
+
+                        savedFiles.Add(filePath);
+
+                        var reviewMedia =
+                            new ReviewMedia
+                            {
+                                ReviewId =
+                                    review.ReviewId,
+
+                                MediaUrl =
+                                    $"/uploads/reviews/{fileName}",
+
+                                MediaType =
+                                    mediaType,
+
+                                CreatedAt =
+                                    DateTime.UtcNow
+                            };
+
+                        _context.ReviewMedias.Add(
+                            reviewMedia
+                        );
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch
+            {
+                // =================================================
+                // DELETE PHYSICAL FILES IF DB SAVE FAILS
+                // =================================================
+
+                foreach (var filePath in savedFiles)
+                {
+                    try
+                    {
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore cleanup error
+                    }
+                }
+
+                // =================================================
+                // DELETE REVIEW
+                // =================================================
+
+                _context.Reviews.Remove(review);
+
+                await _context.SaveChangesAsync();
+
+                throw;
+            }
+
             // =================================================
-            // LOAD REVIEWER
+            // LOAD USER
             // =================================================
 
             await _context.Entry(review)
@@ -669,6 +1078,14 @@ namespace Review.API.Services
                     .LoadAsync();
             }
 
+            // =================================================
+            // LOAD MEDIA
+            // =================================================
+
+            await _context.Entry(review)
+                .Collection(x => x.Media)
+                .LoadAsync();
+
             return review;
         }
 
@@ -681,14 +1098,78 @@ namespace Review.API.Services
         {
             var review =
                 await _context.Reviews
-                    .FindAsync(reviewId);
+                    .Include(x => x.Media)
+                    .FirstOrDefaultAsync(
+                        x => x.ReviewId == reviewId
+                    );
 
             if (review == null)
+            {
                 return false;
+            }
+
+            // =================================================
+            // STORE MEDIA PATHS
+            // =================================================
+
+            var mediaFiles =
+                review.Media
+                    .Select(x => x.MediaUrl)
+                    .ToList();
+
+            // =================================================
+            // DELETE REVIEW
+            // =================================================
 
             _context.Reviews.Remove(review);
 
             await _context.SaveChangesAsync();
+
+            // =================================================
+            // DELETE PHYSICAL MEDIA FILES
+            // =================================================
+
+            foreach (var mediaUrl in mediaFiles)
+            {
+                try
+                {
+                    var relativePath =
+                        mediaUrl
+                            .TrimStart('/')
+                            .Replace(
+                                '/',
+                                Path.DirectorySeparatorChar
+                            );
+
+                    var webRootPath =
+                        _environment.WebRootPath;
+
+                    if (string.IsNullOrWhiteSpace(
+                        webRootPath))
+                    {
+                        webRootPath =
+                            Path.Combine(
+                                _environment.ContentRootPath,
+                                "wwwroot"
+                            );
+                    }
+
+                    var fullPath =
+                        Path.Combine(
+                            webRootPath,
+                            relativePath
+                        );
+
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                    }
+                }
+                catch
+                {
+                    // Ignore physical file cleanup error
+                }
+            }
 
             return true;
         }
