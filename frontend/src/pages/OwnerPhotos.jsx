@@ -31,6 +31,14 @@ import "../styles/OwnerPhotos.css";
 const API_BASE =
   "http://localhost:5213/api";
 
+const BACKEND_BASE =
+  "http://localhost:5213";
+
+const MAX_PHOTOS = 12;
+
+const MAX_FILE_SIZE =
+  5 * 1024 * 1024;
+
 function OwnerPhotos() {
   const navigate = useNavigate();
 
@@ -173,11 +181,51 @@ function OwnerPhotos() {
   // =====================================================
 
   const getPhotoUrl =
-    (photo) =>
-      photo?.photoUrl ??
-      photo?.PhotoUrl ??
-      photo?.image ??
-      "";
+    (photo) => {
+
+      const rawUrl =
+        photo?.photoUrl ??
+        photo?.PhotoUrl ??
+        photo?.imageUrl ??
+        photo?.ImageUrl ??
+        photo?.image ??
+        photo?.Image ??
+        "";
+
+      if (!rawUrl) {
+        return "";
+      }
+
+      const cleanUrl =
+        String(rawUrl).trim();
+
+      if (!cleanUrl) {
+        return "";
+      }
+
+      // Already complete URL
+      if (
+        cleanUrl.startsWith(
+          "http://"
+        ) ||
+        cleanUrl.startsWith(
+          "https://"
+        ) ||
+        cleanUrl.startsWith(
+          "data:image/"
+        )
+      ) {
+        return cleanUrl;
+      }
+
+      // Backend stored path:
+      // /uploads/business/example.jpg
+      return `${BACKEND_BASE}${
+        cleanUrl.startsWith("/")
+          ? cleanUrl
+          : `/${cleanUrl}`
+      }`;
+    };
 
   // =====================================================
   // BUSINESS ID
@@ -243,7 +291,6 @@ function OwnerPhotos() {
             getResponseData(
               businessResponse
             );
-
         }
 
         // ===============================================
@@ -269,7 +316,6 @@ function OwnerPhotos() {
             )
               ? businessData[0]
               : businessData;
-
         }
 
         if (!ownerBusiness) {
@@ -380,10 +426,15 @@ function OwnerPhotos() {
     };
 
   // =====================================================
-  // COMPRESS IMAGE
+  // PREPARE IMAGE
+  // =====================================================
+  // Existing image compression behavior is preserved,
+  // but Base64 is NO LONGER used.
+  //
+  // The image is converted to a real File object.
   // =====================================================
 
-  const compressImage =
+  const prepareImageFile =
     (file) => {
 
       return new Promise(
@@ -482,6 +533,16 @@ function OwnerPhotos() {
                         "2d"
                       );
 
+                    if (!context) {
+                      reject(
+                        new Error(
+                          "Unable to process selected image."
+                        )
+                      );
+
+                      return;
+                    }
+
                     context.drawImage(
                       image,
                       0,
@@ -490,20 +551,67 @@ function OwnerPhotos() {
                       canvas.height
                     );
 
-                    const compressed =
-                      canvas.toDataURL(
-                        "image/jpeg",
-                        0.55
-                      );
+                    // =================================
+                    // Convert canvas to REAL FILE
+                    // instead of Base64
+                    // =================================
 
-                    resolve(
-                      compressed
+                    canvas.toBlob(
+                      (blob) => {
+
+                        if (!blob) {
+                          reject(
+                            new Error(
+                              "Unable to prepare image for upload."
+                            )
+                          );
+
+                          return;
+                        }
+
+                        const originalName =
+                          file.name ||
+                          "business-photo";
+
+                        const baseName =
+                          originalName
+                            .replace(
+                              /\.[^/.]+$/,
+                              ""
+                            )
+                            .replace(
+                              /[^a-zA-Z0-9-_]/g,
+                              "-"
+                            );
+
+                        const finalFileName =
+                          `${baseName}-${Date.now()}.jpg`;
+
+                        const compressedFile =
+                          new File(
+                            [blob],
+                            finalFileName,
+                            {
+                              type:
+                                "image/jpeg",
+                              lastModified:
+                                Date.now(),
+                            }
+                          );
+
+                        resolve(
+                          compressedFile
+                        );
+                      },
+                      "image/jpeg",
+                      0.55
                     );
 
                   } catch (error) {
-                    reject(error);
-                  }
 
+                    reject(error);
+
+                  }
                 };
 
               image.onerror =
@@ -517,7 +625,6 @@ function OwnerPhotos() {
 
               image.src =
                 event.target.result;
-
             };
 
           reader.onerror =
@@ -532,7 +639,6 @@ function OwnerPhotos() {
           reader.readAsDataURL(
             file
           );
-
         }
       );
     };
@@ -540,10 +646,13 @@ function OwnerPhotos() {
   // =====================================================
   // UPLOAD
   // =====================================================
+  // IMPORTANT:
+  // Backend now expects multipart/form-data.
+  // =====================================================
 
   const uploadPhoto =
     async (
-      imageData,
+      imageFile,
       fileName,
       isPrimary
     ) => {
@@ -563,29 +672,44 @@ function OwnerPhotos() {
         );
       }
 
-      const payload = {
-        PhotoUrl:
-          imageData,
+      // ===============================================
+      // FORM DATA
+      // ===============================================
 
-        Caption:
-          fileName ||
-          "Business photo",
+      const formData =
+        new FormData();
 
-        IsPrimary:
-          Boolean(isPrimary),
-      };
+      formData.append(
+        "Photo",
+        imageFile
+      );
+
+      formData.append(
+        "Caption",
+        fileName ||
+          "Business photo"
+      );
+
+      formData.append(
+        "IsPrimary",
+        String(
+          Boolean(isPrimary)
+        )
+      );
+
+      // ===============================================
+      // DO NOT manually set Content-Type.
+      // Browser automatically adds multipart boundary.
+      // ===============================================
 
       const response =
         await axios.post(
           `${API_BASE}/owner/photos/business/${businessId}`,
-          payload,
+          formData,
           {
             headers: {
               Authorization:
                 `Bearer ${token}`,
-
-              "Content-Type":
-                "application/json",
             },
           }
         );
@@ -660,6 +784,10 @@ function OwnerPhotos() {
         return;
       }
 
+      // ===============================================
+      // ACCEPTED FILE TYPES
+      // ===============================================
+
       const imageFiles =
         Array.from(
           files
@@ -677,6 +805,7 @@ function OwnerPhotos() {
         imageFiles.length ===
         0
       ) {
+
         showDialog(
           "Invalid File",
           "Please select JPG, PNG or WEBP image files only.",
@@ -686,11 +815,16 @@ function OwnerPhotos() {
         return;
       }
 
+      // ===============================================
+      // MAX 12 PHOTOS
+      // ===============================================
+
       if (
         photos.length +
           imageFiles.length >
-        12
+        MAX_PHOTOS
       ) {
+
         showDialog(
           "Photo Limit Reached",
           `You can upload maximum 12 business photos. You currently have ${photos.length} photos.`,
@@ -700,16 +834,19 @@ function OwnerPhotos() {
         return;
       }
 
+      // ===============================================
+      // ORIGINAL FILE SIZE CHECK
+      // ===============================================
+
       const oversizedFile =
         imageFiles.find(
           (file) =>
             file.size >
-            5 *
-              1024 *
-              1024
+            MAX_FILE_SIZE
         );
 
       if (oversizedFile) {
+
         showDialog(
           "File Too Large",
           "Each image must be smaller than 5 MB.",
@@ -726,6 +863,10 @@ function OwnerPhotos() {
         const uploadedPhotos =
           [];
 
+        // ===============================================
+        // UPLOAD ONE BY ONE
+        // ===============================================
+
         for (
           let index = 0;
           index <
@@ -736,10 +877,18 @@ function OwnerPhotos() {
           const file =
             imageFiles[index];
 
-          const imageData =
-            await compressImage(
+          // =============================================
+          // PREPARE REAL IMAGE FILE
+          // =============================================
+
+          const preparedFile =
+            await prepareImageFile(
               file
             );
+
+          // =============================================
+          // CHECK PRIMARY PHOTO
+          // =============================================
 
           const hasPrimaryPhoto =
             photos.some(
@@ -755,19 +904,28 @@ function OwnerPhotos() {
             uploadedPhotos.length ===
               0;
 
+          // =============================================
+          // UPLOAD REAL FILE
+          // =============================================
+
           const savedPhoto =
             await uploadPhoto(
-              imageData,
+              preparedFile,
               file.name,
               isPrimary
             );
 
           if (savedPhoto) {
+
             uploadedPhotos.push(
               savedPhoto
             );
           }
         }
+
+        // ===============================================
+        // REFRESH PHOTO LIST
+        // ===============================================
 
         await loadBusinessPhotosOnly();
 
@@ -824,6 +982,20 @@ function OwnerPhotos() {
           return;
         }
 
+        if (
+          error.response?.status ===
+          413
+        ) {
+
+          showDialog(
+            "File Too Large",
+            "The uploaded image is too large. Please choose a smaller image.",
+            "warning"
+          );
+
+          return;
+        }
+
         showDialog(
           "Upload Failed",
           error.message ||
@@ -867,6 +1039,7 @@ function OwnerPhotos() {
 
   const handleDragEnter =
     (event) => {
+
       event.preventDefault();
       event.stopPropagation();
 
@@ -875,6 +1048,7 @@ function OwnerPhotos() {
 
   const handleDragOver =
     (event) => {
+
       event.preventDefault();
       event.stopPropagation();
 
@@ -883,6 +1057,7 @@ function OwnerPhotos() {
 
   const handleDragLeave =
     (event) => {
+
       event.preventDefault();
       event.stopPropagation();
 
@@ -905,6 +1080,7 @@ function OwnerPhotos() {
         files &&
         files.length > 0
       ) {
+
         processFiles(
           files
         );
@@ -922,6 +1098,7 @@ function OwnerPhotos() {
         getPhotoId(photo);
 
       if (!photoId) {
+
         showDialog(
           "Photo ID Missing",
           "Photo ID not found.",
@@ -940,9 +1117,12 @@ function OwnerPhotos() {
             photoId
           ),
         {
-          confirmText: "Delete",
-          cancelText: "Cancel",
-          showCancel: true,
+          confirmText:
+            "Delete",
+          cancelText:
+            "Cancel",
+          showCancel:
+            true,
         }
       );
     };
@@ -958,6 +1138,7 @@ function OwnerPhotos() {
         getToken();
 
       if (!token) {
+
         showDialog(
           "Login Required",
           "Please login again.",
@@ -1001,6 +1182,7 @@ function OwnerPhotos() {
           error.response?.status ===
           401
         ) {
+
           showDialog(
             "Session Expired",
             "Your login session has expired. Please login again.",
@@ -1029,14 +1211,133 @@ function OwnerPhotos() {
   // =====================================================
 
   const handleSetPrimary =
-    async () => {
+    async (photo) => {
+
+      const photoId =
+        getPhotoId(photo);
+
+      if (!photoId) {
+
+        showDialog(
+          "Photo ID Missing",
+          "Photo ID not found.",
+          "error"
+        );
+
+        return;
+      }
 
       showDialog(
-        "Primary Photo",
-        "Primary photo is selected automatically when the first photo is uploaded. To change the primary photo, the backend needs a SetPrimaryPhoto endpoint.",
-        "info"
+        "Set Primary Photo",
+        "Do you want to make this photo your cover photo?",
+        "warning",
+        () =>
+          confirmSetPrimary(
+            photoId
+          ),
+        {
+          confirmText:
+            "Set Primary",
+          cancelText:
+            "Cancel",
+          showCancel:
+            true,
+        }
       );
+    };
 
+  // =====================================================
+  // CONFIRM PRIMARY
+  // =====================================================
+
+  const confirmSetPrimary =
+    async (photoId) => {
+
+      const token =
+        getToken();
+
+      if (!token) {
+
+        showDialog(
+          "Login Required",
+          "Please login again.",
+          "warning",
+          () => navigate("/login")
+        );
+
+        return;
+      }
+
+      try {
+
+        setUploading(true);
+
+        await axios.put(
+          `${API_BASE}/owner/photos/${photoId}/primary`,
+          {},
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
+
+        await loadBusinessPhotosOnly();
+
+        showDialog(
+          "Primary Photo Updated",
+          "This photo is now your cover photo.",
+          "success"
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Set primary photo error:",
+          error
+        );
+
+        if (
+          error.response?.status ===
+          401
+        ) {
+
+          showDialog(
+            "Session Expired",
+            "Your login session has expired. Please login again.",
+            "warning",
+            () => navigate("/login")
+          );
+
+          return;
+        }
+
+        if (
+          error.response?.status ===
+          404
+        ) {
+
+          showDialog(
+            "Photo Not Found",
+            "The selected photo could not be found.",
+            "error"
+          );
+
+          return;
+        }
+
+        showDialog(
+          "Update Failed",
+          "Unable to change the primary photo.",
+          "error"
+        );
+
+      } finally {
+
+        setUploading(false);
+
+      }
     };
 
   // =====================================================
@@ -1047,6 +1348,20 @@ function OwnerPhotos() {
     () => {
 
       if (uploading) {
+        return;
+      }
+
+      if (
+        photos.length >=
+        MAX_PHOTOS
+      ) {
+
+        showDialog(
+          "Photo Limit Reached",
+          "You already have 12 business photos.",
+          "warning"
+        );
+
         return;
       }
 
@@ -1092,34 +1407,34 @@ function OwnerPhotos() {
 
           </div>
 
-        </div>
+          <DialogBox
+            isOpen={
+              dialog.isOpen
+            }
+            title={
+              dialog.title
+            }
+            message={
+              dialog.message
+            }
+            type={
+              dialog.type
+            }
+            confirmText={
+              dialog.confirmText
+            }
+            onConfirm={
+              handleDialogConfirm
+            }
+            onCancel={
+              closeDialog
+            }
+            showCancel={
+              dialog.showCancel
+            }
+          />
 
-        <DialogBox
-          isOpen={
-            dialog.isOpen
-          }
-          title={
-            dialog.title
-          }
-          message={
-            dialog.message
-          }
-          type={
-            dialog.type
-          }
-          confirmText={
-            dialog.confirmText
-          }
-          onConfirm={
-            handleDialogConfirm
-          }
-          onCancel={
-            closeDialog
-          }
-          showCancel={
-            dialog.showCancel
-          }
-        />
+        </div>
 
       </MainLayout>
     );

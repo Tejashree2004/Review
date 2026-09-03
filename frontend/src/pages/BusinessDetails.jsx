@@ -1,5 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 
@@ -26,37 +34,118 @@ import {
   FaTimes,
   FaChevronLeft,
   FaChevronRight,
-  FaPlay,
 } from "react-icons/fa";
 
 import DialogBox from "../components/DialogBox";
 
 import "../styles/PlaceDetails.css";
 
+/*
+=====================================================
+BUSINESS PHOTO PREVIEW COUNT
+
+Only ONE photo will be visible on the
+Business Details page.
+
+If business has:
+1 photo  -> 1 photo
+5 photos -> 1 photo + "+4 More"
+10 photos -> 1 photo + "+9 More"
+
+Clicking the visible photo opens the
+full gallery containing ALL uploaded photos.
+=====================================================
+*/
+const BUSINESS_PHOTO_PREVIEW_COUNT = 1;
+
+/*
+=====================================================
+CUSTOMER REVIEW MEDIA PREVIEW COUNT
+
+Only TWO review media items will be visible
+for each customer review.
+
+If review has:
+1 media  -> 1 media
+2 media  -> 2 media
+3 media  -> 2 media + "+1 More"
+5 media  -> 2 media + "+3 More"
+10 media -> 2 media + "+8 More"
+
+Clicking ANY visible media opens the
+full review media gallery containing ALL media.
+=====================================================
+*/
+const REVIEW_MEDIA_PREVIEW_COUNT = 2;
+
 function BusinessDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [business, setBusiness] = useState(null);
-  const [reviews, setReviews] = useState([]);
+  const [business, setBusiness] =
+    useState(null);
 
-  const [loading, setLoading] = useState(true);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviews, setReviews] =
+    useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [reviewsLoading, setReviewsLoading] =
+    useState(true);
+
+  // =====================================================
+  // BUSINESS PHOTO GALLERY
+  // =====================================================
+
+  const [selectedBusinessPhotos, setSelectedBusinessPhotos] =
+    useState(null);
+
+  const [selectedBusinessPhotoIndex, setSelectedBusinessPhotoIndex] =
+    useState(0);
+
+  // =====================================================
+  // CUSTOMER REVIEW MEDIA GALLERY
+  // =====================================================
+
+  /*
+  Stores ALL valid media of the selected review.
+  */
+
+  const [selectedReviewMedia, setSelectedReviewMedia] =
+    useState(null);
+
+  /*
+  Stores the currently displayed media index.
+  */
+
+  const [selectedReviewMediaIndex, setSelectedReviewMediaIndex] =
+    useState(0);
 
   // =====================================================
   // REVIEW COMMENT EXPANSION
   // =====================================================
 
-  const [expandedReviews, setExpandedReviews] = useState({});
-  const [reviewOverflow, setReviewOverflow] = useState({});
+  const [expandedReviews, setExpandedReviews] =
+    useState({});
 
-  const reviewCommentRefs = useRef({});
+  const [reviewOverflow, setReviewOverflow] =
+    useState({});
 
-  const toggleReview = (reviewId) => {
-    setExpandedReviews((previous) => ({
-      ...previous,
-      [reviewId]: !previous[reviewId],
-    }));
+  const reviewCommentRefs =
+    useRef({});
+
+  const toggleReview = (
+    reviewId
+  ) => {
+    setExpandedReviews(
+      (previous) => ({
+        ...previous,
+
+        [reviewId]:
+          !previous[reviewId],
+      })
+    );
   };
 
   // =====================================================
@@ -66,10 +155,14 @@ function BusinessDetails() {
   const checkReviewOverflow = () => {
     const overflowState = {};
 
-    Object.keys(reviewCommentRefs.current).forEach(
+    Object.keys(
+      reviewCommentRefs.current
+    ).forEach(
       (reviewId) => {
         const element =
-          reviewCommentRefs.current[reviewId];
+          reviewCommentRefs.current[
+            reviewId
+          ];
 
         if (!element) {
           return;
@@ -77,19 +170,25 @@ function BusinessDetails() {
 
         const lineHeight =
           parseFloat(
-            window.getComputedStyle(element).lineHeight
+            window.getComputedStyle(
+              element
+            ).lineHeight
           ) || 24;
 
         const maxHeight =
           lineHeight * 2;
 
-        overflowState[reviewId] =
+        overflowState[
+          reviewId
+        ] =
           element.scrollHeight >
           maxHeight + 1;
       }
     );
 
-    setReviewOverflow(overflowState);
+    setReviewOverflow(
+      overflowState
+    );
   };
 
   useEffect(() => {
@@ -97,9 +196,10 @@ function BusinessDetails() {
       return;
     }
 
-    const timer = setTimeout(() => {
-      checkReviewOverflow();
-    }, 0);
+    const timer =
+      setTimeout(() => {
+        checkReviewOverflow();
+      }, 0);
 
     window.addEventListener(
       "resize",
@@ -117,37 +217,110 @@ function BusinessDetails() {
   }, [reviews]);
 
   // =====================================================
-  // REVIEW MEDIA VIEWER
+  // BUSINESS PHOTO GALLERY HANDLERS
   // =====================================================
 
-  const [selectedReviewMedia, setSelectedReviewMedia] =
-    useState(null);
-
-  const [selectedMediaIndex, setSelectedMediaIndex] =
-    useState(0);
-
-  // =====================================================
-  // REVIEW MEDIA KEYBOARD CONTROLS
-  // =====================================================
-
-  useEffect(() => {
-    if (!selectedReviewMedia) {
+  const openBusinessPhotoGallery = (
+    photoList,
+    startIndex = 0
+  ) => {
+    if (
+      !Array.isArray(photoList) ||
+      photoList.length === 0
+    ) {
       return;
     }
 
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        closeReviewMediaViewer();
+    const safeStartIndex =
+      Math.min(
+        Math.max(
+          Number(startIndex) || 0,
+          0
+        ),
+        photoList.length - 1
+      );
+
+    setSelectedBusinessPhotos(
+      photoList
+    );
+
+    setSelectedBusinessPhotoIndex(
+      safeStartIndex
+    );
+  };
+
+  const closeBusinessPhotoGallery = () => {
+    setSelectedBusinessPhotos(
+      null
+    );
+
+    setSelectedBusinessPhotoIndex(
+      0
+    );
+  };
+
+  const showNextBusinessPhoto = () => {
+    if (
+      !selectedBusinessPhotos?.length
+    ) {
+      return;
+    }
+
+    setSelectedBusinessPhotoIndex(
+      (previous) =>
+        (previous + 1) %
+        selectedBusinessPhotos.length
+    );
+  };
+
+  const showPreviousBusinessPhoto = () => {
+    if (
+      !selectedBusinessPhotos?.length
+    ) {
+      return;
+    }
+
+    setSelectedBusinessPhotoIndex(
+      (previous) =>
+        previous === 0
+          ? selectedBusinessPhotos.length - 1
+          : previous - 1
+    );
+  };
+
+  // =====================================================
+  // BUSINESS PHOTO KEYBOARD CONTROLS
+  // =====================================================
+
+  useEffect(() => {
+    if (!selectedBusinessPhotos) {
+      return;
+    }
+
+    const handleKeyDown = (
+      event
+    ) => {
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        closeBusinessPhotoGallery();
         return;
       }
 
-      if (event.key === "ArrowRight") {
-        showNextMedia();
+      if (
+        event.key ===
+        "ArrowRight"
+      ) {
+        showNextBusinessPhoto();
         return;
       }
 
-      if (event.key === "ArrowLeft") {
-        showPreviousMedia();
+      if (
+        event.key ===
+        "ArrowLeft"
+      ) {
+        showPreviousBusinessPhoto();
       }
     };
 
@@ -171,20 +344,213 @@ function BusinessDetails() {
       document.body.style.overflow =
         previousOverflow;
     };
-  }, [selectedReviewMedia]);
+  }, [
+    selectedBusinessPhotos,
+  ]);
+
+  // =====================================================
+  // REVIEW MEDIA GALLERY HANDLERS
+  // =====================================================
+
+  /*
+  =====================================================
+  OPEN REVIEW MEDIA GALLERY
+
+  mediaList:
+      ALL valid media belonging to the review.
+
+  startIndex:
+      Which media should open first.
+
+  Example:
+
+  User clicks first photo:
+      startIndex = 0
+
+  User clicks second photo:
+      startIndex = 1
+
+  User clicks "+3 More":
+      startIndex = 1
+  =====================================================
+  */
+
+  const openReviewMediaGallery = (
+    mediaList,
+    startIndex = 0
+  ) => {
+    if (
+      !Array.isArray(mediaList) ||
+      mediaList.length === 0
+    ) {
+      return;
+    }
+
+    const safeStartIndex =
+      Math.min(
+        Math.max(
+          Number(startIndex) || 0,
+          0
+        ),
+        mediaList.length - 1
+      );
+
+    setSelectedReviewMedia(
+      mediaList
+    );
+
+    setSelectedReviewMediaIndex(
+      safeStartIndex
+    );
+  };
+
+  /*
+  =====================================================
+  CLOSE REVIEW MEDIA GALLERY
+  =====================================================
+  */
+
+  const closeReviewMediaGallery = () => {
+    setSelectedReviewMedia(
+      null
+    );
+
+    setSelectedReviewMediaIndex(
+      0
+    );
+  };
+
+  /*
+  =====================================================
+  NEXT REVIEW MEDIA
+  =====================================================
+  */
+
+  const showNextReviewMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedReviewMediaIndex(
+      (previous) =>
+        (previous + 1) %
+        selectedReviewMedia.length
+    );
+  };
+
+  /*
+  =====================================================
+  PREVIOUS REVIEW MEDIA
+  =====================================================
+  */
+
+  const showPreviousReviewMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedReviewMediaIndex(
+      (previous) =>
+        previous === 0
+          ? selectedReviewMedia.length - 1
+          : previous - 1
+    );
+  };
+
+  // =====================================================
+  // REVIEW MEDIA KEYBOARD CONTROLS
+  // =====================================================
+
+  useEffect(() => {
+    if (!selectedReviewMedia) {
+      return;
+    }
+
+    const handleKeyDown = (
+      event
+    ) => {
+      /*
+      ESCAPE
+      */
+
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        closeReviewMediaGallery();
+        return;
+      }
+
+      /*
+      NEXT
+      */
+
+      if (
+        event.key ===
+        "ArrowRight"
+      ) {
+        showNextReviewMedia();
+        return;
+      }
+
+      /*
+      PREVIOUS
+      */
+
+      if (
+        event.key ===
+        "ArrowLeft"
+      ) {
+        showPreviousReviewMedia();
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    /*
+    Prevent background page scrolling
+    while review media modal is open.
+    */
+
+    const previousOverflow =
+      document.body.style.overflow;
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        previousOverflow;
+    };
+  }, [
+    selectedReviewMedia,
+  ]);
 
   // =====================================================
   // DIALOG
   // =====================================================
 
-  const [dialog, setDialog] = useState({
-    isOpen: false,
-    title: "REVIO",
-    message: "",
-    type: "info",
-    confirmText: "OK",
-    onConfirm: null,
-  });
+  const [dialog, setDialog] =
+    useState({
+      isOpen: false,
+      title: "REVIO",
+      message: "",
+      type: "info",
+      confirmText: "OK",
+      onConfirm: null,
+    });
 
   const showDialog = ({
     title = "REVIO",
@@ -204,14 +570,17 @@ function BusinessDetails() {
   };
 
   const closeDialog = () => {
-    setDialog((previous) => ({
-      ...previous,
-      isOpen: false,
-    }));
+    setDialog(
+      (previous) => ({
+        ...previous,
+        isOpen: false,
+      })
+    );
   };
 
   const handleDialogConfirm = () => {
-    const callback = dialog.onConfirm;
+    const callback =
+      dialog.onConfirm;
 
     closeDialog();
 
@@ -224,7 +593,9 @@ function BusinessDetails() {
   // FAVORITE
   // =====================================================
 
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] =
+    useState(false);
+
   const [favoriteLoading, setFavoriteLoading] =
     useState(false);
 
@@ -232,12 +603,14 @@ function BusinessDetails() {
   // REVIEW PAGINATION
   // =====================================================
 
-  const [totalReviews, setTotalReviews] = useState(0);
+  const [totalReviews, setTotalReviews] =
+    useState(0);
 
   const [currentReviewPage, setCurrentReviewPage] =
     useState(1);
 
-  const [reviewPageSize] = useState(10);
+  const [reviewPageSize] =
+    useState(10);
 
   const [hasMoreReviews, setHasMoreReviews] =
     useState(false);
@@ -255,8 +628,12 @@ function BusinessDetails() {
 
   const getUserId = () => {
     const userId =
-      localStorage.getItem("userId") ||
-      localStorage.getItem("UserId");
+      localStorage.getItem(
+        "userId"
+      ) ||
+      localStorage.getItem(
+        "UserId"
+      );
 
     return userId
       ? Number(userId)
@@ -282,7 +659,9 @@ function BusinessDetails() {
       setLoading(true);
 
       const response =
-        await getBusinessDetails(id);
+        await getBusinessDetails(
+          id
+        );
 
       console.log(
         "Business Details:",
@@ -293,7 +672,22 @@ function BusinessDetails() {
         response.data?.data ||
         response.data;
 
-      setBusiness(businessData);
+      setBusiness(
+        businessData
+      );
+
+      /*
+      =================================================
+      DEBUG BUSINESS PHOTOS
+      =================================================
+      */
+
+      console.log(
+        "CUSTOMER BUSINESS PHOTOS:",
+        businessData?.photos ??
+          businessData?.Photos ??
+          []
+      );
 
       const businessId =
         businessData?.businessId ||
@@ -306,7 +700,9 @@ function BusinessDetails() {
             1,
             false
           ),
-          checkFavorite(businessId),
+          checkFavorite(
+            businessId
+          ),
         ]);
       }
     } catch (error) {
@@ -316,7 +712,10 @@ function BusinessDetails() {
       );
 
       setBusiness(null);
-      setAverageRating(null);
+
+      setAverageRating(
+        null
+      );
     } finally {
       setLoading(false);
     }
@@ -326,294 +725,384 @@ function BusinessDetails() {
   // LOAD BUSINESS REVIEWS
   // =====================================================
 
-  const loadBusinessReviews = async (
-    businessId,
-    page = 1,
-    append = false
-  ) => {
-    try {
-      setReviewsLoading(true);
-
-      const response =
-        await getBusinessReviews(
-          businessId,
-          page,
-          reviewPageSize
+  const loadBusinessReviews =
+    async (
+      businessId,
+      page = 1,
+      append = false
+    ) => {
+      try {
+        setReviewsLoading(
+          true
         );
 
-      console.log(
-        "Business Reviews:",
-        response.data
-      );
+        const response =
+          await getBusinessReviews(
+            businessId,
+            page,
+            reviewPageSize
+          );
 
-      const responseData =
-        response.data?.data ??
-        response.data?.Data ??
-        response.data;
+        console.log(
+          "Business Reviews:",
+          response.data
+        );
 
-      let reviewData = [];
-      let total = 0;
-      let hasMore = false;
+        const responseData =
+          response.data?.data ??
+          response.data?.Data ??
+          response.data;
 
-      // =================================================
-      // PAGINATED RESPONSE
-      // =================================================
+        let reviewData = [];
+        let total = 0;
+        let hasMore = false;
 
-      if (
-        responseData &&
-        !Array.isArray(responseData)
-      ) {
-        reviewData =
-          responseData.reviews ??
-          responseData.Reviews ??
-          [];
+        // =================================================
+        // PAGINATED RESPONSE
+        // =================================================
 
-        total =
-          Number(
-            responseData.totalReviews ??
-            responseData.TotalReviews ??
+        if (
+          responseData &&
+          !Array.isArray(
+            responseData
+          )
+        ) {
+          reviewData =
+            responseData.reviews ??
+            responseData.Reviews ??
+            [];
+
+          total =
+            Number(
+              responseData.totalReviews ??
+              responseData.TotalReviews ??
+              0
+            );
+
+          hasMore =
+            Boolean(
+              responseData.hasMore ??
+              responseData.HasMore ??
+              false
+            );
+
+          // =================================================
+          // ACTUAL AVERAGE RATING
+          // =================================================
+
+          const apiAverageRating =
+            Number(
+              responseData.averageRating ??
+              responseData.AverageRating
+            );
+
+          if (
+            Number.isFinite(
+              apiAverageRating
+            ) &&
+            apiAverageRating >=
+              0
+          ) {
+            setAverageRating(
+              apiAverageRating
+            );
+          }
+        } else if (
+          Array.isArray(
+            responseData
+          )
+        ) {
+          reviewData =
+            responseData;
+
+          total =
+            responseData.length;
+
+          hasMore =
+            false;
+        }
+
+        const finalReviews =
+          Array.isArray(
+            reviewData
+          )
+            ? reviewData
+            : [];
+
+        console.log(
+          "FINAL BUSINESS DETAILS REVIEWS:",
+          finalReviews
+        );
+
+        if (append) {
+          setReviews(
+            (previous) => [
+              ...previous,
+              ...finalReviews,
+            ]
+          );
+        } else {
+          setReviews(
+            finalReviews
+          );
+        }
+
+        setTotalReviews(
+          total
+        );
+
+        setCurrentReviewPage(
+          page
+        );
+
+        setHasMoreReviews(
+          hasMore
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load business reviews:",
+          error
+        );
+
+        if (!append) {
+          setReviews([]);
+
+          setTotalReviews(
             0
           );
 
-        hasMore =
-          Boolean(
-            responseData.hasMore ??
-            responseData.HasMore ??
-            false
-          );
-
-        // =================================================
-        // ACTUAL AVERAGE RATING FROM API
-        // =================================================
-
-        const apiAverageRating =
-          Number(
-            responseData.averageRating ??
-            responseData.AverageRating
-          );
-
-        if (
-          Number.isFinite(apiAverageRating) &&
-          apiAverageRating >= 0
-        ) {
           setAverageRating(
-            apiAverageRating
+            null
           );
         }
-      } else if (
-        Array.isArray(responseData)
-      ) {
-        reviewData = responseData;
-        total = responseData.length;
-        hasMore = false;
+
+        setHasMoreReviews(
+          false
+        );
+      } finally {
+        setReviewsLoading(
+          false
+        );
       }
-
-      const finalReviews =
-        Array.isArray(reviewData)
-          ? reviewData
-          : [];
-
-      console.log(
-        "FINAL BUSINESS DETAILS REVIEWS:",
-        finalReviews
-      );
-
-      if (append) {
-        setReviews((previous) => [
-          ...previous,
-          ...finalReviews,
-        ]);
-      } else {
-        setReviews(finalReviews);
-      }
-
-      setTotalReviews(total);
-      setCurrentReviewPage(page);
-      setHasMoreReviews(hasMore);
-    } catch (error) {
-      console.error(
-        "Failed to load business reviews:",
-        error
-      );
-
-      if (!append) {
-        setReviews([]);
-        setTotalReviews(0);
-        setAverageRating(null);
-      }
-
-      setHasMoreReviews(false);
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
+    };
 
   // =====================================================
   // LOAD MORE REVIEWS
   // =====================================================
 
-  const handleLoadMoreReviews = async () => {
-    const businessId =
-      business?.businessId ||
-      business?.id;
-
-    if (
-      !businessId ||
-      reviewsLoading ||
-      !hasMoreReviews
-    ) {
-      return;
-    }
-
-    const nextPage =
-      currentReviewPage + 1;
-
-    await loadBusinessReviews(
-      businessId,
-      nextPage,
-      true
-    );
-  };
-
-  // =====================================================
-  // CHECK BUSINESS FAVORITE
-  // =====================================================
-
-  const checkFavorite = async (
-    businessId
-  ) => {
-    try {
-      const userId = getUserId();
-
-      if (!userId || !businessId) {
-        setIsFavorite(false);
-        return;
-      }
-
-      const response =
-        await getFavorites(userId);
-
-      const favorites =
-        response.data?.data ||
-        response.data ||
-        [];
-
-      const currentBusinessId =
-        Number(businessId);
-
-      const alreadyFavorite =
-        Array.isArray(favorites) &&
-        favorites.some(
-          (favorite) =>
-            Number(
-              favorite.businessId ??
-              favorite.BusinessId ??
-              favorite.business?.businessId ??
-              favorite.Business?.BusinessId
-            ) === currentBusinessId
-        );
-
-      setIsFavorite(
-        alreadyFavorite
-      );
-    } catch (error) {
-      console.error(
-        "Failed to check business favorite:",
-        error
-      );
-
-      setIsFavorite(false);
-    }
-  };
-
-  // =====================================================
-  // TOGGLE BUSINESS FAVORITE
-  // =====================================================
-
-  const handleFavorite = async () => {
-    try {
-      const userId = getUserId();
-
-      if (!userId) {
-        showDialog({
-          title: "Login Required",
-          message:
-            "Please login first to add favorites.",
-          type: "warning",
-          onConfirm: () => {
-            navigate("/login");
-          },
-        });
-
-        return;
-      }
-
-      if (!business) {
-        return;
-      }
-
+  const handleLoadMoreReviews =
+    async () => {
       const businessId =
-        business.businessId ||
-        business.id;
-
-      if (!businessId) {
-        console.error(
-          "Business ID not found:",
-          business
-        );
-
-        return;
-      }
-
-      setFavoriteLoading(true);
-
-      if (isFavorite) {
-        await removeBusinessFavorite(
-          userId,
-          Number(businessId)
-        );
-
-        setIsFavorite(false);
-      } else {
-        await addBusinessFavorite({
-          userId: userId,
-          businessId: Number(businessId),
-        });
-
-        setIsFavorite(true);
-      }
-    } catch (error) {
-      console.error(
-        "Favorite operation failed:",
-        error
-      );
-
-      console.error(
-        "Favorite API Error:",
-        error.response?.data
-      );
+        business?.businessId ||
+        business?.id;
 
       if (
-        error.response?.data?.message
+        !businessId ||
+        reviewsLoading ||
+        !hasMoreReviews
       ) {
-        showDialog({
-          title: "Favorite Error",
-          message:
-            error.response.data.message,
-          type: "error",
-        });
-      } else {
-        showDialog({
-          title: "Something Went Wrong",
-          message:
-            "Something went wrong while updating favorites.",
-          type: "error",
-        });
+        return;
       }
-    } finally {
-      setFavoriteLoading(false);
-    }
-  };
+
+      const nextPage =
+        currentReviewPage +
+        1;
+
+      await loadBusinessReviews(
+        businessId,
+        nextPage,
+        true
+      );
+    };
+
+  // =====================================================
+  // CHECK FAVORITE
+  // =====================================================
+
+  const checkFavorite =
+    async (
+      businessId
+    ) => {
+      try {
+        const userId =
+          getUserId();
+
+        if (
+          !userId ||
+          !businessId
+        ) {
+          setIsFavorite(
+            false
+          );
+
+          return;
+        }
+
+        const response =
+          await getFavorites(
+            userId
+          );
+
+        const favorites =
+          response.data?.data ||
+          response.data ||
+          [];
+
+        const currentBusinessId =
+          Number(
+            businessId
+          );
+
+        const alreadyFavorite =
+          Array.isArray(
+            favorites
+          ) &&
+          favorites.some(
+            (
+              favorite
+            ) =>
+              Number(
+                favorite.businessId ??
+                favorite.BusinessId ??
+                favorite.business?.businessId ??
+                favorite.Business?.BusinessId
+              ) ===
+              currentBusinessId
+          );
+
+        setIsFavorite(
+          alreadyFavorite
+        );
+      } catch (error) {
+        console.error(
+          "Failed to check business favorite:",
+          error
+        );
+
+        setIsFavorite(
+          false
+        );
+      }
+    };
+
+  // =====================================================
+  // TOGGLE FAVORITE
+  // =====================================================
+
+  const handleFavorite =
+    async () => {
+      try {
+        const userId =
+          getUserId();
+
+        if (!userId) {
+          showDialog({
+            title:
+              "Login Required",
+
+            message:
+              "Please login first to add favorites.",
+
+            type:
+              "warning",
+
+            onConfirm: () => {
+              navigate(
+                "/login"
+              );
+            },
+          });
+
+          return;
+        }
+
+        if (!business) {
+          return;
+        }
+
+        const businessId =
+          business.businessId ||
+          business.id;
+
+        if (!businessId) {
+          console.error(
+            "Business ID not found:",
+            business
+          );
+
+          return;
+        }
+
+        setFavoriteLoading(
+          true
+        );
+
+        if (
+          isFavorite
+        ) {
+          await removeBusinessFavorite(
+            userId,
+            Number(
+              businessId
+            )
+          );
+
+          setIsFavorite(
+            false
+          );
+        } else {
+          await addBusinessFavorite({
+            userId:
+              userId,
+
+            businessId:
+              Number(
+                businessId
+              ),
+          });
+
+          setIsFavorite(
+            true
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Favorite operation failed:",
+          error
+        );
+
+        if (
+          error.response?.data
+            ?.message
+        ) {
+          showDialog({
+            title:
+              "Favorite Error",
+
+            message:
+              error.response.data.message,
+
+            type:
+              "error",
+          });
+        } else {
+          showDialog({
+            title:
+              "Something Went Wrong",
+
+            message:
+              "Something went wrong while updating favorites.",
+
+            type:
+              "error",
+          });
+        }
+      } finally {
+        setFavoriteLoading(
+          false
+        );
+      }
+    };
 
   // =====================================================
   // GOOGLE MAP
@@ -646,16 +1135,24 @@ function BusinessDetails() {
   // =====================================================
 
   const handleWriteReview = () => {
-    const userId = getUserId();
+    const userId =
+      getUserId();
 
     if (!userId) {
       showDialog({
-        title: "Login Required",
+        title:
+          "Login Required",
+
         message:
           "Please login first to write a review.",
-        type: "warning",
+
+        type:
+          "warning",
+
         onConfirm: () => {
-          navigate("/login");
+          navigate(
+            "/login"
+          );
         },
       });
 
@@ -679,127 +1176,148 @@ function BusinessDetails() {
   // VIEW ALL REVIEWS
   // =====================================================
 
-  const handleViewAllReviews = () => {
-    const businessId =
-      business?.businessId ||
-      business?.id;
+  const handleViewAllReviews =
+    () => {
+      const businessId =
+        business?.businessId ||
+        business?.id;
 
-    if (!businessId) {
-      return;
-    }
-
-    navigate(
-      `/business/${businessId}/reviews`
-    );
-  };
-
-  // =====================================================
-  // OPEN REVIEWER PROFILE
-  // =====================================================
-
-  const handleReviewerProfileClick = (
-    review
-  ) => {
-    const userId =
-      review.UserId ??
-      review.userId ??
-      review.User?.Id ??
-      review.user?.id;
-
-    const reviewId =
-      review.ReviewId ??
-      review.reviewId;
-
-    if (!userId || !reviewId) {
-      console.error(
-        "Reviewer profile information not found:",
-        review
-      );
-
-      return;
-    }
-
-    navigate(
-      `/user-profile/${userId}/review/${reviewId}`
-    );
-  };
-
-  // =====================================================
-  // FORMAT REVIEW DATE
-  // =====================================================
-
-  const getRelativeDate = (
-    dateValue
-  ) => {
-    if (!dateValue) {
-      return "";
-    }
-
-    const reviewDate =
-      new Date(dateValue);
-
-    if (
-      Number.isNaN(
-        reviewDate.getTime()
-      )
-    ) {
-      return "";
-    }
-
-    const now = new Date();
-
-    const difference =
-      now.getTime() -
-      reviewDate.getTime();
-
-    const seconds =
-      Math.floor(
-        difference / 1000
-      );
-
-    const minutes =
-      Math.floor(seconds / 60);
-
-    const hours =
-      Math.floor(minutes / 60);
-
-    const days =
-      Math.floor(hours / 24);
-
-    if (days < 1) {
-      if (hours < 1) {
-        return "Just now";
+      if (!businessId) {
+        return;
       }
 
-      if (hours === 1) {
-        return "1 hour ago";
+      navigate(
+        `/business/${businessId}/reviews`
+      );
+    };
+
+  // =====================================================
+  // REVIEWER PROFILE
+  // =====================================================
+
+  const handleReviewerProfileClick =
+    (
+      review
+    ) => {
+      const userId =
+        review.UserId ??
+        review.userId ??
+        review.User?.Id ??
+        review.user?.id;
+
+      const reviewId =
+        review.ReviewId ??
+        review.reviewId;
+
+      if (
+        !userId ||
+        !reviewId
+      ) {
+        console.error(
+          "Reviewer profile information not found:",
+          review
+        );
+
+        return;
       }
 
-      return `${hours} hours ago`;
-    }
+      navigate(
+        `/user-profile/${userId}/review/${reviewId}`
+      );
+    };
 
-    if (days === 1) {
-      return "1 day ago";
-    }
+  // =====================================================
+  // RELATIVE DATE
+  // =====================================================
 
-    if (days < 7) {
-      return `${days} days ago`;
-    }
+  const getRelativeDate =
+    (
+      dateValue
+    ) => {
+      if (!dateValue) {
+        return "";
+      }
 
-    if (days < 14) {
-      return "1 week ago";
-    }
+      const reviewDate =
+        new Date(
+          dateValue
+        );
 
-    if (days < 30) {
-      return `${Math.floor(days / 7)} weeks ago`;
-    }
+      if (
+        Number.isNaN(
+          reviewDate.getTime()
+        )
+      ) {
+        return "";
+      }
 
-    if (days < 365) {
-      return `${Math.floor(days / 30)} months ago`;
-    }
+      const now =
+        new Date();
 
-    return `${Math.floor(days / 365)} years ago`;
-  };
+      const difference =
+        now.getTime() -
+        reviewDate.getTime();
+
+      const seconds =
+        Math.floor(
+          difference / 1000
+        );
+
+      const minutes =
+        Math.floor(
+          seconds / 60
+        );
+
+      const hours =
+        Math.floor(
+          minutes / 60
+        );
+
+      const days =
+        Math.floor(
+          hours / 24
+        );
+
+      if (days < 1) {
+        if (hours < 1) {
+          return "Just now";
+        }
+
+        if (hours === 1) {
+          return "1 hour ago";
+        }
+
+        return `${hours} hours ago`;
+      }
+
+      if (days === 1) {
+        return "1 day ago";
+      }
+
+      if (days < 7) {
+        return `${days} days ago`;
+      }
+
+      if (days < 14) {
+        return "1 week ago";
+      }
+
+      if (days < 30) {
+        return `${Math.floor(
+          days / 7
+        )} weeks ago`;
+      }
+
+      if (days < 365) {
+        return `${Math.floor(
+          days / 30
+        )} months ago`;
+      }
+
+      return `${Math.floor(
+        days / 365
+      )} years ago`;
+    };
 
   // =====================================================
   // RATING STARS
@@ -809,148 +1327,172 @@ function BusinessDetails() {
     rating
   ) => {
     const numericRating =
-      Number(rating) || 0;
+      Number(
+        rating
+      ) || 0;
 
     return (
       <div className="review-stars">
+
         {[1, 2, 3, 4, 5].map(
-          (star) => (
+          (
+            star
+          ) => (
             <FaStar
-              key={star}
+              key={
+                star
+              }
               className={
-                star <= numericRating
+                star <=
+                numericRating
                   ? "review-star-filled"
                   : "review-star-empty"
               }
             />
           )
         )}
+
       </div>
     );
   };
 
   // =====================================================
-  // GET REVIEW USER NAME
+  // REVIEWER NAME
   // =====================================================
 
-  const getReviewerName = (
-    review
-  ) => {
-    if (review.UserName) {
-      return review.UserName;
-    }
+  const getReviewerName =
+    (
+      review
+    ) => {
+      if (review.UserName) {
+        return review.UserName;
+      }
 
-    if (review.userName) {
-      return review.userName;
-    }
+      if (review.userName) {
+        return review.userName;
+      }
 
-    if (
-      typeof review.User === "string"
-    ) {
-      return review.User;
-    }
+      if (
+        typeof review.User ===
+        "string"
+      ) {
+        return review.User;
+      }
 
-    if (
-      typeof review.user === "string"
-    ) {
-      return review.user;
-    }
+      if (
+        typeof review.user ===
+        "string"
+      ) {
+        return review.user;
+      }
 
-    if (review.User?.FullName) {
-      return review.User.FullName;
-    }
+      if (
+        review.User?.FullName
+      ) {
+        return review.User.FullName;
+      }
 
-    if (review.user?.fullName) {
-      return review.user.fullName;
-    }
+      if (
+        review.user?.fullName
+      ) {
+        return review.user.fullName;
+      }
 
-    if (review.FullName) {
-      return review.FullName;
-    }
+      if (review.FullName) {
+        return review.FullName;
+      }
 
-    if (review.fullName) {
-      return review.fullName;
-    }
+      if (review.fullName) {
+        return review.fullName;
+      }
 
-    return "Anonymous User";
-  };
-
-  // =====================================================
-  // GET REVIEW RATING
-  // =====================================================
-
-  const getReviewRating = (
-    review
-  ) => {
-    return Number(
-      review.Rating ??
-      review.rating ??
-      0
-    );
-  };
+      return "Anonymous User";
+    };
 
   // =====================================================
-  // GET REVIEW COMMENT
+  // REVIEW RATING
   // =====================================================
 
-  const getReviewComment = (
-    review
-  ) => {
-    return (
-      review.Comment ??
-      review.comment ??
-      ""
-    );
-  };
+  const getReviewRating =
+    (
+      review
+    ) => {
+      return Number(
+        review.Rating ??
+        review.rating ??
+        0
+      );
+    };
 
   // =====================================================
-  // GET REVIEW DATE
+  // REVIEW COMMENT
   // =====================================================
 
-  const getReviewDate = (
-    review
-  ) => {
-    return (
-      review.CreatedAt ??
-      review.createdAt ??
-      null
-    );
-  };
+  const getReviewComment =
+    (
+      review
+    ) => {
+      return (
+        review.Comment ??
+        review.comment ??
+        ""
+      );
+    };
 
   // =====================================================
-  // GET REVIEW ID
+  // REVIEW DATE
   // =====================================================
 
-  const getReviewId = (
-    review,
-    index
-  ) => {
-    return (
-      review.ReviewId ??
-      review.reviewId ??
-      `review-${index}`
-    );
-  };
+  const getReviewDate =
+    (
+      review
+    ) => {
+      return (
+        review.CreatedAt ??
+        review.createdAt ??
+        null
+      );
+    };
 
   // =====================================================
-  // GET REVIEW MEDIA
+  // REVIEW ID
   // =====================================================
 
-  const getReviewMedia = (
-    review
-  ) => {
-    const media =
-      review.Media ??
-      review.media ??
-      [];
-
-    return Array.isArray(media)
-      ? media
-      : [];
-  };
+  const getReviewId =
+    (
+      review,
+      index
+    ) => {
+      return (
+        review.ReviewId ??
+        review.reviewId ??
+        `review-${index}`
+      );
+    };
 
   // =====================================================
-  // GET MEDIA URL
+  // REVIEW MEDIA
+  // =====================================================
+
+  const getReviewMedia =
+    (
+      review
+    ) => {
+      return (
+        review.Media ??
+        review.media ??
+        []
+      );
+    };
+
+  // =====================================================
+  // MEDIA URL
+  //
+  // Supports:
+  // 1. Base64 image
+  // 2. Base64 video
+  // 3. Absolute URL
+  // 4. Relative backend URL
   // =====================================================
 
   const getMediaUrl = (
@@ -961,18 +1503,55 @@ function BusinessDetails() {
     }
 
     const cleanUrl =
-      String(mediaUrl).trim();
+      String(
+        mediaUrl
+      ).trim();
 
     if (!cleanUrl) {
       return "";
     }
 
+    /*
+    =================================================
+    BASE64 DATA URL
+
+    Do NOT prefix localhost.
+    =================================================
+    */
+
     if (
-      cleanUrl.startsWith("http://") ||
-      cleanUrl.startsWith("https://")
+      cleanUrl.startsWith(
+        "data:image/"
+      ) ||
+      cleanUrl.startsWith(
+        "data:video/"
+      )
     ) {
       return cleanUrl;
     }
+
+    /*
+    =================================================
+    ABSOLUTE URL
+    =================================================
+    */
+
+    if (
+      cleanUrl.startsWith(
+        "http://"
+      ) ||
+      cleanUrl.startsWith(
+        "https://"
+      )
+    ) {
+      return cleanUrl;
+    }
+
+    /*
+    =================================================
+    RELATIVE BACKEND URL
+    =================================================
+    */
 
     return `http://localhost:5213${
       cleanUrl.startsWith("/")
@@ -985,278 +1564,134 @@ function BusinessDetails() {
   // CHECK MEDIA TYPE
   // =====================================================
 
-  const isVideoMedia = (
-    media
-  ) => {
-    const mediaType =
-      String(
-        media?.MediaType ??
-        media?.mediaType ??
-        ""
-      )
-        .toLowerCase()
-        .trim();
-
-    const mediaUrl =
-      String(
-        media?.MediaUrl ??
-        media?.mediaUrl ??
-        ""
-      )
-        .toLowerCase()
-        .split("?")[0];
-
-    if (
-      mediaType.includes("video")
-    ) {
-      return true;
-    }
-
-    return [
-      ".mp4",
-      ".webm",
-      ".mov",
-      ".avi",
-      ".m4v",
-    ].some((extension) =>
-      mediaUrl.endsWith(extension)
-    );
-  };
-
-  // =====================================================
-  // PREPARE VALID REVIEW MEDIA
-  // =====================================================
-
-  const getValidReviewMedia = (
-    review
-  ) => {
-    const reviewMedia =
-      getReviewMedia(review);
-
-    return reviewMedia
-      .map(
+  const isVideoMedia =
+    (
+      media
+    ) => {
+      const mediaType =
         (
-          media,
-          mediaIndex
-        ) => {
-          const rawUrl =
-            media?.MediaUrl ??
-            media?.mediaUrl ??
-            "";
+          media.MediaType ??
+          media.mediaType ??
+          ""
+        ).toLowerCase();
 
-          const resolvedUrl =
-            getMediaUrl(rawUrl);
+      const mediaUrl =
+        (
+          media.MediaUrl ??
+          media.mediaUrl ??
+          ""
+        ).toLowerCase();
 
-          const mediaId =
-            media?.ReviewMediaId ??
-            media?.reviewMediaId ??
-            `${getReviewId(
-              review,
-              0
-            )}-media-${mediaIndex}`;
-
-          return {
-            ...media,
-            mediaIndex,
-            resolvedUrl,
-            mediaId,
-          };
-        }
-      )
-      .filter(
-        (media) =>
-          Boolean(
-            media.resolvedUrl
-          )
-      );
-  };
-
-  // =====================================================
-  // OPEN REVIEW MEDIA VIEWER
-  // =====================================================
-
-  const openReviewMediaViewer = (
-    mediaList,
-    startIndex = 0
-  ) => {
-    if (
-      !Array.isArray(mediaList) ||
-      mediaList.length === 0
-    ) {
-      return;
-    }
-
-    const safeStartIndex =
-      Math.min(
-        Math.max(
-          Number(startIndex) || 0,
-          0
-        ),
-        mediaList.length - 1
-      );
-
-    setSelectedReviewMedia(
-      mediaList
-    );
-
-    setSelectedMediaIndex(
-      safeStartIndex
-    );
-  };
-
-  // =====================================================
-  // CLOSE REVIEW MEDIA VIEWER
-  // =====================================================
-
-  const closeReviewMediaViewer =
-    () => {
-      setSelectedReviewMedia(
-        null
-      );
-
-      setSelectedMediaIndex(
-        0
+      return (
+        mediaType.includes(
+          "video"
+        ) ||
+        mediaType === ".mp4" ||
+        mediaType === ".webm" ||
+        mediaType === ".mov" ||
+        mediaUrl.endsWith(
+          ".mp4"
+        ) ||
+        mediaUrl.endsWith(
+          ".webm"
+        ) ||
+        mediaUrl.endsWith(
+          ".mov"
+        ) ||
+        mediaUrl.endsWith(
+          ".avi"
+        ) ||
+        mediaUrl.endsWith(
+          ".m4v"
+        )
       );
     };
 
   // =====================================================
-  // SHOW NEXT MEDIA
+  // CALCULATE AVERAGE
   // =====================================================
 
-  const showNextMedia = () => {
-    if (
-      !selectedReviewMedia?.length
-    ) {
-      return;
-    }
-
-    setSelectedMediaIndex(
-      (previous) =>
-        (previous + 1) %
-        selectedReviewMedia.length
-    );
-  };
-
-  // =====================================================
-  // SHOW PREVIOUS MEDIA
-  // =====================================================
-
-  const showPreviousMedia = () => {
-    if (
-      !selectedReviewMedia?.length
-    ) {
-      return;
-    }
-
-    setSelectedMediaIndex(
-      (previous) =>
-        previous === 0
-          ? selectedReviewMedia.length - 1
-          : previous - 1
-    );
-  };
-
-  // =====================================================
-  // CALCULATE ACTUAL AVERAGE RATING
-  // =====================================================
-
-  const calculateAverageRating = () => {
-    // -------------------------------------------------
-    // 1. FIRST PRIORITY:
-    //    AverageRating returned by Reviews API
-    // -------------------------------------------------
-
-    if (
-      averageRating !== null &&
-      Number.isFinite(
-        Number(averageRating)
-      )
-    ) {
-      return Number(
-        averageRating
-      ).toFixed(1);
-    }
-
-    // -------------------------------------------------
-    // 2. FALLBACK:
-    //    Calculate from currently loaded reviews
-    // -------------------------------------------------
-
-    if (reviews.length > 0) {
-      const validRatings =
-        reviews
-          .map((review) =>
-            getReviewRating(review)
+  const calculateAverageRating =
+    () => {
+      if (
+        averageRating !==
+          null &&
+        Number.isFinite(
+          Number(
+            averageRating
           )
-          .filter(
-            (rating) =>
-              rating >= 1 &&
-              rating <= 5
-          );
-
-      if (validRatings.length > 0) {
-        const total =
-          validRatings.reduce(
-            (sum, rating) =>
-              sum + rating,
-            0
-          );
-
-        return (
-          total /
-          validRatings.length
+        )
+      ) {
+        return Number(
+          averageRating
         ).toFixed(1);
       }
-    }
 
-    // -------------------------------------------------
-    // 3. FINAL FALLBACK:
-    //    Business rating
-    // -------------------------------------------------
+      if (
+        reviews.length >
+        0
+      ) {
+        const validRatings =
+          reviews
+            .map(
+              (
+                review
+              ) =>
+                getReviewRating(
+                  review
+                )
+            )
+            .filter(
+              (
+                rating
+              ) =>
+                rating >=
+                  1 &&
+                rating <=
+                  5
+            );
 
-    const businessRating =
-      Number(
-        business?.rating ??
-        business?.Rating
-      );
+        if (
+          validRatings.length >
+          0
+        ) {
+          const total =
+            validRatings.reduce(
+              (
+                sum,
+                rating
+              ) =>
+                sum + rating,
+              0
+            );
 
-    if (
-      Number.isFinite(
-        businessRating
-      ) &&
-      businessRating >= 0
-    ) {
-      return businessRating.toFixed(1);
-    }
+          return (
+            total /
+            validRatings.length
+          ).toFixed(1);
+        }
+      }
 
-    return "0.0";
-  };
+      const businessRating =
+        Number(
+          business?.rating ??
+          business?.Rating
+        );
 
-  // =====================================================
-  // CURRENT MODAL MEDIA
-  // =====================================================
+      if (
+        Number.isFinite(
+          businessRating
+        ) &&
+        businessRating >=
+          0
+      ) {
+        return businessRating.toFixed(
+          1
+        );
+      }
 
-  const currentMedia =
-    selectedReviewMedia?.[
-      selectedMediaIndex
-    ];
-
-  const currentMediaUrl =
-    currentMedia
-      ? currentMedia.resolvedUrl ||
-        getMediaUrl(
-          currentMedia?.MediaUrl ??
-          currentMedia?.mediaUrl ??
-          ""
-        )
-      : "";
-
-  const currentMediaIsVideo =
-    currentMedia
-      ? isVideoMedia(
-          currentMedia
-        )
-      : false;
+      return "0.0";
+    };
 
   // =====================================================
   // LOADING
@@ -1265,6 +1700,7 @@ function BusinessDetails() {
   if (loading) {
     return (
       <MainLayout>
+
         <h2
           style={{
             color: "#fff",
@@ -1274,10 +1710,18 @@ function BusinessDetails() {
         </h2>
 
         <DialogBox
-          isOpen={dialog.isOpen}
-          title={dialog.title}
-          message={dialog.message}
-          type={dialog.type}
+          isOpen={
+            dialog.isOpen
+          }
+          title={
+            dialog.title
+          }
+          message={
+            dialog.message
+          }
+          type={
+            dialog.type
+          }
           confirmText={
             dialog.confirmText
           }
@@ -1285,6 +1729,7 @@ function BusinessDetails() {
             handleDialogConfirm
           }
         />
+
       </MainLayout>
     );
   }
@@ -1296,6 +1741,7 @@ function BusinessDetails() {
   if (!business) {
     return (
       <MainLayout>
+
         <button
           className="back-btn"
           onClick={() =>
@@ -1315,10 +1761,18 @@ function BusinessDetails() {
         </h2>
 
         <DialogBox
-          isOpen={dialog.isOpen}
-          title={dialog.title}
-          message={dialog.message}
-          type={dialog.type}
+          isOpen={
+            dialog.isOpen
+          }
+          title={
+            dialog.title
+          }
+          message={
+            dialog.message
+          }
+          type={
+            dialog.type
+          }
           confirmText={
             dialog.confirmText
           }
@@ -1326,6 +1780,7 @@ function BusinessDetails() {
             handleDialogConfirm
           }
         />
+
       </MainLayout>
     );
   }
@@ -1339,14 +1794,157 @@ function BusinessDetails() {
     business.name ||
     "Business";
 
-  const imageUrl =
-    business.imageUrl ||
-    business.photos?.find(
-      (photo) =>
+  // =====================================================
+  // NORMALIZE BUSINESS PHOTOS
+  // =====================================================
+
+  const businessPhotoSource =
+    business.photos ??
+    business.Photos ??
+    [];
+
+  const businessPhotos =
+    Array.isArray(
+      businessPhotoSource
+    )
+      ? businessPhotoSource
+          .map(
+            (
+              photo,
+              index
+            ) => {
+
+              const rawPhotoUrl =
+                photo?.photoUrl ??
+                photo?.PhotoUrl ??
+                photo?.imageUrl ??
+                photo?.ImageUrl ??
+                photo?.image ??
+                photo?.Image ??
+                photo?.url ??
+                photo?.Url ??
+                "";
+
+              const photoUrl =
+                getMediaUrl(
+                  rawPhotoUrl
+                );
+
+              if (!photoUrl) {
+                return null;
+              }
+
+              return {
+                id:
+                  photo?.businessPhotoId ??
+                  photo?.BusinessPhotoId ??
+                  photo?.id ??
+                  photo?.Id ??
+                  `business-photo-${index}`,
+
+                url:
+                  photoUrl,
+
+                isPrimary:
+                  Boolean(
+                    photo?.isPrimary ??
+                    photo?.IsPrimary ??
+                    false
+                  ),
+
+                caption:
+                  photo?.caption ??
+                  photo?.Caption ??
+                  `${businessName} photo ${
+                    index + 1
+                  }`,
+              };
+            }
+          )
+          .filter(Boolean)
+      : [];
+
+  // =====================================================
+  // PRIMARY PHOTO FIRST
+  // =====================================================
+
+  const sortedBusinessPhotos = [
+    ...businessPhotos.filter(
+      (
+        photo
+      ) =>
         photo.isPrimary
-    )?.photoUrl ||
-    business.photos?.[0]?.photoUrl ||
+    ),
+
+    ...businessPhotos.filter(
+      (
+        photo
+      ) =>
+        !photo.isPrimary
+    ),
+  ];
+
+  // =====================================================
+  // FALLBACK PHOTO
+  // =====================================================
+
+  const fallbackPhoto =
+    getMediaUrl(
+      business.imageUrl ||
+      business.ImageUrl ||
+      ""
+    ) ||
     "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
+
+  // =====================================================
+  // DISPLAY BUSINESS PHOTOS
+  // =====================================================
+
+  const displayBusinessPhotos =
+    sortedBusinessPhotos.length >
+    0
+      ? sortedBusinessPhotos
+      : [
+          {
+            id:
+              "business-fallback",
+
+            url:
+              fallbackPhoto,
+
+            isPrimary:
+              true,
+
+            caption:
+              `${businessName} photo`,
+          },
+        ];
+
+  // =====================================================
+  // ONLY ONE PHOTO IN PAGE PREVIEW
+  // =====================================================
+
+  const visibleBusinessPhotos =
+    displayBusinessPhotos.slice(
+      0,
+      BUSINESS_PHOTO_PREVIEW_COUNT
+    );
+
+  // =====================================================
+  // NUMBER OF ADDITIONAL PHOTOS
+  // =====================================================
+
+  const remainingBusinessPhotoCount =
+    Math.max(
+      displayBusinessPhotos.length -
+        BUSINESS_PHOTO_PREVIEW_COUNT,
+      0
+    );
+
+  const coverImage =
+    displayBusinessPhotos[0]
+      ?.url ??
+    fallbackPhoto;
 
   // =====================================================
   // ACTUAL RATING
@@ -1373,6 +1971,24 @@ function BusinessDetails() {
     `${businessName} provides quality services and aims to provide a great customer experience.`;
 
   // =====================================================
+  // CURRENT BUSINESS PHOTO
+  // =====================================================
+
+  const currentBusinessPhoto =
+    selectedBusinessPhotos?.[
+      selectedBusinessPhotoIndex
+    ];
+
+  // =====================================================
+  // CURRENT REVIEW MEDIA
+  // =====================================================
+
+  const currentReviewMedia =
+    selectedReviewMedia?.[
+      selectedReviewMediaIndex
+    ];
+
+  // =====================================================
   // UI
   // =====================================================
 
@@ -1393,6 +2009,7 @@ function BusinessDetails() {
         <FaArrowLeft />
       </button>
 
+
       {/* =================================================
           BUSINESS DETAILS
       ================================================= */}
@@ -1400,19 +2017,93 @@ function BusinessDetails() {
       <div className="place-details">
 
         {/* =================================================
-            IMAGE
+            BUSINESS PHOTO GALLERY PREVIEW
         ================================================= */}
 
         <div className="image-section">
 
-          <img
-            src={imageUrl}
-            alt={businessName}
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
-            }}
-          />
+          <div className="business-photo-preview-grid">
+
+            {visibleBusinessPhotos.map(
+              (
+                photo,
+                photoIndex
+              ) => {
+
+                const isLastVisible =
+                  photoIndex ===
+                    BUSINESS_PHOTO_PREVIEW_COUNT -
+                      1 &&
+                  remainingBusinessPhotoCount >
+                    0;
+
+                return (
+                  <button
+                    type="button"
+                    key={
+                      photo.id
+                    }
+                    className="business-photo-preview-item"
+                    onClick={() =>
+                      openBusinessPhotoGallery(
+                        displayBusinessPhotos,
+                        photoIndex
+                      )
+                    }
+                    aria-label={
+                      isLastVisible
+                        ? `View ${remainingBusinessPhotoCount} more business photos`
+                        : `View business photo ${
+                            photoIndex + 1
+                          }`
+                    }
+                  >
+
+                    <img
+                      src={
+                        photo.url
+                      }
+                      alt={
+                        photo.caption
+                      }
+                      onError={(
+                        event
+                      ) => {
+
+                        if (
+                          event.currentTarget.src !==
+                          fallbackPhoto
+                        ) {
+                          event.currentTarget.src =
+                            fallbackPhoto;
+                        }
+                      }}
+                    />
+
+                    {photoIndex ===
+                      0 && (
+                      <span className="business-photo-featured-label">
+                        Featured
+                      </span>
+                    )}
+
+                    {isLastVisible && (
+                      <span className="business-photo-more-overlay">
+                        +{
+                          remainingBusinessPhotoCount
+                        } More
+                      </span>
+                    )}
+
+                  </button>
+                );
+              }
+            )}
+
+          </div>
+
+
+          {/* FAVORITE */}
 
           <button
             className={`heart-btn ${
@@ -1437,6 +2128,7 @@ function BusinessDetails() {
 
         </div>
 
+
         {/* =================================================
             DETAILS CARD
         ================================================= */}
@@ -1447,9 +2139,8 @@ function BusinessDetails() {
             {businessName}
           </h1>
 
-          {/* =================================================
-              RATING
-          ================================================= */}
+
+          {/* RATING */}
 
           <div className="rating-row">
 
@@ -1465,9 +2156,8 @@ function BusinessDetails() {
 
           </div>
 
-          {/* =================================================
-              LOCATION
-          ================================================= */}
+
+          {/* LOCATION */}
 
           <div className="info-row">
 
@@ -1484,9 +2174,8 @@ function BusinessDetails() {
 
           </div>
 
-          {/* =================================================
-              CATEGORY
-          ================================================= */}
+
+          {/* CATEGORY */}
 
           <div className="info-row">
 
@@ -1505,9 +2194,8 @@ function BusinessDetails() {
 
           </div>
 
-          {/* =================================================
-              REVIEWS
-          ================================================= */}
+
+          {/* REVIEWS */}
 
           <div className="info-row">
 
@@ -1523,9 +2211,8 @@ function BusinessDetails() {
 
           </div>
 
-          {/* =================================================
-              STATUS
-          ================================================= */}
+
+          {/* STATUS */}
 
           <div className="info-row">
 
@@ -1547,9 +2234,8 @@ function BusinessDetails() {
 
           </div>
 
-          {/* =================================================
-              ACTION BUTTONS
-          ================================================= */}
+
+          {/* ACTIONS */}
 
           <div className="place-actions">
 
@@ -1565,6 +2251,7 @@ function BusinessDetails() {
                 View on Map
               </span>
             </button>
+
 
             <button
               className="place-action-btn review-btn"
@@ -1585,6 +2272,7 @@ function BusinessDetails() {
 
       </div>
 
+
       {/* =================================================
           ABOUT
       ================================================= */}
@@ -1600,6 +2288,7 @@ function BusinessDetails() {
         </p>
 
       </div>
+
 
       {/* =================================================
           CUSTOMER REVIEWS
@@ -1623,24 +2312,23 @@ function BusinessDetails() {
 
         </div>
 
-        {/* =================================================
-            REVIEWS LOADING
-        ================================================= */}
+
+        {/* REVIEWS LOADING */}
 
         {reviewsLoading &&
-          reviews.length === 0 && (
+          reviews.length ===
+            0 && (
             <div className="reviews-loading">
               Loading reviews...
             </div>
           )}
 
-        {/* =================================================
-            NO REVIEWS
-        ================================================= */}
+
+        {/* NO REVIEWS */}
 
         {!reviewsLoading &&
-          reviews.length === 0 && (
-
+          reviews.length ===
+            0 && (
             <div className="no-reviews">
 
               <h3>
@@ -1648,20 +2336,18 @@ function BusinessDetails() {
               </h3>
 
               <p>
-                Be the first customer to
-                review this business.
+                Be the first customer to review this business.
               </p>
 
             </div>
           )}
 
-        {/* =================================================
-            REVIEW LIST
-        ================================================= */}
+
+        {/* REVIEW LIST */}
 
         {!reviewsLoading &&
-          reviews.length > 0 && (
-
+          reviews.length >
+            0 && (
             <div className="reviews-list">
 
               {reviews
@@ -1698,33 +2384,89 @@ function BusinessDetails() {
                         index
                       );
 
-                    // =============================================
-                    // ALL MEDIA
-                    // =============================================
-
-                    const validReviewMedia =
-                      getValidReviewMedia(
+                    const reviewMedia =
+                      getReviewMedia(
                         review
                       );
 
-                    // =============================================
-                    // ONLY FIRST 2 MEDIA ARE VISIBLE
-                    // =============================================
+                    /*
+                    =================================================
+                    NORMALIZE ALL REVIEW MEDIA
 
-                    const visibleMedia =
+                    Invalid/empty URLs are removed.
+
+                    This list is used by BOTH:
+                    1. Preview
+                    2. Full-screen modal
+                    =================================================
+                    */
+
+                    const validReviewMedia =
+                      Array.isArray(
+                        reviewMedia
+                      )
+                        ? reviewMedia
+                            .map(
+                              (
+                                media,
+                                mediaIndex
+                              ) => {
+
+                                const mediaId =
+                                  media?.ReviewMediaId ??
+                                  media?.reviewMediaId ??
+                                  `${reviewId}-media-${mediaIndex}`;
+
+                                const mediaUrl =
+                                  getMediaUrl(
+                                    media?.MediaUrl ??
+                                    media?.mediaUrl
+                                  );
+
+                                if (
+                                  !mediaUrl
+                                ) {
+                                  return null;
+                                }
+
+                                return {
+                                  ...media,
+
+                                  mediaId,
+
+                                  mediaUrl,
+
+                                  mediaIndex,
+                                };
+                              }
+                            )
+                            .filter(
+                              Boolean
+                            )
+                        : [];
+
+                    /*
+                    =================================================
+                    ONLY FIRST TWO MEDIA VISIBLE
+                    =================================================
+                    */
+
+                    const visibleReviewMedia =
                       validReviewMedia.slice(
                         0,
-                        2
+                        REVIEW_MEDIA_PREVIEW_COUNT
                       );
 
-                    // =============================================
-                    // HOW MANY MEDIA REMAIN
-                    // =============================================
+                    /*
+                    =================================================
+                    REMAINING MEDIA COUNT
+                    =================================================
+                    */
 
-                    const remainingMediaCount =
+                    const remainingReviewMediaCount =
                       Math.max(
                         validReviewMedia.length -
-                          2,
+                          REVIEW_MEDIA_PREVIEW_COUNT,
                         0
                       );
 
@@ -1745,18 +2487,16 @@ function BusinessDetails() {
                     return (
                       <div
                         className="customer-review-item"
-                        key={reviewId}
+                        key={
+                          reviewId
+                        }
                       >
 
-                        {/* ==========================================
-                            REVIEW TOP
-                        ========================================== */}
+                        {/* REVIEW TOP */}
 
                         <div className="customer-review-top">
 
                           <div className="reviewer-info">
-
-                            {/* PROFILE AVATAR */}
 
                             <div
                               className="reviewer-avatar"
@@ -1766,28 +2506,16 @@ function BusinessDetails() {
                                 )
                               }
                               title="View Profile"
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(
-                                event
-                              ) => {
-                                if (
-                                  event.key ===
-                                  "Enter"
-                                ) {
-                                  handleReviewerProfileClick(
-                                    review
-                                  );
-                                }
+                              style={{
+                                cursor:
+                                  "pointer",
                               }}
                             >
-
                               {reviewerName
                                 .charAt(
                                   0
                                 )
                                 .toUpperCase()}
-
                             </div>
 
                             <div>
@@ -1812,9 +2540,8 @@ function BusinessDetails() {
 
                         </div>
 
-                        {/* ==========================================
-                            REVIEW COMMENT
-                        ========================================== */}
+
+                        {/* REVIEW COMMENT */}
 
                         <div
                           ref={(
@@ -1822,7 +2549,8 @@ function BusinessDetails() {
                           ) => {
                             reviewCommentRefs.current[
                               reviewId
-                            ] = element;
+                            ] =
+                              element;
                           }}
                           className={`customer-review-comment ${
                             isExpanded
@@ -1837,12 +2565,10 @@ function BusinessDetails() {
 
                         </div>
 
-                        {/* ==========================================
-                            VIEW MORE / VIEW LESS
-                        ========================================== */}
+
+                        {/* VIEW MORE */}
 
                         {hasOverflow && (
-
                           <button
                             type="button"
                             className="review-view-more-btn"
@@ -1856,132 +2582,209 @@ function BusinessDetails() {
                               ? "View Less"
                               : "View More"}
                           </button>
-
                         )}
 
-                        {/* ==========================================
-                            REVIEW MEDIA
-                            ONLY 2 PREVIEWS
-                        ========================================== */}
+
+                        {/* =================================================
+                            CUSTOMER REVIEW MEDIA
+
+                            MAXIMUM TWO MEDIA ARE SHOWN.
+
+                            IMPORTANT:
+                            EACH VISIBLE MEDIA IS CLICKABLE.
+
+                            First photo:
+                                opens modal at index 0
+
+                            Second photo:
+                                opens modal at index 1
+
+                            +N More:
+                                opens modal at index 1
+
+                            Modal contains ALL media.
+                        ================================================= */}
 
                         {validReviewMedia.length >
                           0 && (
 
                           <div className="review-media-gallery">
 
-                            {visibleMedia.map(
+                            {visibleReviewMedia.map(
                               (
                                 media,
-                                mediaIndex
+                                visibleIndex
                               ) => {
 
-                                const mediaId =
-                                  media?.mediaId ??
-                                  media?.ReviewMediaId ??
-                                  media?.reviewMediaId ??
-                                  `${reviewId}-media-${media.mediaIndex}`;
+                                /*
+                                =================================================
+                                OVERLAY ONLY ON SECOND VISIBLE MEDIA
+
+                                Example:
+                                5 media
+                                visible = 2
+                                second = +3 More
+                                =================================================
+                                */
 
                                 const isLastVisible =
-                                  mediaIndex ===
-                                    1 &&
-                                  remainingMediaCount >
+                                  visibleIndex ===
+                                    REVIEW_MEDIA_PREVIEW_COUNT -
+                                      1 &&
+                                  remainingReviewMediaCount >
                                     0;
 
+                                const isVideo =
+                                  isVideoMedia(
+                                    media
+                                  );
+
+                                /*
+                                =================================================
+                                CLICK HANDLER
+
+                                IMPORTANT:
+
+                                We use visibleIndex here.
+
+                                Therefore:
+                                first media  -> 0
+                                second media -> 1
+
+                                This is exactly what we want
+                                when opening the modal.
+                                =================================================
+                                */
+
+                                const handleMediaClick =
+                                  () => {
+                                    openReviewMediaGallery(
+                                      validReviewMedia,
+                                      visibleIndex
+                                    );
+                                  };
+
+                                const handleMediaKeyDown =
+                                  (
+                                    event
+                                  ) => {
+
+                                    if (
+                                      event.key ===
+                                        "Enter" ||
+                                      event.key ===
+                                        " "
+                                    ) {
+                                      event.preventDefault();
+
+                                      handleMediaClick();
+                                    }
+                                  };
+
                                 return (
-                                  <button
-                                    type="button"
+                                  <div
                                     className="review-media-item"
-                                    key={mediaId}
-                                    onClick={() =>
-                                      openReviewMediaViewer(
-                                        validReviewMedia,
-                                        media.mediaIndex
-                                      )
+                                    key={
+                                      media.mediaId
+                                    }
+                                    style={{
+                                      position:
+                                        "relative",
+                                      cursor:
+                                        "pointer",
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={
+                                      handleMediaClick
+                                    }
+                                    onKeyDown={
+                                      handleMediaKeyDown
                                     }
                                     aria-label={
                                       isLastVisible
-                                        ? `View ${remainingMediaCount} more review media`
-                                        : `View review media ${
-                                            mediaIndex +
-                                            1
-                                          }`
+                                        ? `Open review media gallery. ${remainingReviewMediaCount} more media`
+                                        : `Open review media ${visibleIndex + 1}`
                                     }
                                   >
 
-                                    {isVideoMedia(
-                                      media
-                                    ) ? (
+                                    {isVideo ? (
+
                                       <video
                                         className="review-media-video"
                                         src={
-                                          media.resolvedUrl
+                                          media.mediaUrl
                                         }
-                                        muted
-                                        playsInline
+                                        controls
                                         preload="metadata"
                                       />
+
                                     ) : (
+
                                       <img
                                         className="review-media-image"
                                         src={
-                                          media.resolvedUrl
+                                          media.mediaUrl
                                         }
                                         alt={`Review media ${
-                                          mediaIndex +
+                                          media.mediaIndex +
                                           1
                                         }`}
                                         loading="lazy"
-                                        onError={(
-                                          event
-                                        ) => {
-                                          console.error(
-                                            "Review image failed to load:",
-                                            media.resolvedUrl
-                                          );
-
-                                          event.currentTarget.style.display =
-                                            "none";
-                                        }}
                                       />
+
                                     )}
 
-                                    {/* =================================
-                                        VIDEO PLAY ICON
-                                    ================================= */}
 
-                                    {isVideoMedia(
-                                      media
-                                    ) && (
-                                      <span className="review-media-play-icon">
-                                        <FaPlay />
-                                      </span>
-                                    )}
-
-                                    {/* =================================
+                                    {/* =================================================
                                         +N MORE OVERLAY
-                                    ================================= */}
+
+                                        Example:
+                                        5 photos -> +3 More
+                                    ================================================= */}
 
                                     {isLastVisible && (
-                                      <span className="review-media-more-overlay">
+                                      <div
+                                        className="review-media-more-overlay"
+                                        onClick={(
+                                          event
+                                        ) => {
+                                          /*
+                                          Prevent parent click
+                                          from firing twice.
+                                          */
 
+                                          event.stopPropagation();
+
+                                          /*
+                                          Open from SECOND media.
+                                          */
+
+                                          openReviewMediaGallery(
+                                            validReviewMedia,
+                                            1
+                                          );
+                                        }}
+                                      >
                                         <span className="review-media-more-count">
-                                          +{remainingMediaCount} More
+                                          +{
+                                            remainingReviewMediaCount
+                                          } More
                                         </span>
-
-                                      </span>
+                                      </div>
                                     )}
 
-                                  </button>
+                                  </div>
                                 );
                               }
                             )}
 
                           </div>
+
                         )}
 
-                        {/* ==========================================
-                            OWNER REPLY
-                        ========================================== */}
+
+                        {/* OWNER REPLY */}
 
                         {(review.OwnerReply ||
                           review.ownerReply) && (
@@ -2009,12 +2812,12 @@ function BusinessDetails() {
             </div>
           )}
 
-        {/* =================================================
-            VIEW ALL REVIEWS
-        ================================================= */}
+
+        {/* VIEW ALL REVIEWS */}
 
         {!reviewsLoading &&
-          totalReviews > 3 && (
+          totalReviews >
+            3 && (
 
             <div className="view-all-reviews-wrapper">
 
@@ -2028,53 +2831,190 @@ function BusinessDetails() {
               </button>
 
             </div>
+
           )}
 
       </div>
 
-      {/* =====================================================
-          REVIEW MEDIA VIEWER MODAL
-      ===================================================== */}
+
+      {/* =================================================
+          BUSINESS PHOTO FULL SCREEN GALLERY
+
+          EXISTING BUSINESS GALLERY
+          -- NOT CHANGED
+      ================================================= */}
+
+      {selectedBusinessPhotos &&
+        currentBusinessPhoto && (
+
+          <div
+            className="business-photo-gallery-modal"
+            onClick={
+              closeBusinessPhotoGallery
+            }
+          >
+
+            {/* CLOSE */}
+
+            <button
+              type="button"
+              className="business-photo-gallery-close"
+              onClick={
+                closeBusinessPhotoGallery
+              }
+              aria-label="Close business photo gallery"
+            >
+              <FaTimes />
+            </button>
+
+
+            <div
+              className="business-photo-gallery-content"
+              onClick={(
+                event
+              ) =>
+                event.stopPropagation()
+              }
+            >
+
+              {/* PREVIOUS */}
+
+              {selectedBusinessPhotos.length >
+                1 && (
+
+                <button
+                  type="button"
+                  className="business-photo-gallery-nav business-photo-gallery-prev"
+                  onClick={
+                    showPreviousBusinessPhoto
+                  }
+                  aria-label="Previous business photo"
+                >
+                  <FaChevronLeft />
+                </button>
+
+              )}
+
+
+              {/* CURRENT PHOTO */}
+
+              <div className="business-photo-gallery-image-wrapper">
+
+                <img
+                  className="business-photo-gallery-image"
+                  src={
+                    currentBusinessPhoto.url
+                  }
+                  alt={
+                    currentBusinessPhoto.caption ||
+                    `${businessName} photo ${
+                      selectedBusinessPhotoIndex +
+                      1
+                    }`
+                  }
+                  onError={(
+                    event
+                  ) => {
+                    if (
+                      event.currentTarget.src !==
+                      fallbackPhoto
+                    ) {
+                      event.currentTarget.src =
+                        fallbackPhoto;
+                    }
+                  }}
+                />
+
+              </div>
+
+
+              {/* NEXT */}
+
+              {selectedBusinessPhotos.length >
+                1 && (
+
+                <button
+                  type="button"
+                  className="business-photo-gallery-nav business-photo-gallery-next"
+                  onClick={
+                    showNextBusinessPhoto
+                  }
+                  aria-label="Next business photo"
+                >
+                  <FaChevronRight />
+                </button>
+
+              )}
+
+
+              {/* COUNTER */}
+
+              <div className="business-photo-gallery-counter">
+
+                {selectedBusinessPhotoIndex +
+                  1}
+
+                {" / "}
+
+                {
+                  selectedBusinessPhotos.length
+                }
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+
+      {/* =================================================
+          CUSTOMER REVIEW MEDIA FULL SCREEN GALLERY
+      ================================================= */}
 
       {selectedReviewMedia &&
-        currentMediaUrl && (
+        currentReviewMedia && (
 
           <div
             className="review-media-modal"
             onClick={
-              closeReviewMediaViewer
+              closeReviewMediaGallery
             }
           >
 
-            {/* =============================================
+            {/* =================================================
                 CLOSE BUTTON
-            ============================================= */}
+            ================================================= */}
 
             <button
               type="button"
               className="review-media-modal-close"
               onClick={
-                closeReviewMediaViewer
+                closeReviewMediaGallery
               }
-              aria-label="Close media viewer"
+              aria-label="Close review media gallery"
             >
               <FaTimes />
             </button>
 
-            {/* =============================================
+
+            {/* =================================================
                 MODAL CONTENT
-            ============================================= */}
+            ================================================= */}
 
             <div
               className="review-media-modal-content"
-              onClick={(event) =>
+              onClick={(
+                event
+              ) =>
                 event.stopPropagation()
               }
             >
 
-              {/* =========================================
-                  PREVIOUS BUTTON
-              ========================================= */}
+              {/* =================================================
+                  PREVIOUS
+              ================================================= */}
 
               {selectedReviewMedia.length >
                 1 && (
@@ -2083,31 +3023,34 @@ function BusinessDetails() {
                   type="button"
                   className="review-media-modal-nav review-media-modal-prev"
                   onClick={
-                    showPreviousMedia
+                    showPreviousReviewMedia
                   }
-                  aria-label="Previous media"
+                  aria-label="Previous review media"
                 >
                   <FaChevronLeft />
                 </button>
 
               )}
 
-              {/* =========================================
-                  MEDIA
-              ========================================= */}
 
-              <div className="review-media-modal-viewer">
+              {/* =================================================
+                  CURRENT MEDIA
+              ================================================= */}
 
-                {currentMediaIsVideo ? (
+              <div className="review-media-modal-media-wrapper">
+
+                {isVideoMedia(
+                  currentReviewMedia
+                ) ? (
 
                   <video
                     className="review-media-modal-video"
                     src={
-                      currentMediaUrl
+                      currentReviewMedia.mediaUrl
                     }
                     controls
                     autoPlay
-                    playsInline
+                    preload="metadata"
                   />
 
                 ) : (
@@ -2115,10 +3058,10 @@ function BusinessDetails() {
                   <img
                     className="review-media-modal-image"
                     src={
-                      currentMediaUrl
+                      currentReviewMedia.mediaUrl
                     }
                     alt={`Review media ${
-                      selectedMediaIndex +
+                      selectedReviewMediaIndex +
                       1
                     }`}
                   />
@@ -2127,9 +3070,10 @@ function BusinessDetails() {
 
               </div>
 
-              {/* =========================================
-                  NEXT BUTTON
-              ========================================= */}
+
+              {/* =================================================
+                  NEXT
+              ================================================= */}
 
               {selectedReviewMedia.length >
                 1 && (
@@ -2138,43 +3082,57 @@ function BusinessDetails() {
                   type="button"
                   className="review-media-modal-nav review-media-modal-next"
                   onClick={
-                    showNextMedia
+                    showNextReviewMedia
                   }
-                  aria-label="Next media"
+                  aria-label="Next review media"
                 >
                   <FaChevronRight />
                 </button>
 
               )}
 
-              {/* =========================================
-                  MEDIA COUNTER
-              ========================================= */}
+
+              {/* =================================================
+                  COUNTER
+              ================================================= */}
 
               <div className="review-media-modal-counter">
 
-                {selectedMediaIndex + 1}
+                {selectedReviewMediaIndex +
+                  1}
 
                 {" / "}
 
-                {selectedReviewMedia.length}
+                {
+                  selectedReviewMedia.length
+                }
 
               </div>
 
             </div>
 
           </div>
+
         )}
 
-      {/* =====================================================
-          STANDARD DIALOG
-      ===================================================== */}
+
+      {/* =================================================
+          DIALOG
+      ================================================= */}
 
       <DialogBox
-        isOpen={dialog.isOpen}
-        title={dialog.title}
-        message={dialog.message}
-        type={dialog.type}
+        isOpen={
+          dialog.isOpen
+        }
+        title={
+          dialog.title
+        }
+        message={
+          dialog.message
+        }
+        type={
+          dialog.type
+        }
         confirmText={
           dialog.confirmText
         }

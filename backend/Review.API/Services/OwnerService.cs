@@ -49,6 +49,21 @@ public class OwnerService
     }
 
     // =====================================================
+    // CHECK OWNER BUSINESS
+    // =====================================================
+
+    public async Task<bool> OwnerBusinessExistsAsync(
+        int businessId,
+        int ownerId)
+    {
+        return await _context.Businesses
+            .AnyAsync(x =>
+                x.BusinessId == businessId &&
+                x.OwnerId == ownerId &&
+                x.IsActive);
+    }
+
+    // =====================================================
     // CREATE BUSINESS
     // =====================================================
 
@@ -59,31 +74,59 @@ public class OwnerService
         var business = new Business
         {
             OwnerId = ownerId,
-            CategoryId = dto.CategoryId,
 
-            BusinessName = dto.BusinessName.Trim(),
-            Description = dto.Description?.Trim() ?? string.Empty,
+            CategoryId =
+                dto.CategoryId,
 
-            PhoneNumber = dto.PhoneNumber?.Trim() ?? string.Empty,
-            Email = dto.Email?.Trim() ?? string.Empty,
+            BusinessName =
+                dto.BusinessName.Trim(),
 
-            Address = dto.Address?.Trim() ?? string.Empty,
-            City = dto.City?.Trim() ?? string.Empty,
-            Pincode = dto.Pincode?.Trim() ?? string.Empty,
+            Description =
+                dto.Description?.Trim()
+                ?? string.Empty,
 
-            Website = dto.Website?.Trim() ?? string.Empty,
+            PhoneNumber =
+                dto.PhoneNumber?.Trim()
+                ?? string.Empty,
 
-            OpeningTime = dto.OpeningTime,
-            ClosingTime = dto.ClosingTime,
+            Email =
+                dto.Email?.Trim()
+                ?? string.Empty,
+
+            Address =
+                dto.Address?.Trim()
+                ?? string.Empty,
+
+            City =
+                dto.City?.Trim()
+                ?? string.Empty,
+
+            Pincode =
+                dto.Pincode?.Trim()
+                ?? string.Empty,
+
+            Website =
+                dto.Website?.Trim()
+                ?? string.Empty,
+
+            OpeningTime =
+                dto.OpeningTime,
+
+            ClosingTime =
+                dto.ClosingTime,
 
             IsOpen = true,
+
             IsApproved = true,
+
             IsActive = true,
 
             Rating = 0,
+
             ReviewCount = 0,
 
-            CreatedAt = DateTime.UtcNow
+            CreatedAt =
+                DateTime.UtcNow
         };
 
         _context.Businesses.Add(business);
@@ -94,7 +137,8 @@ public class OwnerService
             .Include(x => x.Category)
             .Include(x => x.Photos)
             .FirstAsync(x =>
-                x.BusinessId == business.BusinessId);
+                x.BusinessId ==
+                business.BusinessId);
     }
 
     // =====================================================
@@ -106,41 +150,50 @@ public class OwnerService
         int ownerId,
         UpdateBusinessDto dto)
     {
-        var business = await _context.Businesses
-            .FirstOrDefaultAsync(x =>
-                x.BusinessId == businessId &&
-                x.OwnerId == ownerId &&
-                x.IsActive);
+        var business =
+            await _context.Businesses
+                .FirstOrDefaultAsync(x =>
+                    x.BusinessId == businessId &&
+                    x.OwnerId == ownerId &&
+                    x.IsActive);
 
         if (business == null)
             return null;
 
         business.BusinessName =
-            dto.BusinessName?.Trim() ?? string.Empty;
+            dto.BusinessName?.Trim()
+            ?? string.Empty;
 
         business.Description =
-            dto.Description?.Trim() ?? string.Empty;
+            dto.Description?.Trim()
+            ?? string.Empty;
 
         business.CategoryId =
             dto.CategoryId;
 
         business.PhoneNumber =
-            dto.PhoneNumber?.Trim() ?? string.Empty;
+            dto.PhoneNumber?.Trim()
+            ?? string.Empty;
 
         business.Email =
-            dto.Email?.Trim() ?? string.Empty;
+            dto.Email?.Trim()
+            ?? string.Empty;
 
         business.Address =
-            dto.Address?.Trim() ?? string.Empty;
+            dto.Address?.Trim()
+            ?? string.Empty;
 
         business.City =
-            dto.City?.Trim() ?? string.Empty;
+            dto.City?.Trim()
+            ?? string.Empty;
 
         business.Pincode =
-            dto.Pincode?.Trim() ?? string.Empty;
+            dto.Pincode?.Trim()
+            ?? string.Empty;
 
         business.Website =
-            dto.Website?.Trim() ?? string.Empty;
+            dto.Website?.Trim()
+            ?? string.Empty;
 
         business.OpeningTime =
             dto.OpeningTime;
@@ -171,17 +224,20 @@ public class OwnerService
         int businessId,
         int ownerId)
     {
-        var business = await _context.Businesses
-            .FirstOrDefaultAsync(x =>
-                x.BusinessId == businessId &&
-                x.OwnerId == ownerId &&
-                x.IsActive);
+        var business =
+            await _context.Businesses
+                .FirstOrDefaultAsync(x =>
+                    x.BusinessId == businessId &&
+                    x.OwnerId == ownerId &&
+                    x.IsActive);
 
         if (business == null)
             return false;
 
         business.IsActive = false;
-        business.UpdatedAt = DateTime.UtcNow;
+
+        business.UpdatedAt =
+            DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -192,9 +248,10 @@ public class OwnerService
     // GET OWNER PHOTOS
     // =====================================================
 
-    public async Task<List<BusinessPhoto>> GetOwnerPhotosAsync(
-        int businessId,
-        int ownerId)
+    public async Task<List<BusinessPhoto>>
+        GetOwnerPhotosAsync(
+            int businessId,
+            int ownerId)
     {
         return await _context.BusinessPhotos
             .Include(x => x.Business)
@@ -209,27 +266,51 @@ public class OwnerService
     }
 
     // =====================================================
+    // GET SINGLE OWNER PHOTO
+    // =====================================================
+
+    public async Task<BusinessPhoto?>
+        GetOwnerPhotoByIdAsync(
+            int businessPhotoId,
+            int ownerId)
+    {
+        return await _context.BusinessPhotos
+            .Include(x => x.Business)
+            .FirstOrDefaultAsync(x =>
+                x.BusinessPhotoId == businessPhotoId &&
+                x.Business != null &&
+                x.Business.OwnerId == ownerId &&
+                x.Business.IsActive);
+    }
+
+    // =====================================================
     // ADD OWNER PHOTO
     // =====================================================
 
-    public async Task<BusinessPhoto?> AddOwnerPhotoAsync(
-        int businessId,
-        int ownerId,
-        OwnerPhotoDto dto)
+    public async Task<BusinessPhoto?>
+        AddOwnerPhotoAsync(
+            int businessId,
+            int ownerId,
+            OwnerPhotoDto dto,
+            string photoUrl)
     {
-        var business = await _context.Businesses
-            .FirstOrDefaultAsync(x =>
-                x.BusinessId == businessId &&
-                x.OwnerId == ownerId &&
-                x.IsActive);
+        // =================================================
+        // CHECK BUSINESS OWNERSHIP
+        // =================================================
+
+        var business =
+            await _context.Businesses
+                .FirstOrDefaultAsync(x =>
+                    x.BusinessId == businessId &&
+                    x.OwnerId == ownerId &&
+                    x.IsActive);
 
         if (business == null)
             return null;
 
-        // -------------------------------------------------
-        // IF NEW PHOTO IS PRIMARY/COVER
-        // REMOVE PRIMARY FROM OLD PHOTO
-        // -------------------------------------------------
+        // =================================================
+        // REMOVE EXISTING PRIMARY PHOTO
+        // =================================================
 
         if (dto.IsPrimary)
         {
@@ -240,34 +321,41 @@ public class OwnerService
                         x.IsPrimary)
                     .ToListAsync();
 
-            foreach (var photo in existingPrimaryPhotos)
+            foreach (var photo
+                in existingPrimaryPhotos)
             {
                 photo.IsPrimary = false;
             }
         }
 
-        // -------------------------------------------------
-        // CREATE PHOTO
-        // -------------------------------------------------
+        // =================================================
+        // CREATE BUSINESS PHOTO
+        // =================================================
 
-        var businessPhoto = new BusinessPhoto
-        {
-            BusinessId = businessId,
+        var businessPhoto =
+            new BusinessPhoto
+            {
+                BusinessId =
+                    businessId,
 
-            PhotoUrl =
-                dto.PhotoUrl?.Trim() ?? string.Empty,
+                // IMPORTANT:
+                // Save file URL, NOT Base64
+                PhotoUrl =
+                    photoUrl.Trim(),
 
-            Caption =
-                dto.Caption?.Trim() ?? string.Empty,
+                Caption =
+                    dto.Caption?.Trim()
+                    ?? string.Empty,
 
-            IsPrimary =
-                dto.IsPrimary,
+                IsPrimary =
+                    dto.IsPrimary,
 
-            CreatedAt =
-                DateTime.UtcNow
-        };
+                CreatedAt =
+                    DateTime.UtcNow
+            };
 
-        _context.BusinessPhotos.Add(businessPhoto);
+        _context.BusinessPhotos.Add(
+            businessPhoto);
 
         await _context.SaveChangesAsync();
 
@@ -278,41 +366,53 @@ public class OwnerService
     // DELETE OWNER PHOTO
     // =====================================================
 
-    public async Task<bool> DeleteOwnerPhotoAsync(
-        int businessPhotoId,
-        int ownerId)
+    public async Task<bool>
+        DeleteOwnerPhotoAsync(
+            int businessPhotoId,
+            int ownerId)
     {
-        var photo = await _context.BusinessPhotos
-            .Include(x => x.Business)
-            .FirstOrDefaultAsync(x =>
-                x.BusinessPhotoId == businessPhotoId &&
-                x.Business != null &&
-                x.Business.OwnerId == ownerId &&
-                x.Business.IsActive);
+        var photo =
+            await _context.BusinessPhotos
+                .Include(x => x.Business)
+                .FirstOrDefaultAsync(x =>
+                    x.BusinessPhotoId ==
+                    businessPhotoId &&
+
+                    x.Business != null &&
+
+                    x.Business.OwnerId ==
+                    ownerId &&
+
+                    x.Business.IsActive);
 
         if (photo == null)
             return false;
 
-        var wasPrimary = photo.IsPrimary;
+        var wasPrimary =
+            photo.IsPrimary;
 
-        var businessId = photo.BusinessId;
+        var businessId =
+            photo.BusinessId;
 
-        _context.BusinessPhotos.Remove(photo);
+        _context.BusinessPhotos.Remove(
+            photo);
 
         await _context.SaveChangesAsync();
 
-        // -------------------------------------------------
+        // =================================================
         // IF PRIMARY PHOTO WAS DELETED
-        // MAKE ANOTHER PHOTO PRIMARY
-        // -------------------------------------------------
+        // MAKE LATEST PHOTO PRIMARY
+        // =================================================
 
         if (wasPrimary)
         {
             var nextPhoto =
                 await _context.BusinessPhotos
                     .Where(x =>
-                        x.BusinessId == businessId)
-                    .OrderByDescending(x => x.CreatedAt)
+                        x.BusinessId ==
+                        businessId)
+                    .OrderByDescending(
+                        x => x.CreatedAt)
                     .FirstOrDefaultAsync();
 
             if (nextPhoto != null)
@@ -330,30 +430,48 @@ public class OwnerService
     // SET PRIMARY / COVER PHOTO
     // =====================================================
 
-    public async Task<BusinessPhoto?> SetPrimaryPhotoAsync(
-        int businessPhotoId,
-        int ownerId)
+    public async Task<BusinessPhoto?>
+        SetPrimaryPhotoAsync(
+            int businessPhotoId,
+            int ownerId)
     {
-        var photo = await _context.BusinessPhotos
-            .Include(x => x.Business)
-            .FirstOrDefaultAsync(x =>
-                x.BusinessPhotoId == businessPhotoId &&
-                x.Business != null &&
-                x.Business.OwnerId == ownerId &&
-                x.Business.IsActive);
+        var photo =
+            await _context.BusinessPhotos
+                .Include(x => x.Business)
+                .FirstOrDefaultAsync(x =>
+                    x.BusinessPhotoId ==
+                    businessPhotoId &&
+
+                    x.Business != null &&
+
+                    x.Business.OwnerId ==
+                    ownerId &&
+
+                    x.Business.IsActive);
 
         if (photo == null)
             return null;
 
-        var businessId = photo.BusinessId;
+        var businessId =
+            photo.BusinessId;
+
+        // =================================================
+        // GET ALL BUSINESS PHOTOS
+        // =================================================
 
         var businessPhotos =
             await _context.BusinessPhotos
                 .Where(x =>
-                    x.BusinessId == businessId)
+                    x.BusinessId ==
+                    businessId)
                 .ToListAsync();
 
-        foreach (var businessPhoto in businessPhotos)
+        // =================================================
+        // ONLY SELECTED PHOTO = PRIMARY
+        // =================================================
+
+        foreach (var businessPhoto
+            in businessPhotos)
         {
             businessPhoto.IsPrimary =
                 businessPhoto.BusinessPhotoId ==
@@ -365,73 +483,74 @@ public class OwnerService
         return photo;
     }
 
-// =====================================================
-// GET OWNER REVIEWS
-// =====================================================
+    // =====================================================
+    // GET OWNER REVIEWS
+    // =====================================================
 
-public async Task<List<ReviewItem>> GetOwnerReviewsAsync(
-    int businessId,
-    int ownerId)
-{
-    var business = await _context.Businesses
-        .FirstOrDefaultAsync(x =>
-            x.BusinessId == businessId &&
-            x.OwnerId == ownerId &&
-            x.IsActive);
-
-    if (business == null)
+    public async Task<List<ReviewItem>>
+        GetOwnerReviewsAsync(
+            int businessId,
+            int ownerId)
     {
-        return new List<ReviewItem>();
-    }
+        var business =
+            await _context.Businesses
+                .FirstOrDefaultAsync(x =>
+                    x.BusinessId == businessId &&
+                    x.OwnerId == ownerId &&
+                    x.IsActive);
 
-    return await _context.Reviews
-        .Include(x => x.User)
-        .Include(x => x.Business)
-        .Where(x =>
-            x.BusinessId == businessId)
-        .OrderByDescending(x => x.CreatedAt)
-        .ToListAsync();
-}
+        if (business == null)
+        {
+            return new List<ReviewItem>();
+        }
+
+        return await _context.Reviews
+            .Include(x => x.User)
+            .Include(x => x.Business)
+            .Where(x =>
+                x.BusinessId ==
+                businessId)
+            .OrderByDescending(
+                x => x.CreatedAt)
+            .ToListAsync();
+    }
 
     // =====================================================
     // REPLY TO REVIEW
     // =====================================================
 
-    public async Task<ReviewItem?> ReplyToReviewAsync(
-        int reviewId,
-        int ownerId,
-        OwnerReplyDto dto)
+    public async Task<ReviewItem?>
+        ReplyToReviewAsync(
+            int reviewId,
+            int ownerId,
+            OwnerReplyDto dto)
     {
-        var review = await _context.Reviews
-            .Include(x => x.Place)
-            .FirstOrDefaultAsync(x =>
-                x.ReviewId == reviewId &&
-                x.Place != null);
+        var review =
+            await _context.Reviews
+                .Include(x => x.Place)
+                .FirstOrDefaultAsync(x =>
+                    x.ReviewId == reviewId &&
+                    x.Place != null);
 
         if (review == null)
             return null;
 
-        var business = await _context.Businesses
-            .FirstOrDefaultAsync(x =>
-                x.OwnerId == ownerId &&
-                x.BusinessName == review.Place!.Name &&
-                x.IsActive);
+        var business =
+            await _context.Businesses
+                .FirstOrDefaultAsync(x =>
+                    x.OwnerId == ownerId &&
+                    x.BusinessName ==
+                    review.Place!.Name &&
+                    x.IsActive);
 
         if (business == null)
             return null;
 
-        // -------------------------------------------------
-        // OWNER REPLY
-        // -------------------------------------------------
+        // Current ReviewItem model/service does not show
+        // OwnerReply.
         //
-        // NOTE:
-        // Your current ReviewItem model/service does not
-        // show an OwnerReply field.
-        //
-        // So actual reply storage should be added only
-        // after the Review model contains a reply property.
-        //
-        // -------------------------------------------------
+        // Actual reply storage should be added only after
+        // Review model contains a reply property.
 
         return null;
     }
