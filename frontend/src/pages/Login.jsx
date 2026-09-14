@@ -124,10 +124,7 @@ function Login() {
     try {
       setLoading(true);
 
-      console.log(
-        "Login Data:",
-        formData
-      );
+   
 
       // =================================================
       // BACKEND LOGIN

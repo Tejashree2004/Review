@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 
 import MainLayout from "../layouts/MainLayout";
-import { addReview } from "../services/ReviewService";
+import { addReview } from "../services/reviewService";
 
 import DialogBox from "../components/DialogBox";
 
@@ -34,6 +34,9 @@ function WriteReview() {
   const [media, setMedia] =
     useState([]);
 
+  const [previewUrls, setPreviewUrls] =
+    useState([]);
+
   const [loading, setLoading] =
     useState(false);
 
@@ -48,6 +51,24 @@ function WriteReview() {
     type: "info",
     action: null,
   });
+
+  // ==========================================
+  // MEDIA PREVIEW URL CLEANUP
+  // ==========================================
+
+  useEffect(() => {
+    const urls = media.map((file) =>
+      URL.createObjectURL(file)
+    );
+
+    setPreviewUrls(urls);
+
+    return () => {
+      urls.forEach((url) =>
+        URL.revokeObjectURL(url)
+      );
+    };
+  }, [media]);
 
   // ==========================================
   // SHOW DIALOG
@@ -525,11 +546,12 @@ function WriteReview() {
           typeof validationErrors ===
           "object"
         ) {
-          const messages = Object.values(
-            validationErrors
-          )
-            .flat()
-            .filter(Boolean);
+          const messages =
+            Object.values(
+              validationErrors
+            )
+              .flat()
+              .filter(Boolean);
 
           if (
             messages.length > 0
@@ -557,7 +579,9 @@ function WriteReview() {
 
       <button
         className="back-btn"
-        onClick={() => navigate(-1)}
+        onClick={() =>
+          navigate(-1)
+        }
         title="Go Back"
       >
         <FaArrowLeft />
@@ -705,7 +729,9 @@ function WriteReview() {
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
                 multiple
-                onChange={handleMediaChange}
+                onChange={
+                  handleMediaChange
+                }
                 disabled={
                   media.length >= 5
                 }
@@ -727,9 +753,7 @@ function WriteReview() {
                     (file, index) => {
 
                       const previewUrl =
-                        URL.createObjectURL(
-                          file
-                        );
+                        previewUrls[index];
 
                       const isVideo =
                         file.type.startsWith(
@@ -827,4 +851,3 @@ function WriteReview() {
 }
 
 export default WriteReview;
-

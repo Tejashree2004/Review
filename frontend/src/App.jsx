@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import RoleSelection from "./pages/RoleSelection";
 import VerifyOtp from "./pages/VerifyOtp";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 // =========================
 // Reviewer / Normal User
@@ -181,10 +182,14 @@ function App() {
 
       {/* Owner Dashboard */}
 
-      <Route
-        path="/owner-dashboard"
-        element={<OwnerDashboard />}
-      />
+   <Route
+  path="/owner-dashboard"
+  element={
+    <ProtectedRoute allowedRoles={["Owner", "BusinessOwner", "owner"]}>
+      <OwnerDashboard />
+    </ProtectedRoute>
+  }
+/>
 
 
       {/* =====================================================

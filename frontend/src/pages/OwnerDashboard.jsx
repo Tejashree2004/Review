@@ -134,11 +134,7 @@ function OwnerDashboard() {
             config
           );
 
-        console.log(
-          "OWNER BUSINESSES:",
-          response.data
-        );
-
+      
         const data =
           response?.data?.data ??
           response?.data?.Data ??
@@ -196,11 +192,7 @@ function OwnerDashboard() {
                       }
                     );
 
-                  console.log(
-                    `REVIEW STATISTICS FOR BUSINESS ${businessId}:`,
-                    reviewResponse.data
-                  );
-
+               
                   const reviewData =
                     reviewResponse?.data?.data ??
                     reviewResponse?.data?.Data ??
@@ -309,10 +301,7 @@ function OwnerDashboard() {
             )
           );
 
-        console.log(
-          "OWNER BUSINESSES WITH REVIEW STATS:",
-          businessesWithReviewStats
-        );
+       
 
         setBusinesses(
           businessesWithReviewStats
