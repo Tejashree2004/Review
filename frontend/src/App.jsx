@@ -79,45 +79,47 @@ function App() {
         element={<RoleSelection />}
       />
 
-      <Route
-        path="/edit-profile"
-        element={<EditProfile />}
-      />
-
 
       {/* =====================================================
           REVIEWER / NORMAL USER MODULE
       ===================================================== */}
 
+      {/* Public Home */}
       <Route
         path="/home"
         element={<Home />}
       />
 
+      {/* Public Search */}
       <Route
         path="/search"
         element={<Search />}
       />
 
+      {/* Public Categories */}
       <Route
         path="/categories"
         element={<Categories />}
       />
 
+      {/* Public Place Details */}
       <Route
         path="/place/:id"
         element={<PlaceDetails />}
       />
 
+      {/* Public Business Details */}
       <Route
         path="/business/:id"
         element={<BusinessDetails />}
       />
 
+      {/* Public Business Reviews */}
       <Route
         path="/business/:businessId/reviews"
         element={<BusinessReviews />}
       />
+
 
       {/* =====================================================
           PUBLIC USER PROFILE FROM REVIEW
@@ -125,14 +127,7 @@ function App() {
           Supported URLs:
 
           /user-profile/:userId/review/:reviewId
-
-          AND
-
           /user-profile/:userId?reviewId=:reviewId
-
-          The second route is required because the current
-          reviewer profile click is navigating using a query
-          parameter.
       ===================================================== */}
 
       <Route
@@ -145,34 +140,79 @@ function App() {
         element={<UserPublicProfile />}
       />
 
+
+      {/* =====================================================
+          AUTHENTICATED USER ROUTES
+      ===================================================== */}
+
+      {/* Edit Profile */}
+      <Route
+        path="/edit-profile"
+        element={
+          <ProtectedRoute>
+            <EditProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Favorites */}
       <Route
         path="/favorites"
-        element={<Favorites />}
+        element={
+          <ProtectedRoute>
+            <Favorites />
+          </ProtectedRoute>
+        }
       />
 
+      {/* My Reviews */}
       <Route
         path="/reviews"
-        element={<Reviews />}
+        element={
+          <ProtectedRoute>
+            <Reviews />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Write Review - Place */}
       <Route
         path="/write-review/:placeId"
-        element={<WriteReview />}
+        element={
+          <ProtectedRoute>
+            <WriteReview />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Write Review - Business */}
       <Route
         path="/write-review/business/:businessId"
-        element={<WriteReview />}
+        element={
+          <ProtectedRoute>
+            <WriteReview />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Notifications */}
       <Route
         path="/notifications"
-        element={<Notifications />}
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Profile */}
       <Route
         path="/profile"
-        element={<Profile />}
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
       />
 
 
@@ -181,112 +221,132 @@ function App() {
       ===================================================== */}
 
       {/* Owner Dashboard */}
+      <Route
+        path="/owner-dashboard"
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerDashboard />
+          </ProtectedRoute>
+        }
+      />
 
-   <Route
-  path="/owner-dashboard"
-  element={
-    <ProtectedRoute allowedRoles={["Owner", "BusinessOwner", "owner"]}>
-      <OwnerDashboard />
-    </ProtectedRoute>
-  }
-/>
-
-
-      {/* =====================================================
-          MY BUSINESSES
-
-          Shows all businesses owned by logged-in owner
-
-          URL:
-          /owner/my-businesses
-      ===================================================== */}
-
+      {/* My Businesses */}
       <Route
         path="/owner/my-businesses"
-        element={<MyBusinesses />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <MyBusinesses />
+          </ProtectedRoute>
+        }
       />
 
-
-      {/* =====================================================
-          CREATE NEW BUSINESS
-
-          URL:
-          /owner/business/new
-      ===================================================== */}
-
+      {/* Create New Business */}
       <Route
         path="/owner/business/new"
-        element={<OwnerBusinessProfile />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerBusinessProfile />
+          </ProtectedRoute>
+        }
       />
 
-
-      {/* =====================================================
-          EDIT EXISTING BUSINESS
-
-          URL:
-          /owner/business/2
-          /owner/business/3
-          etc.
-      ===================================================== */}
-
+      {/* Edit Existing Business */}
       <Route
         path="/owner/business/:businessId"
-        element={<OwnerBusinessProfile />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerBusinessProfile />
+          </ProtectedRoute>
+        }
       />
 
-
-      {/* =====================================================
-          LEGACY BUSINESS ROUTE
-      ===================================================== */}
-
+      {/* Legacy Business Route */}
       <Route
         path="/owner/business"
-        element={<OwnerBusinessProfile />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerBusinessProfile />
+          </ProtectedRoute>
+        }
       />
 
-
-      {/* =====================================================
-          BUSINESS PHOTOS
-      ===================================================== */}
-
+      {/* Business Photos */}
       <Route
         path="/owner/photos"
-        element={<OwnerPhotos />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerPhotos />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/owner/photos/:businessId"
-        element={<OwnerPhotos />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerPhotos />
+          </ProtectedRoute>
+        }
       />
 
-
-      {/* =====================================================
-          OWNER REVIEWS
-      ===================================================== */}
-
+      {/* Owner Reviews */}
       <Route
         path="/owner/reviews"
-        element={<OwnerReviews />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerReviews />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/owner/reviews/business/:businessId"
-        element={<OwnerReviews />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerReviews />
+          </ProtectedRoute>
+        }
       />
 
-
-      {/* =====================================================
-          OWNER PUBLIC PROFILE
-      ===================================================== */}
-
+      {/* Owner Public Profile */}
       <Route
         path="/owner/public-profile"
-        element={<OwnerPublicProfile />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerPublicProfile />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/owner/public-profile/:businessId"
-        element={<OwnerPublicProfile />}
+        element={
+          <ProtectedRoute
+            allowedRoles={["Owner", "BusinessOwner", "owner"]}
+          >
+            <OwnerPublicProfile />
+          </ProtectedRoute>
+        }
       />
 
 
@@ -294,29 +354,54 @@ function App() {
           ADMIN MODULE
       ===================================================== */}
 
+      {/* Admin Dashboard */}
       <Route
         path="/admin-dashboard"
-        element={<AdminDashboard />}
+        element={
+          <ProtectedRoute allowedRoles={["Admin", "admin"]}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Admin Users */}
       <Route
         path="/admin/users"
-        element={<AdminUsers />}
+        element={
+          <ProtectedRoute allowedRoles={["Admin", "admin"]}>
+            <AdminUsers />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Admin Businesses */}
       <Route
         path="/admin/businesses"
-        element={<AdminBusinesses />}
+        element={
+          <ProtectedRoute allowedRoles={["Admin", "admin"]}>
+            <AdminBusinesses />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Admin Reviews */}
       <Route
         path="/admin/reviews"
-        element={<AdminReviews />}
+        element={
+          <ProtectedRoute allowedRoles={["Admin", "admin"]}>
+            <AdminReviews />
+          </ProtectedRoute>
+        }
       />
 
+      {/* Admin Reports */}
       <Route
         path="/admin/reports"
-        element={<AdminReports />}
+        element={
+          <ProtectedRoute allowedRoles={["Admin", "admin"]}>
+            <AdminReports />
+          </ProtectedRoute>
+        }
       />
 
     </Routes>

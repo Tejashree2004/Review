@@ -156,15 +156,21 @@ function Profile() {
   // Logout
   // ==========================================
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("UserId");
-    localStorage.removeItem("user");
-    localStorage.removeItem("isLoggedIn");
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("jwtToken");
+  localStorage.removeItem("accessToken");
 
-    navigate("/login");
-  };
+  localStorage.removeItem("userId");
+  localStorage.removeItem("UserId");
+  localStorage.removeItem("user");
+  localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("userRole");
+  localStorage.removeItem("isGuest");
+
+  navigate("/login");
+};
 
   // ==========================================
   // Loading

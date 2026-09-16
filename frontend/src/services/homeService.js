@@ -1,20 +1,21 @@
+
 import axios from "axios";
 
-const API_BASE = "http://localhost:5213/api";
+const API = axios.create({
+  baseURL: "http://localhost:5213/api",
+});
 
-const API_URL = `${API_BASE}/Home`;
-const FAVORITE_API = `${API_BASE}/Favorite`;
-const PROFILE_API = `${API_BASE}/Profile`;
-const BUSINESS_API = `${API_BASE}/Business`;
+const HOME_API = "/Home";
+const FAVORITE_API = "/Favorite";
+const BUSINESS_API = "/Business";
+const REVIEW_API = "/Review";
 
 // =====================================================
 // CATEGORIES
 // =====================================================
 
 export const getCategories = () => {
-  return axios.get(
-    `${API_URL}/categories`
-  );
+  return API.get(`${HOME_API}/categories`);
 };
 
 // =====================================================
@@ -22,9 +23,7 @@ export const getCategories = () => {
 // =====================================================
 
 export const getTopRatedPlaces = () => {
-  return axios.get(
-    `${API_URL}/toprated`
-  );
+  return API.get(`${HOME_API}/toprated`);
 };
 
 // =====================================================
@@ -32,9 +31,7 @@ export const getTopRatedPlaces = () => {
 // =====================================================
 
 export const getAIReviewSummary = () => {
-  return axios.get(
-    `${API_URL}/summary`
-  );
+  return API.get(`${HOME_API}/summary`);
 };
 
 // =====================================================
@@ -42,9 +39,7 @@ export const getAIReviewSummary = () => {
 // =====================================================
 
 export const getPlaceDetails = (id) => {
-  return axios.get(
-    `${API_URL}/place/${id}`
-  );
+  return API.get(`${HOME_API}/place/${id}`);
 };
 
 // =====================================================
@@ -52,12 +47,8 @@ export const getPlaceDetails = (id) => {
 // GET: /api/Business/{id}
 // =====================================================
 
-export const getBusinessDetails = (
-  businessId
-) => {
-  return axios.get(
-    `${BUSINESS_API}/${businessId}`
-  );
+export const getBusinessDetails = (businessId) => {
+  return API.get(`${BUSINESS_API}/${businessId}`);
 };
 
 // =====================================================
@@ -65,21 +56,15 @@ export const getBusinessDetails = (
 // =====================================================
 
 export const addFavorite = (data) => {
-  return axios.post(
-    FAVORITE_API,
-    data
-  );
+  return API.post(FAVORITE_API, data);
 };
 
 // =====================================================
 // REMOVE PLACE FAVORITE
 // =====================================================
 
-export const removeFavorite = (
-  userId,
-  placeId
-) => {
-  return axios.delete(
+export const removeFavorite = (userId, placeId) => {
+  return API.delete(
     `${FAVORITE_API}/${userId}/${placeId}`
   );
 };
@@ -88,10 +73,8 @@ export const removeFavorite = (
 // ADD BUSINESS FAVORITE
 // =====================================================
 
-export const addBusinessFavorite = (
-  data
-) => {
-  return axios.post(
+export const addBusinessFavorite = (data) => {
+  return API.post(
     `${FAVORITE_API}/business`,
     data
   );
@@ -105,7 +88,7 @@ export const removeBusinessFavorite = (
   userId,
   businessId
 ) => {
-  return axios.delete(
+  return API.delete(
     `${FAVORITE_API}/business/${userId}/${businessId}`
   );
 };
@@ -115,7 +98,7 @@ export const removeBusinessFavorite = (
 // =====================================================
 
 export const getFavorites = (userId) => {
-  return axios.get(
+  return API.get(
     `${FAVORITE_API}/user/${userId}`
   );
 };
@@ -133,8 +116,8 @@ export const getMyReviews = (
   page = 1,
   pageSize = 10
 ) => {
-  return axios.get(
-    `${API_BASE}/Review/my/${userId}`,
+  return API.get(
+    `${REVIEW_API}/my/${userId}`,
     {
       params: {
         page,
@@ -143,3 +126,4 @@ export const getMyReviews = (
     }
   );
 };
+

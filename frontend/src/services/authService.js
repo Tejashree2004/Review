@@ -7,3 +7,4 @@ export const signupUser = (data) => {
 export const loginUser = (data) => {
   return API.post("/Auth/login", data);
 };
+
