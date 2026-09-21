@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useRef,
@@ -30,32 +29,28 @@ import {
 
 import "../styles/OwnerPublicProfile.css";
 
-const API_BASE =
-  "http://localhost:5213/api";
+const API_BASE = "http://localhost:5213/api";
+const BACKEND_BASE = "http://localhost:5213";
 
 const SAMPLE_PHOTOS = [
   {
     id: "sample-1",
-    url:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=85",
+    url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=85",
     alt: "Coffee",
   },
   {
     id: "sample-2",
-    url:
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=900&q=85",
+    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=900&q=85",
     alt: "Cafe interior",
   },
   {
     id: "sample-3",
-    url:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=85",
+    url: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=85",
     alt: "Cafe dessert",
   },
   {
     id: "sample-4",
-    url:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=85",
+    url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=85",
     alt: "Restaurant interior",
   },
 ];
@@ -65,50 +60,32 @@ const BUSINESS_PHOTO_PREVIEW_COUNT = 4;
 function OwnerPublicProfile() {
   const navigate = useNavigate();
 
-  const {
-    businessId: routeBusinessId,
-  } = useParams();
+  const { businessId: routeBusinessId } = useParams();
 
-  const [business, setBusiness] =
-    useState(null);
-
-  const [photos, setPhotos] =
-    useState([]);
-
-  const [reviews, setReviews] =
-    useState([]);
-
-  const [reviewsLoading, setReviewsLoading] =
-    useState(false);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
+  const [business, setBusiness] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // =====================================================
   // REVIEW SUMMARY
   // =====================================================
 
-  const [reviewSummary, setReviewSummary] =
-    useState({
-      averageRating: 0,
-      totalReviews: 0,
-    });
+  const [reviewSummary, setReviewSummary] = useState({
+    averageRating: 0,
+    totalReviews: 0,
+  });
 
   // =====================================================
   // REVIEW EXPANSION
   // =====================================================
 
-  const [expandedReviews, setExpandedReviews] =
-    useState({});
+  const [expandedReviews, setExpandedReviews] = useState({});
+  const [reviewMoreStates, setReviewMoreStates] = useState({});
 
-  const [reviewMoreStates, setReviewMoreStates] =
-    useState({});
-
-  const reviewCommentRefs =
-    useRef({});
+  const reviewCommentRefs = useRef({});
 
   // =====================================================
   // REVIEW MEDIA VIEWER
@@ -127,8 +104,10 @@ function OwnerPublicProfile() {
   const [selectedBusinessPhoto, setSelectedBusinessPhoto] =
     useState(null);
 
-  const [selectedBusinessPhotoIndex, setSelectedBusinessPhotoIndex] =
-    useState(0);
+  const [
+    selectedBusinessPhotoIndex,
+    setSelectedBusinessPhotoIndex,
+  ] = useState(0);
 
   // =====================================================
   // TOKEN
@@ -160,42 +139,30 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const normalizeNumber = (value) => {
-    if (
-      value === null ||
-      value === undefined
-    ) {
+    if (value === null || value === undefined) {
       return null;
     }
 
     if (typeof value === "number") {
-      return Number.isFinite(value)
-        ? value
-        : null;
+      return Number.isFinite(value) ? value : null;
     }
 
     if (typeof value === "string") {
-      const cleaned =
-        value.trim();
+      const cleaned = value.trim();
 
       if (!cleaned) {
         return null;
       }
 
-      const match =
-        cleaned.match(
-          /(\d+(?:\.\d+)?)/
-        );
+      const match = cleaned.match(/(\d+(?:\.\d+)?)/);
 
       if (!match) {
         return null;
       }
 
-      const parsed =
-        Number(match[1]);
+      const parsed = Number(match[1]);
 
-      return Number.isFinite(parsed)
-        ? parsed
-        : null;
+      return Number.isFinite(parsed) ? parsed : null;
     }
 
     return null;
@@ -206,10 +173,7 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const getReviewRating = (review) => {
-    if (
-      !review ||
-      typeof review !== "object"
-    ) {
+    if (!review || typeof review !== "object") {
       return 0;
     }
 
@@ -225,8 +189,7 @@ function OwnerPublicProfile() {
     ];
 
     for (const value of values) {
-      const parsed =
-        normalizeNumber(value);
+      const parsed = normalizeNumber(value);
 
       if (
         parsed !== null &&
@@ -250,9 +213,7 @@ function OwnerPublicProfile() {
       review?.Media ??
       [];
 
-    return Array.isArray(media)
-      ? media
-      : [];
+    return Array.isArray(media) ? media : [];
   };
 
   // =====================================================
@@ -264,25 +225,68 @@ function OwnerPublicProfile() {
       return "";
     }
 
-    const cleanUrl =
-      String(mediaUrl).trim();
+    const cleanUrl = String(mediaUrl).trim();
 
     if (!cleanUrl) {
       return "";
     }
 
     if (
-      cleanUrl.startsWith(
-        "http://"
-      ) ||
-      cleanUrl.startsWith(
-        "https://"
-      )
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://") ||
+      cleanUrl.startsWith("data:")
     ) {
       return cleanUrl;
     }
 
-    return `http://localhost:5213${
+    return `${BACKEND_BASE}${
+      cleanUrl.startsWith("/")
+        ? cleanUrl
+        : `/${cleanUrl}`
+    }`;
+  };
+
+  // =====================================================
+  // BUSINESS PHOTO URL
+  // =====================================================
+
+  const getPhotoUrl = (photo) => {
+    if (!photo) {
+      return "";
+    }
+
+    const rawUrl =
+      photo?.photoUrl ??
+      photo?.PhotoUrl ??
+      photo?.imageUrl ??
+      photo?.ImageUrl ??
+      photo?.image ??
+      photo?.Image ??
+      photo?.url ??
+      photo?.Url ??
+      "";
+
+    if (!rawUrl) {
+      return "";
+    }
+
+    const cleanUrl = String(rawUrl).trim();
+
+    if (!cleanUrl) {
+      return "";
+    }
+
+    // Already a complete URL
+    if (
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://") ||
+      cleanUrl.startsWith("data:")
+    ) {
+      return cleanUrl;
+    }
+
+    // Backend returns /uploads/business/...
+    return `${BACKEND_BASE}${
       cleanUrl.startsWith("/")
         ? cleanUrl
         : `/${cleanUrl}`
@@ -294,25 +298,23 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const isVideoMedia = (media) => {
-    const mediaType =
-      (
-        media?.mediaType ??
-        media?.MediaType ??
-        ""
-      )
-        .toString()
-        .toLowerCase()
-        .trim();
+    const mediaType = (
+      media?.mediaType ??
+      media?.MediaType ??
+      ""
+    )
+      .toString()
+      .toLowerCase()
+      .trim();
 
-    const mediaUrl =
-      (
-        media?.mediaUrl ??
-        media?.MediaUrl ??
-        ""
-      )
-        .toString()
-        .toLowerCase()
-        .split("?")[0];
+    const mediaUrl = (
+      media?.mediaUrl ??
+      media?.MediaUrl ??
+      ""
+    )
+      .toString()
+      .toLowerCase()
+      .split("?")[0];
 
     return (
       mediaType.includes("video") ||
@@ -344,13 +346,8 @@ function OwnerPublicProfile() {
       return;
     }
 
-    setSelectedReviewMedia(
-      mediaList
-    );
-
-    setSelectedMediaIndex(
-      startIndex
-    );
+    setSelectedReviewMedia(mediaList);
+    setSelectedMediaIndex(startIndex);
   };
 
   // =====================================================
@@ -367,9 +364,7 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const showNextMedia = () => {
-    if (
-      !selectedReviewMedia?.length
-    ) {
+    if (!selectedReviewMedia?.length) {
       return;
     }
 
@@ -385,9 +380,7 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const showPreviousMedia = () => {
-    if (
-      !selectedReviewMedia?.length
-    ) {
+    if (!selectedReviewMedia?.length) {
       return;
     }
 
@@ -414,13 +407,8 @@ function OwnerPublicProfile() {
       return;
     }
 
-    setSelectedBusinessPhoto(
-      photoList
-    );
-
-    setSelectedBusinessPhotoIndex(
-      startIndex
-    );
+    setSelectedBusinessPhoto(photoList);
+    setSelectedBusinessPhotoIndex(startIndex);
   };
 
   // =====================================================
@@ -437,9 +425,7 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const showNextBusinessPhoto = () => {
-    if (
-      !selectedBusinessPhoto?.length
-    ) {
+    if (!selectedBusinessPhoto?.length) {
       return;
     }
 
@@ -455,9 +441,7 @@ function OwnerPublicProfile() {
   // =====================================================
 
   const showPreviousBusinessPhoto = () => {
-    if (
-      !selectedBusinessPhoto?.length
-    ) {
+    if (!selectedBusinessPhoto?.length) {
       return;
     }
 
@@ -524,8 +508,7 @@ function OwnerPublicProfile() {
     const previousOverflow =
       document.body.style.overflow;
 
-    document.body.style.overflow =
-      "hidden";
+    document.body.style.overflow = "hidden";
 
     return () => {
       document.removeEventListener(
@@ -546,264 +529,242 @@ function OwnerPublicProfile() {
   // =====================================================
 
   useEffect(() => {
-    const loadPublicProfile =
-      async () => {
-        try {
-          setLoading(true);
-          setError("");
+    const loadPublicProfile = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-          const token =
-            getToken();
+        const token = getToken();
 
-          if (!token) {
-            setError(
-              "Please login again."
+        if (!token) {
+          setError("Please login again.");
+          return;
+        }
+
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+
+        let ownerBusiness = null;
+
+        // =================================================
+        // SELECTED BUSINESS
+        // =================================================
+
+        if (routeBusinessId) {
+          const businessResponse =
+            await axios.get(
+              `${API_BASE}/owner/business/${routeBusinessId}`,
+              config
             );
 
-            return;
-          }
+          ownerBusiness =
+            getResponseData(
+              businessResponse
+            );
+        }
 
-          const config = {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          };
+        // =================================================
+        // OLD ROUTE
+        // =================================================
 
-          let ownerBusiness =
-            null;
+        else {
+          const businessResponse =
+            await axios.get(
+              `${API_BASE}/owner/business`,
+              config
+            );
 
-          // =================================================
-          // SELECTED BUSINESS
-          // =================================================
+          const businessData =
+            getResponseData(
+              businessResponse
+            );
 
-          if (routeBusinessId) {
-            const businessResponse =
-              await axios.get(
-                `${API_BASE}/owner/business/${routeBusinessId}`,
-                config
-              );
+          ownerBusiness =
+            Array.isArray(businessData)
+              ? businessData[0]
+              : businessData;
+        }
 
-            ownerBusiness =
-              getResponseData(
-                businessResponse
-              );
-          }
+        // =================================================
+        // NO BUSINESS
+        // =================================================
 
-          // =================================================
-          // OLD ROUTE
-          // =================================================
+        if (!ownerBusiness) {
+          setBusiness(null);
+          setPhotos([]);
+          setReviews([]);
 
-          else {
-            const businessResponse =
-              await axios.get(
-                `${API_BASE}/owner/business`,
-                config
-              );
+          setReviewSummary({
+            averageRating: 0,
+            totalReviews: 0,
+          });
 
-            const businessData =
-              getResponseData(
-                businessResponse
-              );
+          return;
+        }
 
-            ownerBusiness =
-              Array.isArray(
-                businessData
-              )
-                ? businessData[0]
-                : businessData;
-          }
+        console.log(
+          "SELECTED OWNER BUSINESS:",
+          ownerBusiness
+        );
 
-          // =================================================
-          // NO BUSINESS
-          // =================================================
+        setBusiness(ownerBusiness);
 
-          if (!ownerBusiness) {
-            setBusiness(null);
-            setPhotos([]);
-            setReviews([]);
+        const businessId =
+          ownerBusiness?.businessId ??
+          ownerBusiness?.BusinessId ??
+          ownerBusiness?.id ??
+          ownerBusiness?.Id;
 
-            setReviewSummary({
-              averageRating: 0,
-              totalReviews: 0,
-            });
+        if (!businessId) {
+          setError("Business ID not found.");
+          return;
+        }
 
-            return;
-          }
+        // =================================================
+        // PHOTOS
+        // =================================================
+
+        try {
+          const photoResponse =
+            await axios.get(
+              `${API_BASE}/owner/photos/business/${businessId}`,
+              config
+            );
+
+          const data =
+            getResponseData(
+              photoResponse
+            );
+
+          const photoList =
+            Array.isArray(data)
+              ? data
+              : [];
 
           console.log(
-            "SELECTED OWNER BUSINESS:",
-            ownerBusiness
+            "BUSINESS PHOTOS:",
+            photoList
           );
 
-          setBusiness(
-            ownerBusiness
-          );
-
-          const businessId =
-            ownerBusiness?.businessId ??
-            ownerBusiness?.BusinessId ??
-            ownerBusiness?.id ??
-            ownerBusiness?.Id;
-
-          if (!businessId) {
-            setError(
-              "Business ID not found."
-            );
-
-            return;
-          }
-
-          // =================================================
-          // PHOTOS
-          // =================================================
-
-          try {
-            const photoResponse =
-              await axios.get(
-                `${API_BASE}/owner/photos/business/${businessId}`,
-                config
-              );
-
-            const data =
-              getResponseData(
-                photoResponse
-              );
-
-            const photoList =
-              Array.isArray(data)
-                ? data
-                : [];
-
-            console.log(
-              "BUSINESS PHOTOS:",
-              photoList
-            );
-
-            setPhotos(
-              photoList
-            );
-          } catch (photoError) {
-            console.error(
-              "Business photos loading error:",
-              photoError
-            );
-
-            setPhotos([]);
-          }
-
-          // =================================================
-          // REVIEWS
-          // =================================================
-
-          try {
-            setReviewsLoading(true);
-
-            const reviewResponse =
-              await axios.get(
-                `${API_BASE}/Review/business/${businessId}`,
+          photoList.forEach(
+            (photo, index) => {
+              console.log(
+                `PHOTO ${index + 1}:`,
                 {
-                  ...config,
-                  params: {
-                    page: 1,
-                    pageSize: 3,
-                  },
+                  original: photo,
+                  resolvedUrl:
+                    getPhotoUrl(photo),
                 }
               );
-
-            console.log(
-              "BUSINESS REVIEWS API RESPONSE:",
-              reviewResponse.data
-            );
-
-            const reviewData =
-              getResponseData(
-                reviewResponse
-              );
-
-            // =================================================
-            // REVIEW LIST
-            // =================================================
-
-            let reviewList = [];
-
-            if (
-              Array.isArray(
-                reviewData
-              )
-            ) {
-              reviewList =
-                reviewData;
-            } else if (
-              Array.isArray(
-                reviewData?.reviews
-              )
-            ) {
-              reviewList =
-                reviewData.reviews;
-            } else if (
-              Array.isArray(
-                reviewData?.Reviews
-              )
-            ) {
-              reviewList =
-                reviewData.Reviews;
-            } else if (
-              Array.isArray(
-                reviewData?.items
-              )
-            ) {
-              reviewList =
-                reviewData.items;
-            } else if (
-              Array.isArray(
-                reviewData?.Items
-              )
-            ) {
-              reviewList =
-                reviewData.Items;
             }
+          );
 
-            console.log(
-              "BUSINESS REVIEWS:",
-              reviewList
-            );
+          setPhotos(photoList);
+        } catch (photoError) {
+          console.error(
+            "Business photos loading error:",
+            photoError
+          );
 
-            // =================================================
-            // CHECK MEDIA
-            // =================================================
+          setPhotos([]);
+        }
 
-            reviewList.forEach(
-              (
-                review,
-                index
-              ) => {
-                console.log(
-                  `REVIEW ${index + 1} MEDIA:`,
-                  getReviewMedia(
-                    review
-                  )
-                );
+        // =================================================
+        // REVIEWS
+        // =================================================
+
+        try {
+          setReviewsLoading(true);
+
+          const reviewResponse =
+            await axios.get(
+              `${API_BASE}/Review/business/${businessId}`,
+              {
+                ...config,
+                params: {
+                  page: 1,
+                  pageSize: 3,
+                },
               }
             );
 
-            // =================================================
-            // REVIEW API AVERAGE
-            // =================================================
+          console.log(
+            "BUSINESS REVIEWS API RESPONSE:",
+            reviewResponse.data
+          );
 
-            const apiAverageRating =
-              normalizeNumber(
-                reviewData?.averageRating ??
+          const reviewData =
+            getResponseData(
+              reviewResponse
+            );
+
+          let reviewList = [];
+
+          if (
+            Array.isArray(reviewData)
+          ) {
+            reviewList = reviewData;
+          } else if (
+            Array.isArray(
+              reviewData?.reviews
+            )
+          ) {
+            reviewList =
+              reviewData.reviews;
+          } else if (
+            Array.isArray(
+              reviewData?.Reviews
+            )
+          ) {
+            reviewList =
+              reviewData.Reviews;
+          } else if (
+            Array.isArray(
+              reviewData?.items
+            )
+          ) {
+            reviewList =
+              reviewData.items;
+          } else if (
+            Array.isArray(
+              reviewData?.Items
+            )
+          ) {
+            reviewList =
+              reviewData.Items;
+          }
+
+          console.log(
+            "BUSINESS REVIEWS:",
+            reviewList
+          );
+
+          reviewList.forEach(
+            (
+              review,
+              index
+            ) => {
+              console.log(
+                `REVIEW ${index + 1} MEDIA:`,
+                getReviewMedia(
+                  review
+                )
+              );
+            }
+          );
+
+          const apiAverageRating =
+            normalizeNumber(
+              reviewData?.averageRating ??
                 reviewData?.AverageRating
-              ) ?? 0;
+            ) ?? 0;
 
-            // =================================================
-            // TOTAL REVIEWS
-            // =================================================
-
-            const totalReviewsValue =
-              normalizeNumber(
-                reviewData?.totalReviews ??
+          const totalReviewsValue =
+            normalizeNumber(
+              reviewData?.totalReviews ??
                 reviewData?.TotalReviews ??
                 reviewData?.reviewCount ??
                 reviewData?.ReviewCount ??
@@ -813,109 +774,86 @@ function OwnerPublicProfile() {
                 reviewData?.TotalCount ??
                 ownerBusiness?.reviewCount ??
                 ownerBusiness?.ReviewCount
-              );
+            );
 
-            const totalReviews =
-              totalReviewsValue !==
-              null
-                ? totalReviewsValue
-                : reviewList.length;
+          const totalReviews =
+            totalReviewsValue !== null
+              ? totalReviewsValue
+              : reviewList.length;
 
-            // =================================================
-            // SAVE REVIEW SUMMARY
-            // =================================================
+          setReviewSummary({
+            averageRating:
+              apiAverageRating,
+            totalReviews:
+              totalReviews,
+          });
 
-            setReviewSummary({
-              averageRating:
-                apiAverageRating,
-
-              totalReviews:
-                totalReviews,
-            });
-
-            // =================================================
-            // UPDATE BUSINESS REVIEW COUNT
-            // =================================================
-
-            setBusiness(
-              (previous) => {
-                if (!previous) {
-                  return previous;
-                }
-
-                return {
-                  ...previous,
-
-                  reviewCount:
-                    totalReviews,
-
-                  ReviewCount:
-                    totalReviews,
-                };
+          setBusiness(
+            (previous) => {
+              if (!previous) {
+                return previous;
               }
-            );
 
-            // =================================================
-            // ONLY FIRST 3 REVIEWS
-            // =================================================
-
-            setReviews(
-              reviewList.slice(
-                0,
-                3
-              )
-            );
-          } catch (reviewError) {
-            console.error(
-              "Business reviews loading error:",
-              reviewError
-            );
-
-            setReviews([]);
-
-            setReviewSummary({
-              averageRating: 0,
-              totalReviews: 0,
-            });
-          } finally {
-            setReviewsLoading(
-              false
-            );
-          }
-        } catch (err) {
-          console.error(
-            "Public profile loading error:",
-            err
+              return {
+                ...previous,
+                reviewCount:
+                  totalReviews,
+                ReviewCount:
+                  totalReviews,
+              };
+            }
           );
 
-          if (
-            err.response?.status ===
-            401
-          ) {
-            setError(
-              "Your session has expired. Please login again."
-            );
-          } else if (
-            err.response?.status ===
-            404
-          ) {
-            setBusiness(null);
-            setPhotos([]);
-            setReviews([]);
+          setReviews(
+            reviewList.slice(0, 3)
+          );
+        } catch (reviewError) {
+          console.error(
+            "Business reviews loading error:",
+            reviewError
+          );
 
-            setReviewSummary({
-              averageRating: 0,
-              totalReviews: 0,
-            });
-          } else {
-            setError(
-              "Unable to load business profile."
-            );
-          }
+          setReviews([]);
+
+          setReviewSummary({
+            averageRating: 0,
+            totalReviews: 0,
+          });
         } finally {
-          setLoading(false);
+          setReviewsLoading(false);
         }
-      };
+      } catch (err) {
+        console.error(
+          "Public profile loading error:",
+          err
+        );
+
+        if (
+          err.response?.status === 401
+        ) {
+          setError(
+            "Your session has expired. Please login again."
+          );
+        } else if (
+          err.response?.status === 404
+        ) {
+          setBusiness(null);
+          setPhotos([]);
+          setReviews([]);
+
+          setReviewSummary({
+            averageRating: 0,
+            totalReviews: 0,
+          });
+        } else {
+          setError(
+            "Unable to load business profile."
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
     loadPublicProfile();
   }, [routeBusinessId]);
@@ -988,9 +926,7 @@ function OwnerPublicProfile() {
           }
         );
 
-      setReviewMoreStates(
-        states
-      );
+      setReviewMoreStates(states);
     };
 
     const timeout =
@@ -1102,9 +1038,9 @@ function OwnerPublicProfile() {
   const backendRating =
     normalizeNumber(
       business?.rating ??
-      business?.Rating ??
-      business?.averageRating ??
-      business?.AverageRating
+        business?.Rating ??
+        business?.averageRating ??
+        business?.AverageRating
     ) ?? 0;
 
   const reviewApiRating =
@@ -1126,9 +1062,9 @@ function OwnerPublicProfile() {
   const backendReviewCount =
     normalizeNumber(
       business?.reviewCount ??
-      business?.ReviewCount ??
-      business?.totalReviews ??
-      business?.TotalReviews
+        business?.ReviewCount ??
+        business?.totalReviews ??
+        business?.TotalReviews
     ) ?? 0;
 
   const reviewCount =
@@ -1137,20 +1073,6 @@ function OwnerPublicProfile() {
       : backendReviewCount > 0
         ? backendReviewCount
         : reviews.length;
-
-  // =====================================================
-  // BUSINESS PHOTO URL
-  // =====================================================
-
-  const getPhotoUrl = (photo) => {
-    return (
-      photo?.photoUrl ??
-      photo?.PhotoUrl ??
-      photo?.image ??
-      photo?.Image ??
-      ""
-    );
-  };
 
   // =====================================================
   // NORMALIZE BUSINESS PHOTOS
@@ -1164,9 +1086,7 @@ function OwnerPublicProfile() {
           index
         ) => {
           const url =
-            getPhotoUrl(
-              photo
-            );
+            getPhotoUrl(photo);
 
           if (!url) {
             return null;
@@ -1191,14 +1111,9 @@ function OwnerPublicProfile() {
       )
       .filter(Boolean);
 
-  /*
-    IMPORTANT:
-
-    Uploaded business photos are the SOURCE OF TRUTH.
-
-    Sample photos are used ONLY when the business
-    has no uploaded photos.
-  */
+  // =====================================================
+  // DISPLAY PHOTOS
+  // =====================================================
 
   const displayPhotos =
     uploadedPhotos.length > 0
@@ -1374,9 +1289,7 @@ function OwnerPublicProfile() {
     }
 
     const parsed =
-      new Date(
-        date
-      );
+      new Date(date);
 
     if (
       Number.isNaN(
@@ -1420,9 +1333,7 @@ function OwnerPublicProfile() {
     return (
       <div className="public-review-stars">
         {[1, 2, 3, 4, 5].map(
-          (
-            star
-          ) => (
+          (star) => (
             <FaStar
               key={star}
               className={
@@ -1450,7 +1361,6 @@ function OwnerPublicProfile() {
     setExpandedReviews(
       (previous) => ({
         ...previous,
-
         [reviewId]:
           !previous[
             reviewId
@@ -1500,9 +1410,9 @@ function OwnerPublicProfile() {
     currentMedia
       ? getMediaUrl(
           currentMedia?.resolvedUrl ??
-          currentMedia?.mediaUrl ??
-          currentMedia?.MediaUrl ??
-          ""
+            currentMedia?.mediaUrl ??
+            currentMedia?.MediaUrl ??
+            ""
         )
       : "";
 
@@ -1549,9 +1459,7 @@ function OwnerPublicProfile() {
   if (error) {
     return (
       <div className="public-profile-page">
-
         <header className="public-profile-header">
-
           <button
             className="public-back-btn"
             onClick={() =>
@@ -1572,13 +1480,10 @@ function OwnerPublicProfile() {
               Public Profile
             </h1>
           </div>
-
         </header>
 
         <main className="public-profile-container">
-
           <section className="public-error-card">
-
             <h3>
               Unable to load profile
             </h3>
@@ -1597,11 +1502,8 @@ function OwnerPublicProfile() {
             >
               Back to Businesses
             </button>
-
           </section>
-
         </main>
-
       </div>
     );
   }
@@ -1613,9 +1515,7 @@ function OwnerPublicProfile() {
   if (!business) {
     return (
       <div className="public-profile-page">
-
         <header className="public-profile-header">
-
           <button
             className="public-back-btn"
             onClick={() =>
@@ -1628,7 +1528,6 @@ function OwnerPublicProfile() {
           </button>
 
           <div className="public-header-title">
-
             <span>
               REVIO
             </span>
@@ -1636,15 +1535,11 @@ function OwnerPublicProfile() {
             <h1>
               Public Profile
             </h1>
-
           </div>
-
         </header>
 
         <main className="public-profile-container">
-
           <section className="public-error-card">
-
             <FaStore />
 
             <h3>
@@ -1665,11 +1560,8 @@ function OwnerPublicProfile() {
             >
               Add Business
             </button>
-
           </section>
-
         </main>
-
       </div>
     );
   }
@@ -1686,7 +1578,6 @@ function OwnerPublicProfile() {
       ===================================================== */}
 
       <header className="public-profile-header">
-
         <button
           className="public-back-btn"
           onClick={() =>
@@ -1699,7 +1590,6 @@ function OwnerPublicProfile() {
         </button>
 
         <div className="public-header-title">
-
           <span>
             REVIO
           </span>
@@ -1707,11 +1597,8 @@ function OwnerPublicProfile() {
           <h1>
             Public Profile
           </h1>
-
         </div>
-
       </header>
-
 
       <main className="public-profile-container">
 
@@ -1720,11 +1607,19 @@ function OwnerPublicProfile() {
         ===================================================== */}
 
         <section className="public-cover">
-
           <img
             src={coverImage}
             alt={`${businessName} cover`}
             className="public-cover-image"
+            onError={(event) => {
+              if (
+                event.currentTarget.src !==
+                SAMPLE_PHOTOS[0].url
+              ) {
+                event.currentTarget.src =
+                  SAMPLE_PHOTOS[0].url;
+              }
+            }}
           />
 
           <div className="public-cover-overlay"></div>
@@ -1736,20 +1631,16 @@ function OwnerPublicProfile() {
           >
             <FaHeart />
           </button>
-
         </section>
-
 
         {/* =====================================================
             BUSINESS INFORMATION
         ===================================================== */}
 
         <section className="public-business-info">
-
           <div className="public-title-row">
 
             <div className="public-business-title">
-
               <h2>
                 {businessName}
               </h2>
@@ -1757,11 +1648,9 @@ function OwnerPublicProfile() {
               <p className="public-category">
                 {categoryName}
               </p>
-
             </div>
 
             <div className="public-rating">
-
               <FaStar />
 
               <strong>
@@ -1777,15 +1666,11 @@ function OwnerPublicProfile() {
                   : "Reviews"}
                 )
               </span>
-
             </div>
-
           </div>
-
 
           {(address || city) && (
             <div className="public-info-item">
-
               <FaMapMarkerAlt />
 
               <span>
@@ -1797,32 +1682,25 @@ function OwnerPublicProfile() {
 
                 {city}
               </span>
-
             </div>
           )}
 
-
           {phone && (
             <div className="public-info-item">
-
               <FaPhone />
 
               <span>
                 {phone}
               </span>
-
             </div>
           )}
-
 
           {(openingTime ||
             closingTime) && (
             <div className="public-info-item">
-
               <FaClock />
 
               <span>
-
                 {openingTime}
 
                 {openingTime &&
@@ -1831,12 +1709,9 @@ function OwnerPublicProfile() {
                   : ""}
 
                 {closingTime}
-
               </span>
-
             </div>
           )}
-
 
           {website && (
             <a
@@ -1851,7 +1726,6 @@ function OwnerPublicProfile() {
               target="_blank"
               rel="noreferrer"
             >
-
               <FaGlobe />
 
               <span>
@@ -1859,19 +1733,15 @@ function OwnerPublicProfile() {
               </span>
 
               <FaChevronRight className="website-arrow" />
-
             </a>
           )}
-
         </section>
-
 
         {/* =====================================================
             ABOUT
         ===================================================== */}
 
         <section className="public-section">
-
           <h3>
             About this business
           </h3>
@@ -1879,9 +1749,7 @@ function OwnerPublicProfile() {
           <p>
             {description}
           </p>
-
         </section>
-
 
         {/* =====================================================
             BUSINESS PHOTOS
@@ -1890,7 +1758,6 @@ function OwnerPublicProfile() {
         <section className="public-section public-photos-section">
 
           <div className="public-section-title">
-
             <h3>
               Photos
             </h3>
@@ -1901,9 +1768,7 @@ function OwnerPublicProfile() {
                 ? "Photo"
                 : "Photos"}
             </span>
-
           </div>
-
 
           <div className="public-photo-grid">
 
@@ -1912,7 +1777,6 @@ function OwnerPublicProfile() {
                 photo,
                 index
               ) => {
-
                 const isLastVisible =
                   index ===
                     BUSINESS_PHOTO_PREVIEW_COUNT -
@@ -1941,7 +1805,6 @@ function OwnerPublicProfile() {
                         : `View business photo ${index + 1}`
                     }
                   >
-
                     <img
                       src={photo.url}
                       alt={photo.alt}
@@ -1950,6 +1813,10 @@ function OwnerPublicProfile() {
                           ? "eager"
                           : "lazy"
                       }
+                      onError={(event) => {
+                        event.currentTarget.style.display =
+                          "none";
+                      }}
                     />
 
                     {index === 0 && (
@@ -1960,23 +1827,18 @@ function OwnerPublicProfile() {
 
                     {isLastVisible && (
                       <span className="public-business-photo-more-overlay">
-
                         <span className="public-business-photo-more-text">
                           +{remainingBusinessPhotoCount} More
                         </span>
-
                       </span>
                     )}
-
                   </button>
                 );
               }
             )}
 
           </div>
-
         </section>
-
 
         {/* =====================================================
             CUSTOMER REVIEWS
@@ -1987,7 +1849,6 @@ function OwnerPublicProfile() {
           <div className="public-section-title">
 
             <div>
-
               <h3>
                 Customer Reviews
               </h3>
@@ -2000,7 +1861,6 @@ function OwnerPublicProfile() {
                     : "Reviews"}
                 </span>
               )}
-
             </div>
 
             <button
@@ -2012,26 +1872,20 @@ function OwnerPublicProfile() {
             >
               View All
             </button>
-
           </div>
-
 
           {/* =================================================
               REVIEWS LOADING
           ================================================= */}
 
           {reviewsLoading ? (
-
             <div className="public-review-empty">
-
               <FaStar />
 
               <p>
                 Loading customer reviews...
               </p>
-
             </div>
-
           ) : reviews.length > 0 ? (
 
             <div className="public-review-list">
@@ -2088,14 +1942,13 @@ function OwnerPublicProfile() {
                             mediaIndex
                           ) => ({
                             ...media,
-
                             mediaIndex,
 
                             resolvedUrl:
                               getMediaUrl(
                                 media?.mediaUrl ??
-                                media?.MediaUrl ??
-                                ""
+                                  media?.MediaUrl ??
+                                  ""
                               ),
                           })
                         )
@@ -2139,9 +1992,7 @@ function OwnerPublicProfile() {
                         key={reviewId}
                       >
 
-                        {/* =================================================
-                            REVIEWER HEADER
-                        ================================================= */}
+                        {/* REVIEWER HEADER */}
 
                         <div className="public-review-top">
 
@@ -2156,15 +2007,12 @@ function OwnerPublicProfile() {
                             }
                             disabled={!userId}
                           >
-
                             <span>
                               {userName
                                 .charAt(0)
                                 .toUpperCase()}
                             </span>
-
                           </button>
-
 
                           <button
                             type="button"
@@ -2177,7 +2025,6 @@ function OwnerPublicProfile() {
                             }
                             disabled={!userId}
                           >
-
                             <strong>
                               {userName}
                             </strong>
@@ -2189,24 +2036,17 @@ function OwnerPublicProfile() {
                                 )}
                               </span>
                             )}
-
                           </button>
 
-
                           <div className="public-review-rating">
-
                             {renderStars(
                               reviewRating
                             )}
-
                           </div>
 
                         </div>
 
-
-                        {/* =================================================
-                            RATING VALUE
-                        ================================================= */}
+                        {/* RATING VALUE */}
 
                         {reviewRating > 0 && (
                           <div className="public-review-rating-value">
@@ -2214,10 +2054,7 @@ function OwnerPublicProfile() {
                           </div>
                         )}
 
-
-                        {/* =================================================
-                            COMMENT
-                        ================================================= */}
+                        {/* COMMENT */}
 
                         {comment && (
                           <div className="public-review-comment-wrapper">
@@ -2256,14 +2093,10 @@ function OwnerPublicProfile() {
                           </div>
                         )}
 
-
-                        {/* =================================================
-                            REVIEW MEDIA
-                        ================================================= */}
+                        {/* REVIEW MEDIA */}
 
                         {validReviewMedia.length >
                           0 && (
-
                           <div className="public-review-media-gallery">
 
                             {visibleMedia.map(
@@ -2304,7 +2137,6 @@ function OwnerPublicProfile() {
                                     {isVideoMedia(
                                       media
                                     ) ? (
-
                                       <video
                                         className="public-review-media-video"
                                         src={
@@ -2314,9 +2146,7 @@ function OwnerPublicProfile() {
                                         playsInline
                                         preload="metadata"
                                       />
-
                                     ) : (
-
                                       <img
                                         className="public-review-media-image"
                                         src={
@@ -2327,15 +2157,11 @@ function OwnerPublicProfile() {
                                         }`}
                                         loading="lazy"
                                       />
-
                                     )}
-
 
                                     {isLastVisible && (
                                       <span className="public-review-media-more">
-
                                         +{remainingMediaCount} More
-
                                       </span>
                                     )}
 
@@ -2347,14 +2173,10 @@ function OwnerPublicProfile() {
                           </div>
                         )}
 
-
-                        {/* =================================================
-                            OWNER REPLY
-                        ================================================= */}
+                        {/* OWNER REPLY */}
 
                         {(review?.ownerReply ||
                           review?.OwnerReply) && (
-
                           <div className="public-review-owner-reply">
 
                             <strong>
@@ -2379,7 +2201,6 @@ function OwnerPublicProfile() {
           ) : (
 
             <div className="public-review-empty">
-
               <FaStar />
 
               <p>
@@ -2390,28 +2211,22 @@ function OwnerPublicProfile() {
                 Once customers review your business,
                 their ratings and comments will appear here.
               </span>
-
             </div>
-
           )}
 
         </section>
-
 
         {/* =====================================================
             PUBLIC PREVIEW NOTE
         ===================================================== */}
 
         <div className="public-preview-note">
-
           <FaLock />
 
           <span>
             You are seeing this as a public user
           </span>
-
         </div>
-
 
         {/* =====================================================
             EDIT BUSINESS
@@ -2423,15 +2238,10 @@ function OwnerPublicProfile() {
             handleEditBusiness
           }
         >
-
           <FaEdit />
-
           {" "}
-
           Edit Business Information
-
         </button>
-
 
         {/* =====================================================
             BACK TO BUSINESSES
@@ -2454,14 +2264,12 @@ function OwnerPublicProfile() {
 
       </main>
 
-
       {/* =====================================================
           REVIEW MEDIA VIEWER MODAL
       ===================================================== */}
 
       {selectedReviewMedia &&
         currentMediaUrl && (
-
           <div
             className="public-review-media-modal"
             onClick={
@@ -2480,7 +2288,6 @@ function OwnerPublicProfile() {
               <FaTimes />
             </button>
 
-
             <div
               className="public-review-media-modal-content"
               onClick={(event) =>
@@ -2490,7 +2297,6 @@ function OwnerPublicProfile() {
 
               {selectedReviewMedia.length >
                 1 && (
-
                 <button
                   type="button"
                   className="public-review-media-nav public-review-media-prev"
@@ -2501,14 +2307,11 @@ function OwnerPublicProfile() {
                 >
                   <FaChevronLeft />
                 </button>
-
               )}
-
 
               <div className="public-review-media-modal-image-wrapper">
 
                 {currentMediaIsVideo ? (
-
                   <video
                     className="public-review-media-modal-video"
                     src={
@@ -2518,9 +2321,7 @@ function OwnerPublicProfile() {
                     autoPlay
                     playsInline
                   />
-
                 ) : (
-
                   <img
                     className="public-review-media-modal-image"
                     src={
@@ -2530,15 +2331,12 @@ function OwnerPublicProfile() {
                       selectedMediaIndex + 1
                     }`}
                   />
-
                 )}
 
               </div>
 
-
               {selectedReviewMedia.length >
                 1 && (
-
                 <button
                   type="button"
                   className="public-review-media-nav public-review-media-next"
@@ -2549,26 +2347,17 @@ function OwnerPublicProfile() {
                 >
                   <FaChevronRight />
                 </button>
-
               )}
 
-
               <div className="public-review-media-counter">
-
                 {selectedMediaIndex + 1}
-
                 {" / "}
-
                 {selectedReviewMedia.length}
-
               </div>
 
             </div>
-
           </div>
-
         )}
-
 
       {/* =====================================================
           BUSINESS PHOTO VIEWER MODAL
@@ -2576,7 +2365,6 @@ function OwnerPublicProfile() {
 
       {selectedBusinessPhoto &&
         currentBusinessPhoto && (
-
           <div
             className="public-business-photo-modal"
             onClick={
@@ -2597,7 +2385,6 @@ function OwnerPublicProfile() {
               <FaTimes />
             </button>
 
-
             <div
               className="public-business-photo-modal-content"
               onClick={(event) =>
@@ -2609,7 +2396,6 @@ function OwnerPublicProfile() {
 
               {selectedBusinessPhoto.length >
                 1 && (
-
                 <button
                   type="button"
                   className="public-business-photo-nav public-business-photo-prev"
@@ -2620,14 +2406,11 @@ function OwnerPublicProfile() {
                 >
                   <FaChevronLeft />
                 </button>
-
               )}
-
 
               {/* CURRENT PHOTO */}
 
               <div className="public-business-photo-modal-wrapper">
-
                 <img
                   className="public-business-photo-modal-image"
                   src={
@@ -2639,16 +2422,17 @@ function OwnerPublicProfile() {
                       selectedBusinessPhotoIndex + 1
                     }`
                   }
+                  onError={(event) => {
+                    event.currentTarget.src =
+                      SAMPLE_PHOTOS[0].url;
+                  }}
                 />
-
               </div>
-
 
               {/* NEXT */}
 
               {selectedBusinessPhoto.length >
                 1 && (
-
                 <button
                   type="button"
                   className="public-business-photo-nav public-business-photo-next"
@@ -2659,26 +2443,18 @@ function OwnerPublicProfile() {
                 >
                   <FaChevronRight />
                 </button>
-
               )}
-
 
               {/* COUNTER */}
 
               <div className="public-business-photo-counter">
-
                 {selectedBusinessPhotoIndex + 1}
-
                 {" / "}
-
                 {selectedBusinessPhoto.length}
-
               </div>
 
             </div>
-
           </div>
-
         )}
 
     </div>

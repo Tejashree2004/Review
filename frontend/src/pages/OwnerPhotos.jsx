@@ -23,7 +23,6 @@ import {
 } from "react-icons/fa";
 
 import MainLayout from "../layouts/MainLayout";
-
 import DialogBox from "../components/DialogBox";
 
 import "../styles/OwnerPhotos.css";
@@ -152,7 +151,7 @@ function OwnerPhotos() {
   };
 
   // =====================================================
-  // RESPONSE
+  // RESPONSE DATA
   // =====================================================
 
   const getResponseData = (
@@ -169,73 +168,112 @@ function OwnerPhotos() {
   // PHOTO ID
   // =====================================================
 
-  const getPhotoId =
-    (photo) =>
+  const getPhotoId = (photo) => {
+    return (
       photo?.businessPhotoId ??
       photo?.BusinessPhotoId ??
       photo?.id ??
-      null;
+      photo?.Id ??
+      null
+    );
+  };
 
   // =====================================================
   // PHOTO URL
   // =====================================================
 
-  const getPhotoUrl =
-    (photo) => {
+  const getPhotoUrl = (photo) => {
+    const rawUrl =
+      photo?.photoUrl ??
+      photo?.PhotoUrl ??
+      photo?.imageUrl ??
+      photo?.ImageUrl ??
+      photo?.image ??
+      photo?.Image ??
+      "";
 
-      const rawUrl =
-        photo?.photoUrl ??
-        photo?.PhotoUrl ??
-        photo?.imageUrl ??
-        photo?.ImageUrl ??
-        photo?.image ??
-        photo?.Image ??
-        "";
+    if (!rawUrl) {
+      return "";
+    }
 
-      if (!rawUrl) {
-        return "";
-      }
+    let cleanUrl =
+      String(rawUrl).trim();
 
-      const cleanUrl =
-        String(rawUrl).trim();
+    if (!cleanUrl) {
+      return "";
+    }
 
-      if (!cleanUrl) {
-        return "";
-      }
+    cleanUrl =
+      cleanUrl.replace(
+        /^["']|["']$/g,
+        ""
+      );
 
-      // Already complete URL
-      if (
-        cleanUrl.startsWith(
-          "http://"
-        ) ||
-        cleanUrl.startsWith(
-          "https://"
-        ) ||
-        cleanUrl.startsWith(
-          "data:image/"
-        )
-      ) {
-        return cleanUrl;
-      }
+    // Already complete backend URL
+    if (
+      cleanUrl.startsWith(
+        "http://localhost:5213/"
+      )
+    ) {
+      return cleanUrl;
+    }
 
-      // Backend stored path:
-      // /uploads/business/example.jpg
-      return `${BACKEND_BASE}${
-        cleanUrl.startsWith("/")
-          ? cleanUrl
-          : `/${cleanUrl}`
-      }`;
-    };
+    // Already another complete URL
+    if (
+      cleanUrl.startsWith(
+        "http://"
+      ) ||
+      cleanUrl.startsWith(
+        "https://"
+      ) ||
+      cleanUrl.startsWith(
+        "data:image/"
+      )
+    ) {
+      return cleanUrl;
+    }
+
+    // Backend stored path:
+    // /uploads/business/example.jpg
+    if (
+      cleanUrl.startsWith(
+        "/uploads/"
+      )
+    ) {
+      return `${BACKEND_BASE}${cleanUrl}`;
+    }
+
+    // uploads/business/example.jpg
+    if (
+      cleanUrl.startsWith(
+        "uploads/"
+      )
+    ) {
+      return `${BACKEND_BASE}/${cleanUrl}`;
+    }
+
+    // Any other relative path
+    return `${BACKEND_BASE}/${cleanUrl.replace(
+      /^\/+/,
+      ""
+    )}`;
+  };
 
   // =====================================================
   // BUSINESS ID
   // =====================================================
 
-  const getBusinessId =
-    (businessData) =>
+  const getBusinessId = (
+    businessData
+  ) => {
+    return (
       businessData?.businessId ??
       businessData?.BusinessId ??
-      null;
+      businessData?.id ??
+      businessData?.Id ??
+      null
+    );
+  };
 
   // =====================================================
   // LOAD BUSINESS + PHOTOS
@@ -247,9 +285,7 @@ function OwnerPhotos() {
 
   const loadBusinessAndPhotos =
     async () => {
-
-      const token =
-        getToken();
+      const token = getToken();
 
       if (!token) {
         showDialog(
@@ -259,6 +295,7 @@ function OwnerPhotos() {
           () => navigate("/login")
         );
 
+        setLoading(false);
         return;
       }
 
@@ -270,7 +307,6 @@ function OwnerPhotos() {
       };
 
       try {
-
         setLoading(true);
 
         let ownerBusiness = null;
@@ -280,7 +316,6 @@ function OwnerPhotos() {
         // ===============================================
 
         if (routeBusinessId) {
-
           const businessResponse =
             await axios.get(
               `${API_BASE}/owner/business/${routeBusinessId}`,
@@ -298,7 +333,6 @@ function OwnerPhotos() {
         // ===============================================
 
         else {
-
           const businessResponse =
             await axios.get(
               `${API_BASE}/owner/business`,
@@ -318,8 +352,11 @@ function OwnerPhotos() {
               : businessData;
         }
 
-        if (!ownerBusiness) {
+        // ===============================================
+        // BUSINESS NOT FOUND
+        // ===============================================
 
+        if (!ownerBusiness) {
           setBusiness(null);
           setBusinessId(null);
           setPhotos([]);
@@ -346,8 +383,12 @@ function OwnerPhotos() {
             ownerBusiness
           );
 
-        if (!id) {
+        console.log(
+          "OWNER PHOTOS BUSINESS ID:",
+          id
+        );
 
+        if (!id) {
           showDialog(
             "Business ID Missing",
             "Business ID was not found. Please save your business information again.",
@@ -358,6 +399,10 @@ function OwnerPhotos() {
         }
 
         setBusinessId(id);
+
+        // ===============================================
+        // LOAD PHOTOS
+        // ===============================================
 
         const photoResponse =
           await axios.get(
@@ -370,24 +415,31 @@ function OwnerPhotos() {
             photoResponse
           );
 
+        console.log(
+          "OWNER BUSINESS PHOTOS:",
+          photoData
+        );
+
         setPhotos(
           Array.isArray(photoData)
             ? photoData
             : []
         );
-
       } catch (error) {
-
         console.error(
           "Business/photos loading error:",
           error
+        );
+
+        console.error(
+          "LOAD BACKEND RESPONSE:",
+          error?.response?.data
         );
 
         if (
           error.response?.status ===
           401
         ) {
-
           showDialog(
             "Session Expired",
             "Your login session has expired. Please login again.",
@@ -402,7 +454,6 @@ function OwnerPhotos() {
           error.response?.status ===
           404
         ) {
-
           showDialog(
             "Endpoint Not Found",
             "Business or photo endpoint was not found. Please check the backend routes.",
@@ -417,39 +468,28 @@ function OwnerPhotos() {
           "Unable to load business photos.",
           "error"
         );
-
       } finally {
-
         setLoading(false);
-
       }
     };
 
   // =====================================================
-  // PREPARE IMAGE
-  // =====================================================
-  // Existing image compression behavior is preserved,
-  // but Base64 is NO LONGER used.
-  //
-  // The image is converted to a real File object.
+  // PREPARE IMAGE FILE
   // =====================================================
 
   const prepareImageFile =
     (file) => {
-
       return new Promise(
         (
           resolve,
           reject
         ) => {
-
           if (
             !file ||
-            !file.type.startsWith(
+            !file.type?.startsWith(
               "image/"
             )
           ) {
-
             reject(
               new Error(
                 "Selected file is not an image."
@@ -464,15 +504,12 @@ function OwnerPhotos() {
 
           reader.onload =
             (event) => {
-
               const image =
                 new Image();
 
               image.onload =
                 () => {
-
                   try {
-
                     const maxWidth =
                       900;
 
@@ -485,11 +522,14 @@ function OwnerPhotos() {
                     let height =
                       image.height;
 
+                    // =================================
+                    // RESIZE WIDTH
+                    // =================================
+
                     if (
                       width >
                       maxWidth
                     ) {
-
                       height =
                         (height *
                           maxWidth) /
@@ -499,11 +539,14 @@ function OwnerPhotos() {
                         maxWidth;
                     }
 
+                    // =================================
+                    // RESIZE HEIGHT
+                    // =================================
+
                     if (
                       height >
                       maxHeight
                     ) {
-
                       width =
                         (width *
                           maxHeight) /
@@ -552,13 +595,11 @@ function OwnerPhotos() {
                     );
 
                     // =================================
-                    // Convert canvas to REAL FILE
-                    // instead of Base64
+                    // CONVERT TO REAL JPEG FILE
                     // =================================
 
                     canvas.toBlob(
                       (blob) => {
-
                         if (!blob) {
                           reject(
                             new Error(
@@ -580,7 +621,7 @@ function OwnerPhotos() {
                               ""
                             )
                             .replace(
-                              /[^a-zA-Z0-9-_]/g,
+                              /[^a-zA-Z0-9_-]/g,
                               "-"
                             );
 
@@ -599,6 +640,22 @@ function OwnerPhotos() {
                             }
                           );
 
+                        console.log(
+                          "PREPARED IMAGE:",
+                          {
+                            originalName:
+                              file.name,
+                            originalSize:
+                              file.size,
+                            preparedName:
+                              compressedFile.name,
+                            preparedSize:
+                              compressedFile.size,
+                            preparedType:
+                              compressedFile.type,
+                          }
+                        );
+
                         resolve(
                           compressedFile
                         );
@@ -606,11 +663,8 @@ function OwnerPhotos() {
                       "image/jpeg",
                       0.55
                     );
-
                   } catch (error) {
-
                     reject(error);
-
                   }
                 };
 
@@ -644,10 +698,7 @@ function OwnerPhotos() {
     };
 
   // =====================================================
-  // UPLOAD
-  // =====================================================
-  // IMPORTANT:
-  // Backend now expects multipart/form-data.
+  // UPLOAD PHOTO
   // =====================================================
 
   const uploadPhoto =
@@ -656,9 +707,7 @@ function OwnerPhotos() {
       fileName,
       isPrimary
     ) => {
-
-      const token =
-        getToken();
+      const token = getToken();
 
       if (!token) {
         throw new Error(
@@ -672,6 +721,53 @@ function OwnerPhotos() {
         );
       }
 
+      if (
+        !imageFile ||
+        !(imageFile instanceof File)
+      ) {
+        throw new Error(
+          "Invalid photo file."
+        );
+      }
+
+      // ===============================================
+      // DEBUG
+      // ===============================================
+
+      console.log(
+        "========== PHOTO UPLOAD REQUEST =========="
+      );
+
+      console.log(
+        "BUSINESS ID:",
+        businessId
+      );
+
+      console.log(
+        "FILE:",
+        imageFile
+      );
+
+      console.log(
+        "FILE NAME:",
+        imageFile.name
+      );
+
+      console.log(
+        "FILE TYPE:",
+        imageFile.type
+      );
+
+      console.log(
+        "FILE SIZE:",
+        imageFile.size
+      );
+
+      console.log(
+        "IS PRIMARY:",
+        isPrimary
+      );
+
       // ===============================================
       // FORM DATA
       // ===============================================
@@ -681,12 +777,14 @@ function OwnerPhotos() {
 
       formData.append(
         "Photo",
-        imageFile
+        imageFile,
+        imageFile.name
       );
 
       formData.append(
         "Caption",
         fileName ||
+          imageFile.name ||
           "Business photo"
       );
 
@@ -698,8 +796,7 @@ function OwnerPhotos() {
       );
 
       // ===============================================
-      // DO NOT manually set Content-Type.
-      // Browser automatically adds multipart boundary.
+      // DO NOT SET CONTENT-TYPE MANUALLY
       // ===============================================
 
       const response =
@@ -714,6 +811,15 @@ function OwnerPhotos() {
           }
         );
 
+      console.log(
+        "PHOTO UPLOAD SUCCESS:",
+        response.data
+      );
+
+      console.log(
+        "=========================================="
+      );
+
       return getResponseData(
         response
       );
@@ -725,9 +831,7 @@ function OwnerPhotos() {
 
   const loadBusinessPhotosOnly =
     async () => {
-
-      const token =
-        getToken();
+      const token = getToken();
 
       if (
         !token ||
@@ -737,7 +841,6 @@ function OwnerPhotos() {
       }
 
       try {
-
         const response =
           await axios.get(
             `${API_BASE}/owner/photos/business/${businessId}`,
@@ -754,19 +857,26 @@ function OwnerPhotos() {
             response
           );
 
+        console.log(
+          "REFRESHED BUSINESS PHOTOS:",
+          data
+        );
+
         setPhotos(
           Array.isArray(data)
             ? data
             : []
         );
-
       } catch (error) {
-
         console.error(
           "Failed to refresh photos:",
           error
         );
 
+        console.error(
+          "REFRESH PHOTOS RESPONSE:",
+          error?.response?.data
+        );
       }
     };
 
@@ -776,7 +886,6 @@ function OwnerPhotos() {
 
   const processFiles =
     async (files) => {
-
       if (
         !files ||
         files.length === 0
@@ -789,9 +898,7 @@ function OwnerPhotos() {
       // ===============================================
 
       const imageFiles =
-        Array.from(
-          files
-        ).filter(
+        Array.from(files).filter(
           (file) =>
             file.type ===
               "image/jpeg" ||
@@ -802,10 +909,8 @@ function OwnerPhotos() {
         );
 
       if (
-        imageFiles.length ===
-        0
+        imageFiles.length === 0
       ) {
-
         showDialog(
           "Invalid File",
           "Please select JPG, PNG or WEBP image files only.",
@@ -824,7 +929,6 @@ function OwnerPhotos() {
           imageFiles.length >
         MAX_PHOTOS
       ) {
-
         showDialog(
           "Photo Limit Reached",
           `You can upload maximum 12 business photos. You currently have ${photos.length} photos.`,
@@ -846,7 +950,6 @@ function OwnerPhotos() {
         );
 
       if (oversizedFile) {
-
         showDialog(
           "File Too Large",
           "Each image must be smaller than 5 MB.",
@@ -857,7 +960,6 @@ function OwnerPhotos() {
       }
 
       try {
-
         setUploading(true);
 
         const uploadedPhotos =
@@ -873,12 +975,16 @@ function OwnerPhotos() {
           imageFiles.length;
           index++
         ) {
-
           const file =
             imageFiles[index];
 
+          console.log(
+            `UPLOADING PHOTO ${index + 1}/${imageFiles.length}:`,
+            file.name
+          );
+
           // =============================================
-          // PREPARE REAL IMAGE FILE
+          // PREPARE REAL FILE
           // =============================================
 
           const preparedFile =
@@ -887,7 +993,7 @@ function OwnerPhotos() {
             );
 
           // =============================================
-          // CHECK PRIMARY PHOTO
+          // CHECK PRIMARY
           // =============================================
 
           const hasPrimaryPhoto =
@@ -905,7 +1011,7 @@ function OwnerPhotos() {
               0;
 
           // =============================================
-          // UPLOAD REAL FILE
+          // UPLOAD
           // =============================================
 
           const savedPhoto =
@@ -916,7 +1022,6 @@ function OwnerPhotos() {
             );
 
           if (savedPhoto) {
-
             uploadedPhotos.push(
               savedPhoto
             );
@@ -924,7 +1029,7 @@ function OwnerPhotos() {
         }
 
         // ===============================================
-        // REFRESH PHOTO LIST
+        // REFRESH
         // ===============================================
 
         await loadBusinessPhotosOnly();
@@ -937,24 +1042,60 @@ function OwnerPhotos() {
             : `${uploadedPhotos.length} photos uploaded successfully!`,
           "success"
         );
-
       } catch (error) {
-
         console.error(
           "Photo upload error:",
           error
         );
 
+        // ===============================================
+        // IMPORTANT BACKEND DEBUG
+        // ===============================================
+
+        console.log(
+          "========== PHOTO UPLOAD DEBUG =========="
+        );
+
+        console.log(
+          "STATUS:",
+          error?.response?.status
+        );
+
+        console.log(
+          "BACKEND RESPONSE:",
+          error?.response?.data
+        );
+
+        console.log(
+          "BACKEND MESSAGE:",
+          error?.response?.data?.message
+        );
+
+        console.log(
+          "BACKEND ERROR:",
+          error?.response?.data?.error
+        );
+
+        console.log(
+          "========================================="
+        );
+
+        // ===============================================
+        // 400
+        // ===============================================
+
         if (
           error.response?.status ===
           400
         ) {
+          const responseData =
+            error.response?.data;
 
           const message =
-            error.response?.data
-              ?.message ??
-            error.response?.data
-              ?.Message ??
+            responseData?.message ??
+            responseData?.Message ??
+            responseData?.error ??
+            responseData?.Error ??
             "";
 
           showDialog(
@@ -967,26 +1108,33 @@ function OwnerPhotos() {
           return;
         }
 
+        // ===============================================
+        // 401
+        // ===============================================
+
         if (
           error.response?.status ===
           401
         ) {
-
           showDialog(
             "Session Expired",
             "Your login session has expired. Please login again.",
             "warning",
-            () => navigate("/login")
+            () =>
+              navigate("/login")
           );
 
           return;
         }
 
+        // ===============================================
+        // 413
+        // ===============================================
+
         if (
           error.response?.status ===
           413
         ) {
-
           showDialog(
             "File Too Large",
             "The uploaded image is too large. Please choose a smaller image.",
@@ -996,17 +1144,18 @@ function OwnerPhotos() {
           return;
         }
 
+        // ===============================================
+        // GENERAL ERROR
+        // ===============================================
+
         showDialog(
           "Upload Failed",
           error.message ||
             "Something went wrong while uploading the photo.",
           "error"
         );
-
       } finally {
-
         setUploading(false);
-
       }
     };
 
@@ -1016,7 +1165,6 @@ function OwnerPhotos() {
 
   const handleFileChange =
     (event) => {
-
       const files =
         event.target.files;
 
@@ -1024,66 +1172,67 @@ function OwnerPhotos() {
         files &&
         files.length > 0
       ) {
-        processFiles(
-          files
-        );
+        processFiles(files);
       }
 
-      event.target.value =
-        "";
+      event.target.value = "";
     };
 
   // =====================================================
-  // DRAG
+  // DRAG ENTER
   // =====================================================
 
   const handleDragEnter =
     (event) => {
-
       event.preventDefault();
       event.stopPropagation();
 
       setIsDragging(true);
     };
+
+  // =====================================================
+  // DRAG OVER
+  // =====================================================
 
   const handleDragOver =
     (event) => {
-
       event.preventDefault();
       event.stopPropagation();
 
       setIsDragging(true);
     };
 
+  // =====================================================
+  // DRAG LEAVE
+  // =====================================================
+
   const handleDragLeave =
     (event) => {
-
       event.preventDefault();
       event.stopPropagation();
 
       setIsDragging(false);
     };
 
+  // =====================================================
+  // DROP
+  // =====================================================
+
   const handleDrop =
     (event) => {
-
       event.preventDefault();
       event.stopPropagation();
 
       setIsDragging(false);
 
       const files =
-        event.dataTransfer
-          .files;
+        event.dataTransfer.files;
 
       if (
         files &&
         files.length > 0
       ) {
-
-        processFiles(
-          files
-        );
+        processFiles(files);
       }
     };
 
@@ -1093,12 +1242,10 @@ function OwnerPhotos() {
 
   const handleDelete =
     async (photo) => {
-
       const photoId =
         getPhotoId(photo);
 
       if (!photoId) {
-
         showDialog(
           "Photo ID Missing",
           "Photo ID not found.",
@@ -1133,12 +1280,9 @@ function OwnerPhotos() {
 
   const confirmDeletePhoto =
     async (photoId) => {
-
-      const token =
-        getToken();
+      const token = getToken();
 
       if (!token) {
-
         showDialog(
           "Login Required",
           "Please login again.",
@@ -1150,7 +1294,6 @@ function OwnerPhotos() {
       }
 
       try {
-
         setUploading(true);
 
         await axios.delete(
@@ -1170,19 +1313,21 @@ function OwnerPhotos() {
           "Photo deleted successfully.",
           "success"
         );
-
       } catch (error) {
-
         console.error(
           "Delete photo error:",
           error
+        );
+
+        console.error(
+          "DELETE BACKEND RESPONSE:",
+          error?.response?.data
         );
 
         if (
           error.response?.status ===
           401
         ) {
-
           showDialog(
             "Session Expired",
             "Your login session has expired. Please login again.",
@@ -1198,11 +1343,8 @@ function OwnerPhotos() {
           "Unable to delete photo.",
           "error"
         );
-
       } finally {
-
         setUploading(false);
-
       }
     };
 
@@ -1212,12 +1354,10 @@ function OwnerPhotos() {
 
   const handleSetPrimary =
     async (photo) => {
-
       const photoId =
         getPhotoId(photo);
 
       if (!photoId) {
-
         showDialog(
           "Photo ID Missing",
           "Photo ID not found.",
@@ -1252,12 +1392,9 @@ function OwnerPhotos() {
 
   const confirmSetPrimary =
     async (photoId) => {
-
-      const token =
-        getToken();
+      const token = getToken();
 
       if (!token) {
-
         showDialog(
           "Login Required",
           "Please login again.",
@@ -1269,7 +1406,6 @@ function OwnerPhotos() {
       }
 
       try {
-
         setUploading(true);
 
         await axios.put(
@@ -1290,19 +1426,21 @@ function OwnerPhotos() {
           "This photo is now your cover photo.",
           "success"
         );
-
       } catch (error) {
-
         console.error(
           "Set primary photo error:",
           error
+        );
+
+        console.error(
+          "PRIMARY BACKEND RESPONSE:",
+          error?.response?.data
         );
 
         if (
           error.response?.status ===
           401
         ) {
-
           showDialog(
             "Session Expired",
             "Your login session has expired. Please login again.",
@@ -1317,7 +1455,6 @@ function OwnerPhotos() {
           error.response?.status ===
           404
         ) {
-
           showDialog(
             "Photo Not Found",
             "The selected photo could not be found.",
@@ -1332,11 +1469,8 @@ function OwnerPhotos() {
           "Unable to change the primary photo.",
           "error"
         );
-
       } finally {
-
         setUploading(false);
-
       }
     };
 
@@ -1346,7 +1480,6 @@ function OwnerPhotos() {
 
   const openFilePicker =
     () => {
-
       if (uploading) {
         return;
       }
@@ -1355,7 +1488,6 @@ function OwnerPhotos() {
         photos.length >=
         MAX_PHOTOS
       ) {
-
         showDialog(
           "Photo Limit Reached",
           "You already have 12 business photos.",
@@ -1373,12 +1505,9 @@ function OwnerPhotos() {
   // =====================================================
 
   if (loading) {
-
     return (
       <MainLayout>
-
         <div className="owner-photos-page">
-
           <div
             style={{
               minHeight:
@@ -1395,7 +1524,6 @@ function OwnerPhotos() {
                 "15px",
             }}
           >
-
             <FaSpinner
               className="fa-spin"
               size={28}
@@ -1404,7 +1532,6 @@ function OwnerPhotos() {
             <p>
               Loading business photos...
             </p>
-
           </div>
 
           <DialogBox
@@ -1433,9 +1560,7 @@ function OwnerPhotos() {
               dialog.showCancel
             }
           />
-
         </div>
-
       </MainLayout>
     );
   }
@@ -1446,8 +1571,11 @@ function OwnerPhotos() {
 
   return (
     <MainLayout>
-
       <div className="owner-photos-page">
+
+        {/* =================================================
+            TOP BAR
+        ================================================= */}
 
         <div className="owner-photos-topbar">
 
@@ -1473,6 +1601,9 @@ function OwnerPhotos() {
 
         </div>
 
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
         <section className="owner-photos-header">
 
@@ -1505,6 +1636,9 @@ function OwnerPhotos() {
 
         </section>
 
+        {/* =================================================
+            UPLOAD BOX
+        ================================================= */}
 
         <section
           className={`photo-upload-box ${
@@ -1529,7 +1663,9 @@ function OwnerPhotos() {
           <div className="upload-icon">
 
             {uploading ? (
-              <FaSpinner className="fa-spin" />
+              <FaSpinner
+                className="fa-spin"
+              />
             ) : (
               <FaCloudUploadAlt />
             )}
@@ -1583,9 +1719,11 @@ function OwnerPhotos() {
 
         </section>
 
+        {/* =================================================
+            PHOTOS
+        ================================================= */}
 
         {photos.length > 0 ? (
-
           <section className="photos-section">
 
             <div className="photos-section-header">
@@ -1604,15 +1742,11 @@ function OwnerPhotos() {
               </div>
 
               <div className="photos-number">
-
                 <FaImage />
-
                 {photos.length}
-
               </div>
 
             </div>
-
 
             <div className="photos-grid">
 
@@ -1646,7 +1780,6 @@ function OwnerPhotos() {
                     }`;
 
                   return (
-
                     <div
                       className={`photo-card ${
                         isPrimary
@@ -1662,7 +1795,6 @@ function OwnerPhotos() {
                       <div className="photo-image-wrapper">
 
                         {photoUrl ? (
-
                           <img
                             src={
                               photoUrl
@@ -1672,9 +1804,7 @@ function OwnerPhotos() {
                             }
                             className="business-photo"
                           />
-
                         ) : (
-
                           <div
                             style={{
                               width:
@@ -1690,30 +1820,31 @@ function OwnerPhotos() {
                             }}
                           >
                             <FaImage
-                              size={40}
+                              size={
+                                40
+                              }
                             />
                           </div>
-
                         )}
 
+                        {/* =================================
+                            COVER BADGE
+                        ================================= */}
 
                         {isPrimary && (
-
                           <div className="cover-badge">
-
                             <FaStar />
-
                             Cover Photo
-
                           </div>
-
                         )}
 
+                        {/* =================================
+                            ACTIONS
+                        ================================= */}
 
                         <div className="photo-actions">
 
                           {!isPrimary && (
-
                             <button
                               type="button"
                               className="photo-action-btn"
@@ -1729,7 +1860,6 @@ function OwnerPhotos() {
                             >
                               <FaStar />
                             </button>
-
                           )}
 
                           <button
@@ -1752,6 +1882,9 @@ function OwnerPhotos() {
 
                       </div>
 
+                      {/* =================================
+                          FOOTER
+                      ================================= */}
 
                       <div className="photo-card-footer">
 
@@ -1765,19 +1898,14 @@ function OwnerPhotos() {
                         </span>
 
                         {isPrimary && (
-
                           <span className="cover-check">
-
                             <FaCheck />
-
                           </span>
-
                         )}
 
                       </div>
 
                     </div>
-
                   );
                 }
               )}
@@ -1785,9 +1913,7 @@ function OwnerPhotos() {
             </div>
 
           </section>
-
         ) : (
-
           <section className="photos-empty">
 
             <div className="empty-photo-icon">
@@ -1818,9 +1944,11 @@ function OwnerPhotos() {
             </button>
 
           </section>
-
         )}
 
+        {/* =================================================
+            TIPS
+        ================================================= */}
 
         <section className="photo-tips">
 
@@ -1844,6 +1972,9 @@ function OwnerPhotos() {
 
         </section>
 
+        {/* =================================================
+            FOOTER
+        ================================================= */}
 
         <div className="owner-photos-footer">
           REVIO • Discover. Review. Trust.
@@ -1851,10 +1982,9 @@ function OwnerPhotos() {
 
       </div>
 
-
-      {/* =====================================================
+      {/* =================================================
           DIALOG
-      ===================================================== */}
+      ================================================= */}
 
       <DialogBox
         isOpen={

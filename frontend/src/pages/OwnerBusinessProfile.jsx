@@ -34,40 +34,25 @@ import DialogBox from "../components/DialogBox";
 
 import "../styles/OwnerBusinessProfile.css";
 
-const API_BASE =
-  "http://localhost:5213/api";
+const API_BASE = "http://localhost:5213/api";
+
+const MAX_PHOTOS = 12;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function OwnerBusinessProfile() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const {
-    businessId: routeBusinessId,
-  } = useParams();
+  const { businessId: routeBusinessId } = useParams();
 
-  const fileInputRef =
-    useRef(null);
-
-  const categoryDropdownRef =
-    useRef(null);
+  const fileInputRef = useRef(null);
+  const categoryDropdownRef = useRef(null);
 
   // =====================================================
   // ROUTE MODE
   // =====================================================
 
-  /*
-    CREATE:
-    /owner/business/new
-
-    EDIT:
-    /owner/business/2
-
-    LEGACY:
-    /owner/business
-  */
-
-  const pathname =
-    location.pathname;
+  const pathname = location.pathname;
 
   const isCreateMode =
     pathname === "/owner/business/new" ||
@@ -76,19 +61,16 @@ function OwnerBusinessProfile() {
   const isEditMode =
     !isCreateMode &&
     routeBusinessId &&
-    !Number.isNaN(
-      Number(routeBusinessId)
-    );
+    !Number.isNaN(Number(routeBusinessId));
 
   const isLegacyMode =
     !isCreateMode &&
     !isEditMode &&
     pathname === "/owner/business";
 
-  const routeBusinessIdNumber =
-    isEditMode
-      ? Number(routeBusinessId)
-      : null;
+  const routeBusinessIdNumber = isEditMode
+    ? Number(routeBusinessId)
+    : null;
 
   // =====================================================
   // EMPTY FORM
@@ -107,82 +89,54 @@ function OwnerBusinessProfile() {
     website: "",
     openingTime: "",
     closingTime: "",
-    workingDays:
-      "Monday - Sunday",
+    workingDays: "Monday - Sunday",
   };
 
   // =====================================================
   // STATE
   // =====================================================
 
-  const [formData, setFormData] =
-    useState(emptyForm);
+  const [formData, setFormData] = useState(emptyForm);
 
-  const [saving, setSaving] =
-    useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [categories, setCategories] = useState([]);
 
-  const [categories, setCategories] =
-    useState([]);
+  const [businessId, setBusinessId] = useState(
+    isEditMode ? routeBusinessIdNumber : null
+  );
 
-  /*
-    Business ID is assigned only when:
-    1. Editing an existing business
-    2. Backend returns a newly-created business ID
-  */
-
-  const [businessId, setBusinessId] =
-    useState(
-      isEditMode
-        ? routeBusinessIdNumber
-        : null
-    );
-
-  const [categoryOpen, setCategoryOpen] =
-    useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   // =====================================================
-  // PHOTOS STATE
+  // PHOTOS
   // =====================================================
 
-  const [photos, setPhotos] =
-    useState([]);
+  const [photos, setPhotos] = useState([]);
 
-  const [uploading, setUploading] =
-    useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  const [isDragging, setIsDragging] =
-    useState(false);
-
-  /*
-    For CREATE mode, photos are selected first.
-
-    They are uploaded only after the business has
-    successfully been created and the backend returns
-    the new BusinessId.
-  */
+  const [isDragging, setIsDragging] = useState(false);
 
   const [pendingPhotoFiles, setPendingPhotoFiles] =
     useState([]);
 
   // =====================================================
-  // DIALOG STATE
+  // DIALOG
   // =====================================================
 
-  const [dialog, setDialog] =
-    useState({
-      isOpen: false,
-      title: "Message",
-      message: "",
-      type: "info",
-      confirmText: "OK",
-      cancelText: "Cancel",
-      showCancel: false,
-      onConfirm: null,
-      onCancel: null,
-    });
+  const [dialog, setDialog] = useState({
+    isOpen: false,
+    title: "Message",
+    message: "",
+    type: "info",
+    confirmText: "OK",
+    cancelText: "Cancel",
+    showCancel: false,
+    onConfirm: null,
+    onCancel: null,
+  });
 
   // =====================================================
   // DIALOG HELPERS
@@ -220,12 +174,8 @@ function OwnerBusinessProfile() {
       confirmText,
       cancelText,
       showCancel,
-      onConfirm:
-        onConfirm ||
-        closeDialog,
-      onCancel:
-        onCancel ||
-        closeDialog,
+      onConfirm: onConfirm || closeDialog,
+      onCancel: onCancel || closeDialog,
     });
   };
 
@@ -246,9 +196,7 @@ function OwnerBusinessProfile() {
   // RESPONSE DATA
   // =====================================================
 
-  const getResponseData = (
-    response
-  ) => {
+  const getResponseData = (response) => {
     return (
       response?.data?.data ??
       response?.data?.Data ??
@@ -260,9 +208,7 @@ function OwnerBusinessProfile() {
   // PHOTO ID
   // =====================================================
 
-  const getPhotoId = (
-    photo
-  ) => {
+  const getPhotoId = (photo) => {
     return (
       photo?.businessPhotoId ??
       photo?.BusinessPhotoId ??
@@ -276,25 +222,50 @@ function OwnerBusinessProfile() {
   // PHOTO URL
   // =====================================================
 
-  const getPhotoUrl = (
-    photo
-  ) => {
-    return (
+  const getPhotoUrl = (photo) => {
+    if (!photo) {
+      return "";
+    }
+
+    const rawUrl =
       photo?.photoUrl ??
       photo?.PhotoUrl ??
+      photo?.imageUrl ??
+      photo?.ImageUrl ??
       photo?.image ??
       photo?.Image ??
-      ""
-    );
+      "";
+
+    if (!rawUrl) {
+      return "";
+    }
+
+    const cleanUrl = String(rawUrl).trim();
+
+    if (!cleanUrl) {
+      return "";
+    }
+
+    if (
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://") ||
+      cleanUrl.startsWith("data:image/")
+    ) {
+      return cleanUrl;
+    }
+
+    return `http://localhost:5213${
+      cleanUrl.startsWith("/")
+        ? cleanUrl
+        : `/${cleanUrl}`
+    }`;
   };
 
   // =====================================================
-  // PHOTO PRIMARY
+  // PRIMARY PHOTO
   // =====================================================
 
-  const isPrimaryPhoto = (
-    photo
-  ) => {
+  const isPrimaryPhoto = (photo) => {
     return (
       photo?.isPrimary === true ||
       photo?.IsPrimary === true
@@ -305,9 +276,7 @@ function OwnerBusinessProfile() {
   // BUSINESS ID
   // =====================================================
 
-  const getBusinessId = (
-    businessData
-  ) => {
+  const getBusinessId = (businessData) => {
     return (
       businessData?.businessId ??
       businessData?.BusinessId ??
@@ -319,31 +288,26 @@ function OwnerBusinessProfile() {
   // LOAD CATEGORIES
   // =====================================================
 
-  const loadCategories =
-    async () => {
-      try {
-        const response =
-          await axios.get(
-            `${API_BASE}/Home/categories`
-          );
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(
+        `${API_BASE}/Home/categories`
+      );
 
-        const data =
-          getResponseData(response);
+      const data = getResponseData(response);
 
-        setCategories(
-          Array.isArray(data)
-            ? data
-            : []
-        );
-      } catch (error) {
-        console.error(
-          "Category loading error:",
-          error
-        );
+      setCategories(
+        Array.isArray(data) ? data : []
+      );
+    } catch (error) {
+      console.error(
+        "Category loading error:",
+        error
+      );
 
-        setCategories([]);
-      }
-    };
+      setCategories([]);
+    }
+  };
 
   // =====================================================
   // RESET FORM
@@ -354,15 +318,8 @@ function OwnerBusinessProfile() {
       ...emptyForm,
     });
 
-    /*
-      IMPORTANT:
-      New business must not inherit an old BusinessId.
-    */
-
     setBusinessId(null);
-
     setPhotos([]);
-
     setPendingPhotoFiles([]);
 
     localStorage.removeItem(
@@ -374,9 +331,7 @@ function OwnerBusinessProfile() {
   // SET BUSINESS FORM
   // =====================================================
 
-  const setBusinessForm = (
-    business
-  ) => {
+  const setBusinessForm = (business) => {
     if (!business) {
       return;
     }
@@ -398,9 +353,7 @@ function OwnerBusinessProfile() {
       "";
 
     setBusinessId(
-      id
-        ? Number(id)
-        : null
+      id ? Number(id) : null
     );
 
     setFormData({
@@ -409,8 +362,7 @@ function OwnerBusinessProfile() {
         business.BusinessName ??
         "",
 
-      businessType:
-        categoryName,
+      businessType: categoryName,
 
       description:
         business.description ??
@@ -470,9 +422,7 @@ function OwnerBusinessProfile() {
 
     localStorage.setItem(
       "businessProfile",
-      JSON.stringify(
-        business
-      )
+      JSON.stringify(business)
     );
   };
 
@@ -480,53 +430,42 @@ function OwnerBusinessProfile() {
   // LOAD PHOTOS
   // =====================================================
 
-  const loadBusinessPhotos =
-    async (
-      id
-    ) => {
-      if (!id) {
-        setPhotos([]);
-        return;
-      }
+  const loadBusinessPhotos = async (id) => {
+    if (!id) {
+      setPhotos([]);
+      return;
+    }
 
-      const token =
-        getToken();
+    const token = getToken();
 
-      if (!token) {
-        return;
-      }
+    if (!token) {
+      return;
+    }
 
-      try {
-        const response =
-          await axios.get(
-            `${API_BASE}/owner/photos/business/${id}`,
-            {
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-              },
-            }
-          );
+    try {
+      const response = await axios.get(
+        `${API_BASE}/owner/photos/business/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-        const data =
-          getResponseData(
-            response
-          );
+      const data = getResponseData(response);
 
-        setPhotos(
-          Array.isArray(data)
-            ? data
-            : []
-        );
-      } catch (error) {
-        console.error(
-          "Failed to load business photos:",
-          error
-        );
+      setPhotos(
+        Array.isArray(data) ? data : []
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load business photos:",
+        error
+      );
 
-        setPhotos([]);
-      }
-    };
+      setPhotos([]);
+    }
+  };
 
   // =====================================================
   // LOAD DATA
@@ -535,225 +474,82 @@ function OwnerBusinessProfile() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadData =
-      async () => {
-        const token =
-          getToken();
+    const loadData = async () => {
+      const token = getToken();
 
-        if (!token) {
+      if (!token) {
+        setLoading(false);
+
+        showDialog({
+          title: "Login Required",
+          message:
+            "Please login to continue.",
+          type: "error",
+          confirmText: "Login",
+          onConfirm: () => {
+            closeDialog();
+            navigate("/login");
+          },
+        });
+
+        return;
+      }
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      try {
+        setLoading(true);
+
+        await loadCategories();
+
+        if (cancelled) {
+          return;
+        }
+
+        // =================================================
+        // CREATE
+        // =================================================
+
+        if (isCreateMode) {
+          console.log(
+            "CREATE NEW BUSINESS MODE"
+          );
+
+          resetForm();
+
           setLoading(false);
-
-          showDialog({
-            title: "Login Required",
-            message:
-              "Please login to continue.",
-            type: "error",
-            confirmText: "Login",
-            onConfirm: () => {
-              closeDialog();
-
-              navigate(
-                "/login"
-              );
-            },
-          });
 
           return;
         }
 
-        const config = {
-          headers: {
-            Authorization:
-              `Bearer ${token}`,
-          },
-        };
+        // =================================================
+        // EDIT
+        // =================================================
 
-        try {
-          setLoading(true);
+        if (isEditMode) {
+          console.log(
+            "EDITING BUSINESS:",
+            routeBusinessIdNumber
+          );
 
-          await loadCategories();
+          const response =
+            await axios.get(
+              `${API_BASE}/owner/business/${routeBusinessIdNumber}`,
+              config
+            );
 
           if (cancelled) {
             return;
           }
 
-          // =================================================
-          // CREATE MODE
-          // =================================================
+          const business =
+            getResponseData(response);
 
-          if (isCreateMode) {
-            console.log(
-              "CREATE NEW BUSINESS MODE"
-            );
-
-            resetForm();
-
-            setLoading(false);
-
-            return;
-          }
-
-          // =================================================
-          // EDIT SPECIFIC BUSINESS
-          // =================================================
-
-          if (isEditMode) {
-            console.log(
-              "EDITING BUSINESS:",
-              routeBusinessIdNumber
-            );
-
-            const response =
-              await axios.get(
-                `${API_BASE}/owner/business/${routeBusinessIdNumber}`,
-                config
-              );
-
-            if (cancelled) {
-              return;
-            }
-
-            const business =
-              getResponseData(
-                response
-              );
-
-            if (!business) {
-              showDialog({
-                title: "Business Not Found",
-                message:
-                  "The requested business could not be found.",
-                type: "error",
-                confirmText: "OK",
-                onConfirm: () => {
-                  closeDialog();
-
-                  navigate(
-                    "/owner-dashboard"
-                  );
-                },
-              });
-
-              return;
-            }
-
-            setBusinessForm(
-              business
-            );
-
-            const id =
-              getBusinessId(
-                business
-              );
-
-            if (id) {
-              await loadBusinessPhotos(
-                id
-              );
-            }
-
-            setLoading(false);
-
-            return;
-          }
-
-          // =================================================
-          // LEGACY ROUTE
-          // =================================================
-
-          if (isLegacyMode) {
-            console.log(
-              "LEGACY BUSINESS ROUTE"
-            );
-
-            const response =
-              await axios.get(
-                `${API_BASE}/owner/business`,
-                config
-              );
-
-            if (cancelled) {
-              return;
-            }
-
-            const data =
-              getResponseData(
-                response
-              );
-
-            const businesses =
-              Array.isArray(data)
-                ? data
-                : [];
-
-            if (
-              businesses.length > 0
-            ) {
-              setBusinessForm(
-                businesses[0]
-              );
-
-              const id =
-                getBusinessId(
-                  businesses[0]
-                );
-
-              if (id) {
-                await loadBusinessPhotos(
-                  id
-                );
-              }
-            } else {
-              resetForm();
-            }
-
-            setLoading(false);
-
-            return;
-          }
-
-          // =================================================
-          // UNKNOWN ROUTE
-          // =================================================
-
-          console.warn(
-            "Unknown OwnerBusinessProfile route:",
-            pathname
-          );
-
-          resetForm();
-        } catch (error) {
-          console.error(
-            "Business data loading error:",
-            error
-          );
-
-          if (
-            error.response?.status ===
-            401
-          ) {
-            showDialog({
-              title: "Session Expired",
-              message:
-                "Your login session has expired. Please login again.",
-              type: "error",
-              confirmText: "Login",
-              onConfirm: () => {
-                closeDialog();
-
-                navigate(
-                  "/login"
-                );
-              },
-            });
-
-            return;
-          }
-
-          if (
-            error.response?.status ===
-            404
-          ) {
+          if (!business) {
             showDialog({
               title: "Business Not Found",
               message:
@@ -762,7 +558,6 @@ function OwnerBusinessProfile() {
               confirmText: "OK",
               onConfirm: () => {
                 closeDialog();
-
                 navigate(
                   "/owner-dashboard"
                 );
@@ -772,19 +567,132 @@ function OwnerBusinessProfile() {
             return;
           }
 
+          setBusinessForm(business);
+
+          const id =
+            getBusinessId(business);
+
+          if (id) {
+            await loadBusinessPhotos(id);
+          }
+
+          setLoading(false);
+
+          return;
+        }
+
+        // =================================================
+        // LEGACY
+        // =================================================
+
+        if (isLegacyMode) {
+          console.log(
+            "LEGACY BUSINESS ROUTE"
+          );
+
+          const response =
+            await axios.get(
+              `${API_BASE}/owner/business`,
+              config
+            );
+
+          if (cancelled) {
+            return;
+          }
+
+          const data =
+            getResponseData(response);
+
+          const businesses =
+            Array.isArray(data)
+              ? data
+              : [];
+
+          if (businesses.length > 0) {
+            setBusinessForm(
+              businesses[0]
+            );
+
+            const id =
+              getBusinessId(
+                businesses[0]
+              );
+
+            if (id) {
+              await loadBusinessPhotos(id);
+            }
+          } else {
+            resetForm();
+          }
+
+          setLoading(false);
+
+          return;
+        }
+
+        console.warn(
+          "Unknown OwnerBusinessProfile route:",
+          pathname
+        );
+
+        resetForm();
+      } catch (error) {
+        console.error(
+          "Business data loading error:",
+          error
+        );
+
+        if (
+          error.response?.status === 401
+        ) {
           showDialog({
-            title: "Loading Failed",
+            title: "Session Expired",
             message:
-              "Something went wrong while loading business information.",
+              "Your login session has expired. Please login again.",
+            type: "error",
+            confirmText: "Login",
+            onConfirm: () => {
+              closeDialog();
+              navigate("/login");
+            },
+          });
+
+          return;
+        }
+
+        if (
+          error.response?.status === 404
+        ) {
+          showDialog({
+            title: "Business Not Found",
+            message:
+              "The requested business could not be found.",
             type: "error",
             confirmText: "OK",
+            onConfirm: () => {
+              closeDialog();
+              navigate(
+                "/owner-dashboard"
+              );
+            },
           });
-        } finally {
-          if (!cancelled) {
-            setLoading(false);
-          }
+
+          return;
         }
-      };
+
+        showDialog({
+          title: "Loading Failed",
+          message:
+            "Something went wrong while loading business information.",
+          type: "error",
+          confirmText: "OK",
+        });
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
 
     loadData();
 
@@ -802,17 +710,16 @@ function OwnerBusinessProfile() {
   // =====================================================
 
   useEffect(() => {
-    const handleOutsideClick =
-      (event) => {
-        if (
-          categoryDropdownRef.current &&
-          !categoryDropdownRef.current.contains(
-            event.target
-          )
-        ) {
-          setCategoryOpen(false);
-        }
-      };
+    const handleOutsideClick = (event) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(
+          event.target
+        )
+      ) {
+        setCategoryOpen(false);
+      }
+    };
 
     document.addEventListener(
       "mousedown",
@@ -831,423 +738,510 @@ function OwnerBusinessProfile() {
   // INPUT CHANGE
   // =====================================================
 
-  const handleChange = (
-    e
-  ) => {
+  const handleChange = (e) => {
     const {
       name,
       value,
     } = e.target;
 
-    setFormData(
-      (previous) => ({
-        ...previous,
-        [name]: value,
-      })
-    );
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   // =====================================================
   // CATEGORY SELECT
   // =====================================================
 
-  const handleCategorySelect =
-    (
-      categoryName
-    ) => {
-      setFormData(
-        (previous) => ({
-          ...previous,
-          businessType:
-            categoryName,
-        })
-      );
+  const handleCategorySelect = (
+    categoryName
+  ) => {
+    setFormData((previous) => ({
+      ...previous,
+      businessType: categoryName,
+    }));
 
-      setCategoryOpen(
-        false
-      );
-    };
+    setCategoryOpen(false);
+  };
 
   // =====================================================
   // CATEGORY ID
   // =====================================================
 
-  const getSelectedCategoryId =
-    () => {
-      const selectedCategory =
-        categories.find(
-          (category) => {
-            const categoryName =
-              category?.categoryName ??
-              category?.CategoryName ??
-              "";
+  const getSelectedCategoryId = () => {
+    const selectedCategory =
+      categories.find(
+        (category) => {
+          const categoryName =
+            category?.categoryName ??
+            category?.CategoryName ??
+            "";
 
-            return (
-              categoryName
-                .toLowerCase()
-                .trim() ===
-              formData.businessType
-                .toLowerCase()
-                .trim()
-            );
-          }
-        );
-
-      return (
-        selectedCategory?.categoryId ??
-        selectedCategory?.CategoryId ??
-        null
+          return (
+            categoryName
+              .toLowerCase()
+              .trim() ===
+            formData.businessType
+              .toLowerCase()
+              .trim()
+          );
+        }
       );
-    };
+
+    return (
+      selectedCategory?.categoryId ??
+      selectedCategory?.CategoryId ??
+      null
+    );
+  };
 
   // =====================================================
   // COMPRESS IMAGE
   // =====================================================
 
-  const compressImage =
-    (file) => {
-      return new Promise(
-        (
-          resolve,
-          reject
-        ) => {
-          if (
-            !file ||
-            !file.type.startsWith(
-              "image/"
+  const compressImage = (file) => {
+    return new Promise(
+      (resolve, reject) => {
+        if (
+          !file ||
+          !file.type.startsWith("image/")
+        ) {
+          reject(
+            new Error(
+              "Selected file is not an image."
             )
-          ) {
+          );
+
+          return;
+        }
+
+        const reader =
+          new FileReader();
+
+        reader.onload = (event) => {
+          const image = new Image();
+
+          image.onload = () => {
+            try {
+              const maxWidth = 900;
+              const maxHeight = 900;
+
+              let width = image.width;
+              let height = image.height;
+
+              if (width > maxWidth) {
+                height =
+                  (height * maxWidth) /
+                  width;
+
+                width = maxWidth;
+              }
+
+              if (height > maxHeight) {
+                width =
+                  (width * maxHeight) /
+                  height;
+
+                height = maxHeight;
+              }
+
+              const canvas =
+                document.createElement(
+                  "canvas"
+                );
+
+              canvas.width =
+                Math.round(width);
+
+              canvas.height =
+                Math.round(height);
+
+              const context =
+                canvas.getContext(
+                  "2d"
+                );
+
+              if (!context) {
+                reject(
+                  new Error(
+                    "Unable to process image."
+                  )
+                );
+
+                return;
+              }
+
+              context.drawImage(
+                image,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
+
+              canvas.toBlob(
+                (blob) => {
+                  if (!blob) {
+                    reject(
+                      new Error(
+                        "Unable to compress image."
+                      )
+                    );
+
+                    return;
+                  }
+
+                  const baseName =
+                    file.name
+                      .replace(
+                        /\.[^/.]+$/,
+                        ""
+                      )
+                      .trim() ||
+                    "business-photo";
+
+                  const compressedFile =
+                    new File(
+                      [blob],
+                      `${baseName}.jpg`,
+                      {
+                        type: "image/jpeg",
+                        lastModified:
+                          Date.now(),
+                      }
+                    );
+
+                  resolve(
+                    compressedFile
+                  );
+                },
+                "image/jpeg",
+                0.55
+              );
+            } catch (error) {
+              reject(error);
+            }
+          };
+
+          image.onerror = () => {
             reject(
               new Error(
-                "Selected file is not an image."
+                "Unable to read selected image."
               )
             );
+          };
 
-            return;
-          }
+          image.src =
+            event.target.result;
+        };
 
-          const reader =
-            new FileReader();
-
-          reader.onload =
-            (event) => {
-              const image =
-                new Image();
-
-              image.onload =
-                () => {
-                  try {
-                    const maxWidth =
-                      900;
-
-                    const maxHeight =
-                      900;
-
-                    let width =
-                      image.width;
-
-                    let height =
-                      image.height;
-
-                    if (
-                      width >
-                      maxWidth
-                    ) {
-                      height =
-                        (height *
-                          maxWidth) /
-                        width;
-
-                      width =
-                        maxWidth;
-                    }
-
-                    if (
-                      height >
-                      maxHeight
-                    ) {
-                      width =
-                        (width *
-                          maxHeight) /
-                        height;
-
-                      height =
-                        maxHeight;
-                    }
-
-                    const canvas =
-                      document.createElement(
-                        "canvas"
-                      );
-
-                    canvas.width =
-                      Math.round(
-                        width
-                      );
-
-                    canvas.height =
-                      Math.round(
-                        height
-                      );
-
-                    const context =
-                      canvas.getContext(
-                        "2d"
-                      );
-
-                    context.drawImage(
-                      image,
-                      0,
-                      0,
-                      canvas.width,
-                      canvas.height
-                    );
-
-                    const compressed =
-                      canvas.toDataURL(
-                        "image/jpeg",
-                        0.55
-                      );
-
-                    resolve(
-                      compressed
-                    );
-                  } catch (error) {
-                    reject(error);
-                  }
-                };
-
-              image.onerror =
-                () => {
-                  reject(
-                    new Error(
-                      "Unable to read selected image."
-                    )
-                  );
-                };
-
-              image.src =
-                event.target.result;
-            };
-
-          reader.onerror =
-            () => {
-              reject(
-                new Error(
-                  "Unable to read selected file."
-                )
-              );
-            };
-
-          reader.readAsDataURL(
-            file
+        reader.onerror = () => {
+          reject(
+            new Error(
+              "Unable to read selected file."
+            )
           );
-        }
-      );
-    };
+        };
+
+        reader.readAsDataURL(file);
+      }
+    );
+  };
 
   // =====================================================
   // VALIDATE PHOTO FILES
   // =====================================================
 
-  const validatePhotoFiles =
-    (files) => {
-      if (
-        !files ||
-        files.length === 0
-      ) {
-        return [];
-      }
+  const validatePhotoFiles = (files) => {
+    if (!files || files.length === 0) {
+      return [];
+    }
 
-      const imageFiles =
-        Array.from(
-          files
-        ).filter(
-          (file) =>
-            file.type ===
-              "image/jpeg" ||
-            file.type ===
-              "image/png" ||
-            file.type ===
-              "image/webp"
-        );
+    const imageFiles =
+      Array.from(files).filter(
+        (file) =>
+          file.type === "image/jpeg" ||
+          file.type === "image/png" ||
+          file.type === "image/webp"
+      );
 
-      if (
-        imageFiles.length ===
-        0
-      ) {
-        showDialog({
-          title: "Invalid Image",
-          message:
-            "Please select JPG, PNG or WEBP image files only.",
-          type: "error",
-          confirmText: "OK",
-        });
+    if (imageFiles.length === 0) {
+      showDialog({
+        title: "Invalid Image",
+        message:
+          "Please select JPG, PNG or WEBP image files only.",
+        type: "error",
+        confirmText: "OK",
+      });
 
-        return [];
-      }
+      return [];
+    }
 
-      const currentPhotoCount =
-        photos.length +
-        pendingPhotoFiles.length;
+    const currentPhotoCount =
+      photos.length +
+      pendingPhotoFiles.length;
 
-      if (
-        currentPhotoCount +
-          imageFiles.length >
-        12
-      ) {
-        showDialog({
-          title: "Photo Limit Reached",
-          message:
-            "You can upload maximum 12 business photos.",
-          type: "error",
-          confirmText: "OK",
-        });
+    if (
+      currentPhotoCount +
+        imageFiles.length >
+      MAX_PHOTOS
+    ) {
+      showDialog({
+        title: "Photo Limit Reached",
+        message:
+          "You can upload maximum 12 business photos.",
+        type: "error",
+        confirmText: "OK",
+      });
 
-        return [];
-      }
+      return [];
+    }
 
-      const oversizedFile =
-        imageFiles.find(
-          (file) =>
-            file.size >
-            5 *
-              1024 *
-              1024
-        );
+    const oversizedFile =
+      imageFiles.find(
+        (file) =>
+          file.size > MAX_FILE_SIZE
+      );
 
-      if (oversizedFile) {
-        showDialog({
-          title: "Image Too Large",
-          message:
-            "Each image must be smaller than 5 MB.",
-          type: "error",
-          confirmText: "OK",
-        });
+    if (oversizedFile) {
+      showDialog({
+        title: "Image Too Large",
+        message:
+          "Each image must be smaller than 5 MB.",
+        type: "error",
+        confirmText: "OK",
+      });
 
-        return [];
-      }
+      return [];
+    }
 
-      return imageFiles;
-    };
+    return imageFiles;
+  };
 
   // =====================================================
   // PHOTO INPUT
   // =====================================================
 
-  const handlePhotoFiles =
-    (files) => {
-      const imageFiles =
-        validatePhotoFiles(
-          files
-        );
+  const handlePhotoFiles = (files) => {
+    const imageFiles =
+      validatePhotoFiles(files);
 
-      if (
-        imageFiles.length ===
-        0
-      ) {
-        return;
-      }
+    if (imageFiles.length === 0) {
+      return;
+    }
 
-      /*
-        CREATE:
-        Keep files temporarily.
-      */
-
-      if (!businessId) {
-        setPendingPhotoFiles(
-          (previous) => [
-            ...previous,
-            ...imageFiles,
-          ]
-        );
-
-        return;
-      }
-
-      /*
-        EDIT:
-        Business already exists,
-        so upload immediately.
-      */
-
-      processExistingBusinessFiles(
-        imageFiles
+    // CREATE
+    if (!businessId) {
+      setPendingPhotoFiles(
+        (previous) => [
+          ...previous,
+          ...imageFiles,
+        ]
       );
-    };
+
+      return;
+    }
+
+    // EDIT
+    processExistingBusinessFiles(
+      imageFiles
+    );
+  };
 
   // =====================================================
   // UPLOAD PHOTO
   // =====================================================
 
-  const uploadPhoto =
-    async (
-      id,
-      imageData,
-      fileName,
-      isPrimary
-    ) => {
-      const token =
-        getToken();
+  /*
+    IMPORTANT BACKEND CONTRACT:
 
-      if (!token) {
-        throw new Error(
-          "Authentication token not found."
-        );
+    Backend:
+      [FromForm] OwnerPhotoDto dto
+
+    DTO:
+      IFormFile Photo
+      string Caption
+      bool IsPrimary
+
+    Therefore we MUST send multipart/form-data.
+    We must NOT send PhotoUrl JSON.
+  */
+
+  const uploadPhoto = async (
+    id,
+    file,
+    fileName,
+    isPrimary
+  ) => {
+    const token = getToken();
+
+    if (!token) {
+      throw new Error(
+        "Authentication token not found."
+      );
+    }
+
+    if (!id) {
+      throw new Error(
+        "Business ID not found."
+      );
+    }
+
+    if (!file) {
+      throw new Error(
+        "Photo file not found."
+      );
+    }
+
+    if (!(file instanceof File)) {
+      console.error(
+        "INVALID PHOTO FILE:",
+        file
+      );
+
+      throw new Error(
+        "Invalid photo data."
+      );
+    }
+
+    if (file.size <= 0) {
+      throw new Error(
+        "Photo file is empty."
+      );
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(
+        "Photo must be smaller than 5 MB."
+      );
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+      throw new Error(
+        `Unsupported image type: ${file.type}`
+      );
+    }
+
+    console.log(
+      "PHOTO BEFORE UPLOAD:",
+      {
+        businessId: id,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        isFile:
+          file instanceof File,
       }
+    );
 
-      if (!id) {
-        throw new Error(
-          "Business ID not found."
-        );
-      }
+    const formData =
+      new FormData();
 
-      const payload = {
-        PhotoUrl:
-          imageData,
+    /*
+      EXACT backend property name:
+      Photo
+    */
+    formData.append(
+      "Photo",
+      file,
+      file.name ||
+        "business-photo.jpg"
+    );
 
-        Caption:
-          fileName ||
-          "Business photo",
+    /*
+      EXACT backend property name:
+      Caption
+    */
+    formData.append(
+      "Caption",
+      fileName ||
+        file.name ||
+        "Business photo"
+    );
 
-        IsPrimary:
-          Boolean(
-            isPrimary
-          ),
-      };
+    /*
+      EXACT backend property name:
+      IsPrimary
+    */
+    formData.append(
+      "IsPrimary",
+      String(Boolean(isPrimary))
+    );
 
-      const response =
-        await axios.post(
-          `${API_BASE}/owner/photos/business/${id}`,
-          payload,
+    // Debug FormData
+    for (
+      const [
+        key,
+        value,
+      ] of formData.entries()
+    ) {
+      if (
+        value instanceof File
+      ) {
+        console.log(
+          "FORM DATA:",
+          key,
           {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-
-              "Content-Type":
-                "application/json",
-            },
+            name:
+              value.name,
+            type:
+              value.type,
+            size:
+              value.size,
           }
         );
+      } else {
+        console.log(
+          "FORM DATA:",
+          key,
+          value
+        );
+      }
+    }
 
-      return getResponseData(
-        response
+    const response =
+      await axios.post(
+        `${API_BASE}/owner/photos/business/${id}`,
+        formData,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+          /*
+            IMPORTANT:
+            Do NOT manually set Content-Type.
+            Axios/browser will automatically add:
+            multipart/form-data; boundary=...
+          */
+        }
       );
-    };
+
+    return getResponseData(
+      response
+    );
+  };
 
   // =====================================================
-  // UPLOAD SELECTED FILES TO EXISTING BUSINESS
+  // UPLOAD SELECTED FILES
   // =====================================================
 
   const processExistingBusinessFiles =
-    async (
-      imageFiles
-    ) => {
+    async (imageFiles) => {
       if (
         !imageFiles ||
-        imageFiles.length ===
-          0 ||
+        imageFiles.length === 0 ||
         !businessId
       ) {
         return;
@@ -1256,41 +1250,61 @@ function OwnerBusinessProfile() {
       try {
         setUploading(true);
 
-        const uploadedPhotos =
-          [];
+        const uploadedPhotos = [];
 
         for (
           let index = 0;
-          index <
-          imageFiles.length;
+          index < imageFiles.length;
           index++
         ) {
-          const file =
+          const originalFile =
             imageFiles[index];
 
-          const imageData =
+          /*
+            Convert the selected image
+            into a REAL File object.
+          */
+          const compressedFile =
             await compressImage(
-              file
+              originalFile
             );
 
           const hasPrimaryPhoto =
             photos.some(
               (photo) =>
-                isPrimaryPhoto(
-                  photo
-                )
+                isPrimaryPhoto(photo)
             );
 
           const isPrimary =
             !hasPrimaryPhoto &&
-            uploadedPhotos.length ===
-              0;
+            uploadedPhotos.length === 0;
+
+          console.log(
+            "COMPRESSED PHOTO:",
+            {
+              originalName:
+                originalFile.name,
+              originalType:
+                originalFile.type,
+              originalSize:
+                originalFile.size,
+              compressedName:
+                compressedFile.name,
+              compressedType:
+                compressedFile.type,
+              compressedSize:
+                compressedFile.size,
+              isFile:
+                compressedFile instanceof File,
+              isPrimary,
+            }
+          );
 
           const savedPhoto =
             await uploadPhoto(
               businessId,
-              imageData,
-              file.name,
+              compressedFile,
+              originalFile.name,
               isPrimary
             );
 
@@ -1306,8 +1320,7 @@ function OwnerBusinessProfile() {
         );
 
         if (
-          uploadedPhotos.length ===
-          1
+          uploadedPhotos.length === 1
         ) {
           showDialog({
             title: "Upload Successful",
@@ -1317,8 +1330,7 @@ function OwnerBusinessProfile() {
             confirmText: "OK",
           });
         } else if (
-          uploadedPhotos.length >
-          1
+          uploadedPhotos.length > 1
         ) {
           showDialog({
             title: "Upload Successful",
@@ -1334,15 +1346,27 @@ function OwnerBusinessProfile() {
           error
         );
 
+        console.error(
+          "PHOTO UPLOAD BACKEND RESPONSE:",
+          error?.response?.data
+        );
+
+        console.error(
+          "PHOTO UPLOAD STATUS:",
+          error?.response?.status
+        );
+
         if (
-          error.response?.status ===
-          400
+          error.response?.status === 400
         ) {
+          const backendData =
+            error?.response?.data;
+
           const message =
-            error.response?.data
-              ?.message ??
-            error.response?.data
-              ?.Message ??
+            backendData?.message ??
+            backendData?.Message ??
+            backendData?.error ??
+            backendData?.Error ??
             "";
 
           showDialog({
@@ -1358,8 +1382,7 @@ function OwnerBusinessProfile() {
         }
 
         if (
-          error.response?.status ===
-          401
+          error.response?.status === 401
         ) {
           showDialog({
             title: "Session Expired",
@@ -1369,11 +1392,22 @@ function OwnerBusinessProfile() {
             confirmText: "Login",
             onConfirm: () => {
               closeDialog();
-
-              navigate(
-                "/login"
-              );
+              navigate("/login");
             },
+          });
+
+          return;
+        }
+
+        if (
+          error.response?.status === 413
+        ) {
+          showDialog({
+            title: "Photo Too Large",
+            message:
+              "The selected photo is too large.",
+            type: "error",
+            confirmText: "OK",
           });
 
           return;
@@ -1397,51 +1431,44 @@ function OwnerBusinessProfile() {
   // =====================================================
 
   const uploadPendingPhotos =
-    async (
-      createdBusinessId
-    ) => {
+    async (createdBusinessId) => {
       if (
         !createdBusinessId ||
-        pendingPhotoFiles.length ===
-          0
+        pendingPhotoFiles.length === 0
       ) {
-        return;
+        return [];
       }
 
-      const files =
-        [...pendingPhotoFiles];
+      const files = [
+        ...pendingPhotoFiles,
+      ];
 
-      const uploadedPhotos =
-        [];
+      const uploadedPhotos = [];
 
       for (
         let index = 0;
-        index <
-        files.length;
+        index < files.length;
         index++
       ) {
-        const file =
+        const originalFile =
           files[index];
 
-        const imageData =
+        const compressedFile =
           await compressImage(
-            file
+            originalFile
           );
 
         /*
-          First photo becomes primary
-          if the business currently has
-          no photos.
+          First photo becomes primary.
         */
-
         const isPrimary =
           index === 0;
 
         const savedPhoto =
           await uploadPhoto(
             createdBusinessId,
-            imageData,
-            file.name,
+            compressedFile,
+            originalFile.name,
             isPrimary
           );
 
@@ -1452,9 +1479,7 @@ function OwnerBusinessProfile() {
         }
       }
 
-      setPendingPhotoFiles(
-        []
-      );
+      setPendingPhotoFiles([]);
 
       return uploadedPhotos;
     };
@@ -1463,809 +1488,764 @@ function OwnerBusinessProfile() {
   // DELETE PHOTO
   // =====================================================
 
-  const handleDelete =
-    async (
-      photo
-    ) => {
-      const photoId =
-        getPhotoId(
-          photo
-        );
+  const handleDelete = async (
+    photo
+  ) => {
+    const photoId =
+      getPhotoId(photo);
 
-      if (!photoId) {
-        showDialog({
-          title: "Delete Failed",
-          message:
-            "Photo ID not found.",
-          type: "error",
-          confirmText: "OK",
-        });
-
-        return;
-      }
-
+    if (!photoId) {
       showDialog({
-        title: "Delete Photo",
+        title: "Delete Failed",
         message:
-          "Are you sure you want to delete this photo?",
+          "Photo ID not found.",
         type: "error",
-        confirmText: "Delete",
-        cancelText: "Cancel",
-        showCancel: true,
-
-        onCancel:
-          closeDialog,
-
-        onConfirm:
-          async () => {
-            closeDialog();
-
-            const token =
-              getToken();
-
-            if (!token) {
-              showDialog({
-                title: "Login Required",
-                message:
-                  "Please login again.",
-                type: "error",
-                confirmText: "Login",
-                onConfirm: () => {
-                  closeDialog();
-
-                  navigate(
-                    "/login"
-                  );
-                },
-              });
-
-              return;
-            }
-
-            try {
-              setUploading(true);
-
-              await axios.delete(
-                `${API_BASE}/owner/photos/${photoId}`,
-                {
-                  headers: {
-                    Authorization:
-                      `Bearer ${token}`,
-                  },
-                }
-              );
-
-              await loadBusinessPhotos(
-                businessId
-              );
-
-              showDialog({
-                title: "Photo Deleted",
-                message:
-                  "Photo deleted successfully.",
-                type: "success",
-                confirmText: "OK",
-              });
-            } catch (error) {
-              console.error(
-                "Delete photo error:",
-                error
-              );
-
-              if (
-                error.response?.status ===
-                401
-              ) {
-                showDialog({
-                  title: "Session Expired",
-                  message:
-                    "Your login session has expired. Please login again.",
-                  type: "error",
-                  confirmText: "Login",
-                  onConfirm: () => {
-                    closeDialog();
-
-                    navigate(
-                      "/login"
-                    );
-                  },
-                });
-
-                return;
-              }
-
-              showDialog({
-                title: "Delete Failed",
-                message:
-                  "Unable to delete photo.",
-                type: "error",
-                confirmText: "OK",
-              });
-            } finally {
-              setUploading(false);
-            }
-          },
-      });
-    };
-
-  // =====================================================
-  // PRIMARY PHOTO
-  // =====================================================
-
-  const handleSetPrimary =
-    async () => {
-      /*
-        Same existing functionality:
-        backend SetPrimaryPhoto endpoint
-        is not available yet.
-      */
-
-      showDialog({
-        title: "Primary Photo",
-        message:
-          "Primary photo is selected automatically when the first photo is uploaded. To change the primary photo, the backend needs a SetPrimaryPhoto endpoint.",
-        type: "info",
         confirmText: "OK",
       });
-    };
 
-  // =====================================================
-  // OPEN FILE PICKER
-  // =====================================================
-
-  const openFilePicker =
-    () => {
-      if (
-        saving ||
-        uploading
-      ) {
-        return;
-      }
-
-      fileInputRef.current?.click();
-    };
-
-  // =====================================================
-  // FILE INPUT
-  // =====================================================
-
-  const handleFileChange =
-    (event) => {
-      const files =
-        event.target.files;
-
-      if (
-        files &&
-        files.length > 0
-      ) {
-        handlePhotoFiles(
-          files
-        );
-      }
-
-      event.target.value =
-        "";
-    };
-
-  // =====================================================
-  // DRAG ENTER
-  // =====================================================
-
-  const handleDragEnter =
-    (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      setIsDragging(true);
-    };
-
-  // =====================================================
-  // DRAG OVER
-  // =====================================================
-
-  const handleDragOver =
-    (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      setIsDragging(true);
-    };
-
-  // =====================================================
-  // DRAG LEAVE
-  // =====================================================
-
-  const handleDragLeave =
-    (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      setIsDragging(false);
-    };
-
-  // =====================================================
-  // DROP
-  // =====================================================
-
-  const handleDrop =
-    (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      setIsDragging(false);
-
-      const files =
-        event.dataTransfer
-          .files;
-
-      if (
-        files &&
-        files.length > 0
-      ) {
-        handlePhotoFiles(
-          files
-        );
-      }
-    };
-
-  // =====================================================
-  // REMOVE PENDING PHOTO
-  // =====================================================
-
-  const removePendingPhoto =
-    (index) => {
-      setPendingPhotoFiles(
-        (previous) =>
-          previous.filter(
-            (_, photoIndex) =>
-              photoIndex !==
-              index
-          )
-      );
-    };
-
-  // =====================================================
-  // SUBMIT
-  // =====================================================
-
-  const handleSubmit =
-    async (e) => {
-      e.preventDefault();
-
-      // =================================================
-      // VALIDATION
-      // =================================================
-
-      if (
-        !formData.businessName.trim()
-      ) {
-        showDialog({
-          title: "Business Name Required",
-          message:
-            "Please enter your business name.",
-          type: "error",
-          confirmText: "OK",
-        });
-
-        return;
-      }
-
-      if (
-        !formData.businessType
-      ) {
-        showDialog({
-          title: "Business Type Required",
-          message:
-            "Please select your business type.",
-          type: "error",
-          confirmText: "OK",
-        });
-
-        return;
-      }
-
-      if (
-        !formData.address.trim()
-      ) {
-        showDialog({
-          title: "Address Required",
-          message:
-            "Please enter your business address.",
-          type: "error",
-          confirmText: "OK",
-        });
-
-        return;
-      }
-
-      if (
-        !formData.city.trim()
-      ) {
-        showDialog({
-          title: "City Required",
-          message:
-            "Please enter your city.",
-          type: "error",
-          confirmText: "OK",
-        });
-
-        return;
-      }
-
-      if (
-        !formData.phone.trim()
-      ) {
-        showDialog({
-          title: "Contact Number Required",
-          message:
-            "Please enter your contact number.",
-          type: "error",
-          confirmText: "OK",
-        });
-
-        return;
-      }
-
-      // =================================================
-      // TOKEN
-      // =================================================
-
-      const token =
-        getToken();
-
-      if (!token) {
-        showDialog({
-          title: "Login Required",
-          message:
-            "Please login again before saving your business.",
-          type: "error",
-          confirmText: "Login",
-          onConfirm: () => {
-            closeDialog();
-
-            navigate(
-              "/login"
-            );
-          },
-        });
-
-        return;
-      }
-
-      // =================================================
-      // CATEGORY
-      // =================================================
-
-      const categoryId =
-        getSelectedCategoryId();
-
-      if (!categoryId) {
-        showDialog({
-          title: "Category Not Found",
-          message:
-            "Selected business category was not found. Please refresh the page and try again.",
-          type: "error",
-          confirmText: "OK",
-        });
-
-        return;
-      }
-
-      // =================================================
-      // BUSINESS DATA
-      // =================================================
-
-      const businessData = {
-        categoryId:
-          Number(categoryId),
-
-        businessName:
-          formData.businessName.trim(),
-
-        description:
-          formData.description.trim(),
-
-        phoneNumber:
-          formData.phone.trim(),
-
-        email:
-          formData.email.trim(),
-
-        address:
-          formData.address.trim(),
-
-        city:
-          formData.city.trim(),
-
-        state:
-          formData.state.trim(),
-
-        pincode:
-          formData.pincode.trim(),
-
-        website:
-          formData.website.trim(),
-
-        openingTime:
-          formData.openingTime,
-
-        closingTime:
-          formData.closingTime,
-
-        workingDays:
-          formData.workingDays,
-      };
-
-      const config = {
-        headers: {
-          Authorization:
-            `Bearer ${token}`,
-
-          "Content-Type":
-            "application/json",
-        },
-      };
-
-      try {
-        setSaving(true);
-
-        let response;
-
-        // =================================================
-        // CREATE
-        // =================================================
-
-        if (isCreateMode) {
-          console.log(
-            "CREATING NEW BUSINESS"
-          );
-
-          console.log(
-            "POST DATA:",
-            businessData
-          );
-
-          response =
-            await axios.post(
-              `${API_BASE}/owner/business`,
-              businessData,
-              config
-            );
+      return;
+    }
+
+    showDialog({
+      title: "Delete Photo",
+      message:
+        "Are you sure you want to delete this photo?",
+      type: "error",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      showCancel: true,
+
+      onCancel: closeDialog,
+
+      onConfirm: async () => {
+        closeDialog();
+
+        const token = getToken();
+
+        if (!token) {
+          showDialog({
+            title: "Login Required",
+            message:
+              "Please login again.",
+            type: "error",
+            confirmText: "Login",
+            onConfirm: () => {
+              closeDialog();
+              navigate("/login");
+            },
+          });
+
+          return;
         }
 
-        // =================================================
-        // EDIT
-        // =================================================
+        try {
+          setUploading(true);
 
-        else {
-          if (!businessId) {
+          await axios.delete(
+            `${API_BASE}/owner/photos/${photoId}`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+          await loadBusinessPhotos(
+            businessId
+          );
+
+          showDialog({
+            title: "Photo Deleted",
+            message:
+              "Photo deleted successfully.",
+            type: "success",
+            confirmText: "OK",
+          });
+        } catch (error) {
+          console.error(
+            "Delete photo error:",
+            error
+          );
+
+          if (
+            error.response?.status ===
+            401
+          ) {
             showDialog({
-              title: "Business ID Missing",
+              title: "Session Expired",
               message:
-                "Business ID is missing. Please open the business again.",
+                "Your login session has expired. Please login again.",
               type: "error",
-              confirmText: "OK",
+              confirmText: "Login",
+              onConfirm: () => {
+                closeDialog();
+                navigate("/login");
+              },
             });
 
             return;
           }
 
-          console.log(
-            "UPDATING EXISTING BUSINESS:",
-            businessId
-          );
+          showDialog({
+            title: "Delete Failed",
+            message:
+              "Unable to delete photo.",
+            type: "error",
+            confirmText: "OK",
+          });
+        } finally {
+          setUploading(false);
+        }
+      },
+    });
+  };
 
-          response =
-            await axios.put(
-              `${API_BASE}/owner/business/${businessId}`,
-              {
-                ...businessData,
-                isOpen: true,
-              },
-              config
-            );
+  // =====================================================
+  // PRIMARY PHOTO
+  // =====================================================
+
+  const handleSetPrimary = () => {
+    showDialog({
+      title: "Primary Photo",
+      message:
+        "Primary photo is selected automatically when the first photo is uploaded. To change the primary photo, the backend needs a SetPrimaryPhoto endpoint.",
+      type: "info",
+      confirmText: "OK",
+    });
+  };
+
+  // =====================================================
+  // OPEN FILE PICKER
+  // =====================================================
+
+  const openFilePicker = () => {
+    if (saving || uploading) {
+      return;
+    }
+
+    fileInputRef.current?.click();
+  };
+
+  // =====================================================
+  // FILE INPUT
+  // =====================================================
+
+  const handleFileChange = (
+    event
+  ) => {
+    const files =
+      event.target.files;
+
+    if (
+      files &&
+      files.length > 0
+    ) {
+      handlePhotoFiles(files);
+    }
+
+    event.target.value = "";
+  };
+
+  // =====================================================
+  // DRAG ENTER
+  // =====================================================
+
+  const handleDragEnter = (
+    event
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setIsDragging(true);
+  };
+
+  // =====================================================
+  // DRAG OVER
+  // =====================================================
+
+  const handleDragOver = (
+    event
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setIsDragging(true);
+  };
+
+  // =====================================================
+  // DRAG LEAVE
+  // =====================================================
+
+  const handleDragLeave = (
+    event
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setIsDragging(false);
+  };
+
+  // =====================================================
+  // DROP
+  // =====================================================
+
+  const handleDrop = (
+    event
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setIsDragging(false);
+
+    const files =
+      event.dataTransfer.files;
+
+    if (
+      files &&
+      files.length > 0
+    ) {
+      handlePhotoFiles(files);
+    }
+  };
+
+  // =====================================================
+  // REMOVE PENDING PHOTO
+  // =====================================================
+
+  const removePendingPhoto = (
+    index
+  ) => {
+    setPendingPhotoFiles(
+      (previous) =>
+        previous.filter(
+          (_, photoIndex) =>
+            photoIndex !== index
+        )
+    );
+  };
+
+  // =====================================================
+  // SUBMIT
+  // =====================================================
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // =================================================
+    // VALIDATION
+    // =================================================
+
+    if (
+      !formData.businessName.trim()
+    ) {
+      showDialog({
+        title:
+          "Business Name Required",
+        message:
+          "Please enter your business name.",
+        type: "error",
+        confirmText: "OK",
+      });
+
+      return;
+    }
+
+    if (!formData.businessType) {
+      showDialog({
+        title:
+          "Business Type Required",
+        message:
+          "Please select your business type.",
+        type: "error",
+        confirmText: "OK",
+      });
+
+      return;
+    }
+
+    if (
+      !formData.address.trim()
+    ) {
+      showDialog({
+        title: "Address Required",
+        message:
+          "Please enter your business address.",
+        type: "error",
+        confirmText: "OK",
+      });
+
+      return;
+    }
+
+    if (!formData.city.trim()) {
+      showDialog({
+        title: "City Required",
+        message:
+          "Please enter your city.",
+        type: "error",
+        confirmText: "OK",
+      });
+
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      showDialog({
+        title:
+          "Contact Number Required",
+        message:
+          "Please enter your contact number.",
+        type: "error",
+        confirmText: "OK",
+      });
+
+      return;
+    }
+
+    // =================================================
+    // TOKEN
+    // =================================================
+
+    const token = getToken();
+
+    if (!token) {
+      showDialog({
+        title: "Login Required",
+        message:
+          "Please login again before saving your business.",
+        type: "error",
+        confirmText: "Login",
+        onConfirm: () => {
+          closeDialog();
+          navigate("/login");
+        },
+      });
+
+      return;
+    }
+
+    // =================================================
+    // CATEGORY
+    // =================================================
+
+    const categoryId =
+      getSelectedCategoryId();
+
+    if (!categoryId) {
+      showDialog({
+        title: "Category Not Found",
+        message:
+          "Selected business category was not found. Please refresh the page and try again.",
+        type: "error",
+        confirmText: "OK",
+      });
+
+      return;
+    }
+
+    // =================================================
+    // BUSINESS DATA
+    // =================================================
+
+    const businessData = {
+      categoryId: Number(categoryId),
+
+      businessName:
+        formData.businessName.trim(),
+
+      description:
+        formData.description.trim(),
+
+      phoneNumber:
+        formData.phone.trim(),
+
+      email:
+        formData.email.trim(),
+
+      address:
+        formData.address.trim(),
+
+      city:
+        formData.city.trim(),
+
+      state:
+        formData.state.trim(),
+
+      pincode:
+        formData.pincode.trim(),
+
+      website:
+        formData.website.trim(),
+
+      openingTime:
+        formData.openingTime,
+
+      closingTime:
+        formData.closingTime,
+
+      workingDays:
+        formData.workingDays,
+    };
+
+    const config = {
+      headers: {
+        Authorization:
+          `Bearer ${token}`,
+        "Content-Type":
+          "application/json",
+      },
+    };
+
+    try {
+      setSaving(true);
+
+      let response;
+
+      // =================================================
+      // CREATE
+      // =================================================
+
+      if (isCreateMode) {
+        console.log(
+          "CREATING NEW BUSINESS"
+        );
+
+        console.log(
+          "POST DATA:",
+          businessData
+        );
+
+        response =
+          await axios.post(
+            `${API_BASE}/owner/business`,
+            businessData,
+            config
+          );
+      }
+
+      // =================================================
+      // EDIT
+      // =================================================
+
+      else {
+        if (!businessId) {
+          showDialog({
+            title:
+              "Business ID Missing",
+            message:
+              "Business ID is missing. Please open the business again.",
+            type: "error",
+            confirmText: "OK",
+          });
+
+          return;
         }
 
-        // =================================================
-        // RESPONSE
-        // =================================================
+        console.log(
+          "UPDATING EXISTING BUSINESS:",
+          businessId
+        );
 
-        const savedBusiness =
-          getResponseData(
-            response
+        response =
+          await axios.put(
+            `${API_BASE}/owner/business/${businessId}`,
+            {
+              ...businessData,
+              isOpen: true,
+            },
+            config
           );
+      }
 
-        const savedBusinessId =
-          savedBusiness?.businessId ??
-          savedBusiness?.BusinessId ??
-          null;
+      // =================================================
+      // RESPONSE
+      // =================================================
 
-        // =================================================
-        // FINAL BUSINESS ID
-        // =================================================
+      const savedBusiness =
+        getResponseData(response);
 
-        const finalBusinessId =
-          isCreateMode
-            ? savedBusinessId
-            : businessId;
+      const savedBusinessId =
+        savedBusiness?.businessId ??
+        savedBusiness?.BusinessId ??
+        null;
 
-        /*
-          New business photos can only be uploaded
-          AFTER backend returns the new BusinessId.
-        */
+      const finalBusinessId =
+        isCreateMode
+          ? savedBusinessId
+          : businessId;
 
-        if (
-          isCreateMode &&
-          pendingPhotoFiles.length >
-            0
-        ) {
-          if (!finalBusinessId) {
+      // =================================================
+      // UPLOAD CREATE-MODE PHOTOS
+      // =================================================
+
+      if (
+        isCreateMode &&
+        pendingPhotoFiles.length > 0
+      ) {
+        if (!finalBusinessId) {
+          showDialog({
+            title:
+              "Photo Upload Failed",
+            message:
+              "Business was created, but the Business ID was not returned. Photos could not be uploaded.",
+            type: "error",
+            confirmText: "OK",
+          });
+        } else {
+          try {
+            setUploading(true);
+
+            await uploadPendingPhotos(
+              finalBusinessId
+            );
+          } catch (photoError) {
+            console.error(
+              "New business photo upload error:",
+              photoError
+            );
+
+            console.error(
+              "NEW PHOTO BACKEND RESPONSE:",
+              photoError?.response?.data
+            );
+
             showDialog({
-              title: "Photo Upload Failed",
+              title:
+                "Photo Upload Failed",
               message:
-                "Business was created, but the Business ID was not returned. Photos could not be uploaded.",
+                "Business was created successfully, but some photos could not be uploaded.",
               type: "error",
               confirmText: "OK",
             });
-          } else {
-            try {
-              setUploading(true);
-
-              await uploadPendingPhotos(
-                finalBusinessId
-              );
-            } catch (photoError) {
-              console.error(
-                "New business photo upload error:",
-                photoError
-              );
-
-              showDialog({
-                title: "Photo Upload Failed",
-                message:
-                  "Business was created successfully, but some photos could not be uploaded.",
-                type: "error",
-                confirmText: "OK",
-              });
-            } finally {
-              setUploading(false);
-            }
+          } finally {
+            setUploading(false);
           }
         }
+      }
 
-        // =================================================
-        // FRONTEND BUSINESS OBJECT
-        // =================================================
+      // =================================================
+      // FRONTEND BUSINESS OBJECT
+      // =================================================
 
-        const categoryObject =
-          savedBusiness?.category ??
-          savedBusiness?.Category ?? {
-            categoryId:
-              Number(categoryId),
-
-            categoryName:
-              formData.businessType,
-          };
-
-        const businessForFrontend = {
-          ...(savedBusiness || {}),
-
-          businessId:
-            finalBusinessId,
-
+      const categoryObject =
+        savedBusiness?.category ??
+        savedBusiness?.Category ?? {
           categoryId:
             Number(categoryId),
 
-          category:
-            categoryObject,
-
-          businessName:
-            savedBusiness?.businessName ??
-            savedBusiness?.BusinessName ??
-            formData.businessName,
-
-          description:
-            savedBusiness?.description ??
-            savedBusiness?.Description ??
-            formData.description,
-
-          phoneNumber:
-            savedBusiness?.phoneNumber ??
-            savedBusiness?.PhoneNumber ??
-            formData.phone,
-
-          email:
-            savedBusiness?.email ??
-            savedBusiness?.Email ??
-            formData.email,
-
-          address:
-            savedBusiness?.address ??
-            savedBusiness?.Address ??
-            formData.address,
-
-          city:
-            savedBusiness?.city ??
-            savedBusiness?.City ??
-            formData.city,
-
-          state:
-            savedBusiness?.state ??
-            savedBusiness?.State ??
-            formData.state,
-
-          pincode:
-            savedBusiness?.pincode ??
-            savedBusiness?.Pincode ??
-            formData.pincode,
-
-          website:
-            savedBusiness?.website ??
-            savedBusiness?.Website ??
-            formData.website,
-
-          openingTime:
-            savedBusiness?.openingTime ??
-            savedBusiness?.OpeningTime ??
-            formData.openingTime,
-
-          closingTime:
-            savedBusiness?.closingTime ??
-            savedBusiness?.ClosingTime ??
-            formData.closingTime,
-
-          workingDays:
-            savedBusiness?.workingDays ??
-            savedBusiness?.WorkingDays ??
-            formData.workingDays,
-
-          isOpen:
-            savedBusiness?.isOpen ??
-            savedBusiness?.IsOpen ??
-            true,
+          categoryName:
+            formData.businessType,
         };
 
-        // =================================================
-        // STORE
-        // =================================================
+      const businessForFrontend = {
+        ...(savedBusiness || {}),
 
-        if (
-          finalBusinessId
-        ) {
-          localStorage.setItem(
-            "businessProfile",
-            JSON.stringify(
-              businessForFrontend
-            )
-          );
-        }
+        businessId:
+          finalBusinessId,
 
-        // =================================================
-        // SUCCESS MESSAGE
-        // =================================================
+        categoryId:
+          Number(categoryId),
 
-        if (
-          isCreateMode
-        ) {
-          showDialog({
-            title: "Business Created",
-            message:
-              "New business created successfully!",
-            type: "success",
-            confirmText: "Go to Dashboard",
-            onConfirm: () => {
-              closeDialog();
+        category:
+          categoryObject,
 
-              navigate(
-                "/owner-dashboard",
-                {
-                  replace: true,
-                }
-              );
-            },
-          });
-        } else {
-          showDialog({
-            title: "Business Updated",
-            message:
-              "Business information updated successfully!",
-            type: "success",
-            confirmText: "Go to Dashboard",
-            onConfirm: () => {
-              closeDialog();
+        businessName:
+          savedBusiness?.businessName ??
+          savedBusiness?.BusinessName ??
+          formData.businessName,
 
-              navigate(
-                "/owner-dashboard",
-                {
-                  replace: true,
-                }
-              );
-            },
-          });
-        }
+        description:
+          savedBusiness?.description ??
+          savedBusiness?.Description ??
+          formData.description,
 
-        // =================================================
-        // GO DASHBOARD
-        // =================================================
+        phoneNumber:
+          savedBusiness?.phoneNumber ??
+          savedBusiness?.PhoneNumber ??
+          formData.phone,
 
-        /*
-          Navigation is now handled from the
-          DialogBox confirmation button so that
-          the success message remains visible.
-        */
-      } catch (error) {
-        console.error(
-          "Business save error:",
-          error
+        email:
+          savedBusiness?.email ??
+          savedBusiness?.Email ??
+          formData.email,
+
+        address:
+          savedBusiness?.address ??
+          savedBusiness?.Address ??
+          formData.address,
+
+        city:
+          savedBusiness?.city ??
+          savedBusiness?.City ??
+          formData.city,
+
+        state:
+          savedBusiness?.state ??
+          savedBusiness?.State ??
+          formData.state,
+
+        pincode:
+          savedBusiness?.pincode ??
+          savedBusiness?.Pincode ??
+          formData.pincode,
+
+        website:
+          savedBusiness?.website ??
+          savedBusiness?.Website ??
+          formData.website,
+
+        openingTime:
+          savedBusiness?.openingTime ??
+          savedBusiness?.OpeningTime ??
+          formData.openingTime,
+
+        closingTime:
+          savedBusiness?.closingTime ??
+          savedBusiness?.ClosingTime ??
+          formData.closingTime,
+
+        workingDays:
+          savedBusiness?.workingDays ??
+          savedBusiness?.WorkingDays ??
+          formData.workingDays,
+
+        isOpen:
+          savedBusiness?.isOpen ??
+          savedBusiness?.IsOpen ??
+          true,
+      };
+
+      // =================================================
+      // STORE
+      // =================================================
+
+      if (finalBusinessId) {
+        localStorage.setItem(
+          "businessProfile",
+          JSON.stringify(
+            businessForFrontend
+          )
         );
+      }
 
-        if (
-          error.response?.status ===
-          401
-        ) {
-          showDialog({
-            title: "Session Expired",
-            message:
-              "Your login session has expired. Please login again.",
-            type: "error",
-            confirmText: "Login",
-            onConfirm: () => {
-              closeDialog();
+      // =================================================
+      // SUCCESS
+      // =================================================
 
-              navigate(
-                "/login"
-              );
-            },
-          });
+      if (isCreateMode) {
+        showDialog({
+          title:
+            "Business Created",
+          message:
+            "New business created successfully!",
+          type: "success",
+          confirmText:
+            "Go to Dashboard",
+          onConfirm: () => {
+            closeDialog();
 
-          return;
-        }
+            navigate(
+              "/owner-dashboard",
+              {
+                replace: true,
+              }
+            );
+          },
+        });
+      } else {
+        showDialog({
+          title:
+            "Business Updated",
+          message:
+            "Business information updated successfully!",
+          type: "success",
+          confirmText:
+            "Go to Dashboard",
+          onConfirm: () => {
+            closeDialog();
 
-        if (
-          error.response?.status ===
-          400
-        ) {
-          const message =
-            error.response?.data?.message ??
-            error.response?.data?.Message ??
-            "Please check the business information and try again.";
+            navigate(
+              "/owner-dashboard",
+              {
+                replace: true,
+              }
+            );
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        "Business save error:",
+        error
+      );
 
-          showDialog({
-            title: "Invalid Information",
-            message,
-            type: "error",
-            confirmText: "OK",
-          });
+      if (
+        error.response?.status === 401
+      ) {
+        showDialog({
+          title:
+            "Session Expired",
+          message:
+            "Your login session has expired. Please login again.",
+          type: "error",
+          confirmText: "Login",
+          onConfirm: () => {
+            closeDialog();
+            navigate("/login");
+          },
+        });
 
-          return;
-        }
+        return;
+      }
 
-        if (
-          error.response?.status ===
-          404
-        ) {
-          showDialog({
-            title: "Endpoint Not Found",
-            message:
-              "Business endpoint was not found. Please check the backend route.",
-            type: "error",
-            confirmText: "OK",
-          });
-
-          return;
-        }
+      if (
+        error.response?.status === 400
+      ) {
+        const message =
+          error.response?.data
+            ?.message ??
+          error.response?.data
+            ?.Message ??
+          "Please check the business information and try again.";
 
         showDialog({
-          title: "Save Failed",
-          message:
-            "Something went wrong while saving the business. Please try again.",
+          title:
+            "Invalid Information",
+          message,
           type: "error",
           confirmText: "OK",
         });
-      } finally {
-        setSaving(false);
+
+        return;
       }
-    };
+
+      if (
+        error.response?.status === 404
+      ) {
+        showDialog({
+          title:
+            "Endpoint Not Found",
+          message:
+            "Business endpoint was not found. Please check the backend route.",
+          type: "error",
+          confirmText: "OK",
+        });
+
+        return;
+      }
+
+      showDialog({
+        title: "Save Failed",
+        message:
+          "Something went wrong while saving the business. Please try again.",
+        type: "error",
+        confirmText: "OK",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // =====================================================
   // LOADING
@@ -2277,23 +2257,12 @@ function OwnerBusinessProfile() {
         <div className="owner-business-page">
           <div
             style={{
-              minHeight:
-                "100vh",
-
-              display:
-                "flex",
-
-              alignItems:
-                "center",
-
-              justifyContent:
-                "center",
-
-              flexDirection:
-                "column",
-
-              gap:
-                "12px",
+              minHeight: "100vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              gap: "12px",
             }}
           >
             <FaSpinner
@@ -2308,18 +2277,10 @@ function OwnerBusinessProfile() {
         </div>
 
         <DialogBox
-          isOpen={
-            dialog.isOpen
-          }
-          title={
-            dialog.title
-          }
-          message={
-            dialog.message
-          }
-          type={
-            dialog.type
-          }
+          isOpen={dialog.isOpen}
+          title={dialog.title}
+          message={dialog.message}
+          type={dialog.type}
           confirmText={
             dialog.confirmText
           }
@@ -2366,13 +2327,11 @@ function OwnerBusinessProfile() {
 
   return (
     <div className="owner-business-page">
-
       {/* =================================================
           HEADER
       ================================================= */}
 
       <header className="business-form-header">
-
         <button
           type="button"
           className="business-back-btn"
@@ -2389,19 +2348,15 @@ function OwnerBusinessProfile() {
           REVIO
         </div>
 
-        <div className="business-header-space"></div>
-
+        <div className="business-header-space" />
       </header>
-
 
       {/* =================================================
           MAIN
       ================================================= */}
 
       <main className="business-form-main">
-
         <section className="business-form-intro">
-
           <span className="business-form-label">
             BUSINESS INFORMATION
           </span>
@@ -2415,9 +2370,7 @@ function OwnerBusinessProfile() {
             This information will appear on your
             REVIO public profile.
           </p>
-
         </section>
-
 
         {/* =================================================
             FORM
@@ -2425,19 +2378,14 @@ function OwnerBusinessProfile() {
 
         <form
           className="business-form"
-          onSubmit={
-            handleSubmit
-          }
+          onSubmit={handleSubmit}
         >
-
           {/* =================================================
               BASIC INFORMATION
           ================================================= */}
 
           <section className="form-section">
-
             <div className="form-section-heading">
-
               <div className="form-section-icon">
                 <FaBuilding />
               </div>
@@ -2451,12 +2399,9 @@ function OwnerBusinessProfile() {
                   Tell us about your business.
                 </p>
               </div>
-
             </div>
 
-
             <div className="form-group">
-
               <label>
                 Business name
                 <span>*</span>
@@ -2473,14 +2418,11 @@ function OwnerBusinessProfile() {
                   handleChange
                 }
               />
-
             </div>
-
 
             {/* BUSINESS TYPE */}
 
             <div className="form-group">
-
               <label>
                 Business type
                 <span>*</span>
@@ -2492,7 +2434,6 @@ function OwnerBusinessProfile() {
                   categoryDropdownRef
                 }
               >
-
                 <button
                   type="button"
                   className="category-dropdown-trigger"
@@ -2503,7 +2444,6 @@ function OwnerBusinessProfile() {
                     )
                   }
                 >
-
                   <span
                     className={
                       formData.businessType
@@ -2511,10 +2451,8 @@ function OwnerBusinessProfile() {
                         : "category-placeholder"
                     }
                   >
-                    {
-                      formData.businessType ||
-                      "Select business type"
-                    }
+                    {formData.businessType ||
+                      "Select business type"}
                   </span>
 
                   <FaChevronDown
@@ -2524,22 +2462,14 @@ function OwnerBusinessProfile() {
                         : "category-arrow"
                     }
                   />
-
                 </button>
 
-
                 {categoryOpen && (
-
                   <div className="category-dropdown-menu">
-
                     {categories.length >
                     0 ? (
-
                       categories.map(
-                        (
-                          category
-                        ) => {
-
+                        (category) => {
                           const id =
                             category?.categoryId ??
                             category?.CategoryId;
@@ -2560,9 +2490,7 @@ function OwnerBusinessProfile() {
                           return (
                             <button
                               type="button"
-                              key={
-                                id
-                              }
+                              key={id}
                               className={
                                 selected
                                   ? "category-dropdown-option selected"
@@ -2579,29 +2507,20 @@ function OwnerBusinessProfile() {
                           );
                         }
                       )
-
                     ) : (
-
                       <button
                         type="button"
                         className="category-dropdown-option"
                       >
                         No categories available
                       </button>
-
                     )}
-
                   </div>
-
                 )}
-
               </div>
-
             </div>
 
-
             <div className="form-group">
-
               <label>
                 Business description
               </label>
@@ -2621,20 +2540,15 @@ function OwnerBusinessProfile() {
               <small>
                 This description will be visible to users.
               </small>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               LOCATION
           ================================================= */}
 
           <section className="form-section">
-
             <div className="form-section-heading">
-
               <div className="form-section-icon">
                 <FaMapMarkerAlt />
               </div>
@@ -2648,12 +2562,9 @@ function OwnerBusinessProfile() {
                   Help customers find your business.
                 </p>
               </div>
-
             </div>
 
-
             <div className="form-group">
-
               <label>
                 Full address
                 <span>*</span>
@@ -2670,14 +2581,10 @@ function OwnerBusinessProfile() {
                 }
                 rows="3"
               />
-
             </div>
 
-
             <div className="form-grid">
-
               <div className="form-group">
-
                 <label>
                   City
                   <span>*</span>
@@ -2694,12 +2601,9 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
 
-
               <div className="form-group">
-
                 <label>
                   State
                 </label>
@@ -2715,12 +2619,9 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
 
-
               <div className="form-group">
-
                 <label>
                   Pincode
                 </label>
@@ -2736,22 +2637,16 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               CONTACT
           ================================================= */}
 
           <section className="form-section">
-
             <div className="form-section-heading">
-
               <div className="form-section-icon">
                 <FaPhone />
               </div>
@@ -2765,14 +2660,10 @@ function OwnerBusinessProfile() {
                   Let customers contact your business.
                 </p>
               </div>
-
             </div>
 
-
             <div className="form-grid">
-
               <div className="form-group">
-
                 <label>
                   Phone number
                   <span>*</span>
@@ -2789,12 +2680,9 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
 
-
               <div className="form-group">
-
                 <label>
                   Business email
                 </label>
@@ -2810,20 +2698,15 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
-
             </div>
 
-
             <div className="form-group">
-
               <label>
                 Website
               </label>
 
               <div className="input-with-icon">
-
                 <FaGlobe />
 
                 <input
@@ -2837,22 +2720,16 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               OPENING HOURS
           ================================================= */}
 
           <section className="form-section">
-
             <div className="form-section-heading">
-
               <div className="form-section-icon">
                 <FaClock />
               </div>
@@ -2866,12 +2743,9 @@ function OwnerBusinessProfile() {
                   Tell customers when you are open.
                 </p>
               </div>
-
             </div>
 
-
             <div className="form-group">
-
               <label>
                 Working days
               </label>
@@ -2885,7 +2759,6 @@ function OwnerBusinessProfile() {
                   handleChange
                 }
               >
-
                 <option value="Monday - Sunday">
                   Monday - Sunday
                 </option>
@@ -2897,16 +2770,11 @@ function OwnerBusinessProfile() {
                 <option value="Monday - Friday">
                   Monday - Friday
                 </option>
-
               </select>
-
             </div>
 
-
             <div className="form-grid">
-
               <div className="form-group">
-
                 <label>
                   Opening time
                 </label>
@@ -2921,12 +2789,9 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
 
-
               <div className="form-group">
-
                 <label>
                   Closing time
                 </label>
@@ -2941,22 +2806,16 @@ function OwnerBusinessProfile() {
                     handleChange
                   }
                 />
-
               </div>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               BUSINESS PHOTOS
           ================================================= */}
 
           <section className="form-section business-photos-form-section">
-
             <div className="form-section-heading">
-
               <div className="form-section-icon">
                 <FaCamera />
               </div>
@@ -2971,13 +2830,9 @@ function OwnerBusinessProfile() {
                   what your business looks like.
                 </p>
               </div>
-
             </div>
 
-
-            {/* =================================================
-                UPLOAD BOX
-            ================================================= */}
+            {/* UPLOAD BOX */}
 
             <div
               className={`business-form-photo-upload ${
@@ -2994,21 +2849,15 @@ function OwnerBusinessProfile() {
               onDragLeave={
                 handleDragLeave
               }
-              onDrop={
-                handleDrop
-              }
+              onDrop={handleDrop}
             >
-
               <div className="business-form-upload-icon">
-
                 {uploading ? (
                   <FaSpinner className="fa-spin" />
                 ) : (
                   <FaCloudUploadAlt />
                 )}
-
               </div>
-
 
               <h3>
                 {uploading
@@ -3016,12 +2865,10 @@ function OwnerBusinessProfile() {
                   : "Add business photos"}
               </h3>
 
-
               <p>
                 Drag and drop photos here
                 or choose them from your device.
               </p>
-
 
               <button
                 type="button"
@@ -3041,11 +2888,8 @@ function OwnerBusinessProfile() {
                   : "Choose Photos"}
               </button>
 
-
               <input
-                ref={
-                  fileInputRef
-                }
+                ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
@@ -3055,129 +2899,94 @@ function OwnerBusinessProfile() {
                 hidden
               />
 
-
               <div className="business-form-upload-info">
                 JPG, PNG or WEBP • Maximum 12 photos • Maximum 5 MB per image
               </div>
-
             </div>
 
-
-            {/* =================================================
-                PENDING PHOTOS FOR NEW BUSINESS
-            ================================================= */}
+            {/* PENDING PHOTOS */}
 
             {pendingPhotoFiles.length >
               0 && (
+                <div className="business-form-pending-photos">
+                  <div className="business-form-photos-heading">
+                    <div>
+                      <h3>
+                        Selected Photos
+                      </h3>
 
-              <div className="business-form-pending-photos">
+                      <p>
+                        These photos will be added
+                        after your business is saved.
+                      </p>
+                    </div>
 
-                <div className="business-form-photos-heading">
-
-                  <div>
-                    <h3>
-                      Selected Photos
-                    </h3>
-
-                    <p>
-                      These photos will be added
-                      after your business is saved.
-                    </p>
+                    <span>
+                      {pendingPhotoFiles.length}/12
+                    </span>
                   </div>
 
-                  <span>
-                    {pendingPhotoFiles.length}/12
-                  </span>
-
-                </div>
-
-
-                <div className="business-form-photos-grid">
-
-                  {pendingPhotoFiles.map(
-                    (
-                      file,
-                      index
-                    ) => (
-
-                      <div
-                        className="business-form-photo-card"
-                        key={`${file.name}-${index}`}
-                      >
-
-                        <div className="business-form-photo-preview">
-
-                          <img
-                            src={
-                              URL.createObjectURL(
+                  <div className="business-form-photos-grid">
+                    {pendingPhotoFiles.map(
+                      (
+                        file,
+                        index
+                      ) => (
+                        <div
+                          className="business-form-photo-card"
+                          key={`${file.name}-${index}`}
+                        >
+                          <div className="business-form-photo-preview">
+                            <img
+                              src={URL.createObjectURL(
                                 file
-                              )
-                            }
-                            alt={
-                              file.name
-                            }
-                          />
+                              )}
+                              alt={
+                                file.name
+                              }
+                            />
 
-                          {index ===
-                            0 && (
+                            {index ===
+                              0 && (
+                              <div className="business-form-cover-badge">
+                                <FaStar />
+                                Cover Photo
+                              </div>
+                            )}
 
-                            <div className="business-form-cover-badge">
+                            <button
+                              type="button"
+                              className="business-form-delete-photo"
+                              onClick={() =>
+                                removePendingPhoto(
+                                  index
+                                )
+                              }
+                              disabled={
+                                saving ||
+                                uploading
+                              }
+                              title="Remove photo"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
 
-                              <FaStar />
-
-                              Cover Photo
-
-                            </div>
-
-                          )}
-
-                          <button
-                            type="button"
-                            className="business-form-delete-photo"
-                            onClick={() =>
-                              removePendingPhoto(
-                                index
-                              )
-                            }
-                            disabled={
-                              saving ||
-                              uploading
-                            }
-                            title="Remove photo"
-                          >
-                            <FaTrash />
-                          </button>
-
+                          <div className="business-form-photo-name">
+                            {file.name}
+                          </div>
                         </div>
-
-
-                        <div className="business-form-photo-name">
-                          {file.name}
-                        </div>
-
-                      </div>
-
-                    )
-                  )}
-
+                      )
+                    )}
+                  </div>
                 </div>
+              )}
 
-              </div>
+            {/* EXISTING PHOTOS */}
 
-            )}
-
-
-            {/* =================================================
-                EXISTING PHOTOS
-            ================================================= */}
-
-            {photos.length >
-              0 && (
-
+            {photos.length > 0 && (
               <div className="business-form-existing-photos">
-
                 <div className="business-form-photos-heading">
-
                   <div>
                     <h3>
                       Your Photos
@@ -3193,18 +3002,14 @@ function OwnerBusinessProfile() {
                     <FaImage />
                     {photos.length}/12
                   </span>
-
                 </div>
 
-
                 <div className="business-form-photos-grid">
-
                   {photos.map(
                     (
                       photo,
                       index
                     ) => {
-
                       const photoUrl =
                         getPhotoUrl(
                           photo
@@ -3239,11 +3044,8 @@ function OwnerBusinessProfile() {
                             `${photoUrl}-${index}`
                           }
                         >
-
                           <div className="business-form-photo-preview">
-
                             {photoUrl ? (
-
                               <img
                                 src={
                                   photoUrl
@@ -3252,35 +3054,23 @@ function OwnerBusinessProfile() {
                                   caption
                                 }
                               />
-
                             ) : (
-
                               <div className="business-form-no-photo">
                                 <FaImage
                                   size={35}
                                 />
                               </div>
-
                             )}
-
 
                             {isPrimary && (
-
                               <div className="business-form-cover-badge">
-
                                 <FaStar />
-
                                 Cover Photo
-
                               </div>
-
                             )}
 
-
                             <div className="business-form-photo-actions">
-
                               {!isPrimary && (
-
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -3295,9 +3085,7 @@ function OwnerBusinessProfile() {
                                 >
                                   <FaStar />
                                 </button>
-
                               )}
-
 
                               <button
                                 type="button"
@@ -3314,14 +3102,10 @@ function OwnerBusinessProfile() {
                               >
                                 <FaTrash />
                               </button>
-
                             </div>
-
                           </div>
 
-
                           <div className="business-form-photo-footer">
-
                             <span
                               title={
                                 caption
@@ -3331,59 +3115,43 @@ function OwnerBusinessProfile() {
                             </span>
 
                             {isPrimary && (
-
                               <FaCheck />
-
                             )}
-
                           </div>
-
                         </div>
                       );
                     }
                   )}
-
                 </div>
-
               </div>
-
             )}
 
+            {/* EMPTY */}
 
-            {/* =================================================
-                EMPTY PHOTOS
-            ================================================= */}
-
-            {photos.length ===
-              0 &&
+            {photos.length === 0 &&
               pendingPhotoFiles.length ===
                 0 && (
+                <div className="business-form-empty-photos">
+                  <FaImage />
 
-              <div className="business-form-empty-photos">
+                  <h3>
+                    No photos added yet
+                  </h3>
 
-                <FaImage />
+                  <p>
+                    Add photos of your business
+                    to make your REVIO profile
+                    more attractive.
+                  </p>
+                </div>
+              )}
 
-                <h3>
-                  No photos added yet
-                </h3>
-
-                <p>
-                  Add photos of your business
-                  to make your REVIO profile
-                  more attractive.
-                </p>
-
-              </div>
-
-            )}
-
+            {/* TIP */}
 
             <div className="business-form-photo-tip">
-
               <FaCheck />
 
               <div>
-
                 <strong>
                   Make your profile stand out
                 </strong>
@@ -3394,20 +3162,15 @@ function OwnerBusinessProfile() {
                   services and other important
                   areas of your business.
                 </p>
-
               </div>
-
             </div>
-
           </section>
-
 
           {/* =================================================
               ACTIONS
           ================================================= */}
 
           <div className="business-form-actions">
-
             <button
               type="button"
               className="cancel-business-btn"
@@ -3424,7 +3187,6 @@ function OwnerBusinessProfile() {
               Cancel
             </button>
 
-
             <button
               type="submit"
               className="save-business-btn"
@@ -3433,7 +3195,6 @@ function OwnerBusinessProfile() {
                 uploading
               }
             >
-
               {saving ||
               uploading ? (
                 <FaSpinner className="fa-spin" />
@@ -3442,33 +3203,20 @@ function OwnerBusinessProfile() {
               )}
 
               {submitText}
-
             </button>
-
           </div>
-
         </form>
-
       </main>
 
-
       {/* =====================================================
-          DIALOG BOX
+          DIALOG
       ===================================================== */}
 
       <DialogBox
-        isOpen={
-          dialog.isOpen
-        }
-        title={
-          dialog.title
-        }
-        message={
-          dialog.message
-        }
-        type={
-          dialog.type
-        }
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
         confirmText={
           dialog.confirmText
         }
@@ -3485,7 +3233,6 @@ function OwnerBusinessProfile() {
           dialog.onCancel
         }
       />
-
     </div>
   );
 }
