@@ -92,8 +92,7 @@ function PlaceDetails() {
   // ==========================================
 
   const handleDialogConfirm = () => {
-    const callback =
-      dialog.onConfirm;
+    const callback = dialog.onConfirm;
 
     closeDialog();
 
@@ -117,11 +116,24 @@ function PlaceDetails() {
   };
 
   // ==========================================
+  // CHECK GUEST USER
+  // ==========================================
+
+  const isGuestUser = () => {
+    return (
+      localStorage.getItem("isGuest") ===
+      "true"
+    );
+  };
+
+  // ==========================================
   // LOAD PLACE
   // ==========================================
 
   useEffect(() => {
     loadPlace();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // ==========================================
@@ -147,7 +159,6 @@ function PlaceDetails() {
           response.data.placeId
         );
       }
-
     } catch (error) {
       console.error(
         "Failed to load place details:",
@@ -163,7 +174,6 @@ function PlaceDetails() {
           "Failed to load place details.",
         type: "error",
       });
-
     } finally {
       setLoading(false);
     }
@@ -178,8 +188,19 @@ function PlaceDetails() {
   ) => {
     try {
       const userId = getUserId();
+      const isGuest = isGuestUser();
 
-      if (!userId || !placeId) {
+      /*
+      Guest users can browse places,
+      but favorite state should not be
+      loaded for them.
+      */
+
+      if (
+        isGuest ||
+        !userId ||
+        !placeId
+      ) {
         setIsFavorite(false);
         return;
       }
@@ -210,7 +231,6 @@ function PlaceDetails() {
       setIsFavorite(
         alreadyFavorite
       );
-
     } catch (error) {
       console.error(
         "Failed to check favorite:",
@@ -228,13 +248,31 @@ function PlaceDetails() {
   const handleFavorite = async () => {
     try {
       const userId = getUserId();
+      const isGuest = isGuestUser();
 
-      if (!userId) {
+      /*
+      Guest users are allowed to browse,
+      but they must login before adding
+      or removing favorites.
+      */
+
+      if (
+        isGuest ||
+        !userId
+      ) {
         showDialog({
-          title: "Login Required",
+          title:
+            "Login Required",
+
           message:
             "Please login first to add favorites.",
-          type: "warning",
+
+          type:
+            "warning",
+
+          onConfirm: () => {
+            navigate("/login");
+          },
         });
 
         return;
@@ -253,7 +291,6 @@ function PlaceDetails() {
         );
 
         setIsFavorite(false);
-
       } else {
         await addFavorite({
           userId: userId,
@@ -262,7 +299,6 @@ function PlaceDetails() {
 
         setIsFavorite(true);
       }
-
     } catch (error) {
       console.error(
         "Favorite operation failed:",
@@ -276,7 +312,6 @@ function PlaceDetails() {
           "Something went wrong. Please try again.",
         type: "error",
       });
-
     } finally {
       setFavoriteLoading(false);
     }
@@ -316,13 +351,31 @@ function PlaceDetails() {
 
   const handleWriteReview = () => {
     const userId = getUserId();
+    const isGuest = isGuestUser();
 
-    if (!userId) {
+    /*
+    Guest users can view the place,
+    but login is required before writing
+    a review.
+    */
+
+    if (
+      isGuest ||
+      !userId
+    ) {
       showDialog({
-        title: "Login Required",
+        title:
+          "Login Required",
+
         message:
           "Please login first to write a review.",
-        type: "warning",
+
+        type:
+          "warning",
+
+        onConfirm: () => {
+          navigate("/login");
+        },
       });
 
       return;
@@ -345,7 +398,11 @@ function PlaceDetails() {
     return (
       <MainLayout>
 
-        <h2 style={{ color: "#fff" }}>
+        <h2
+          style={{
+            color: "#fff",
+          }}
+        >
           Loading...
         </h2>
 
@@ -371,15 +428,27 @@ function PlaceDetails() {
           <FaArrowLeft />
         </button>
 
-        <h2 style={{ color: "#fff" }}>
+        <h2
+          style={{
+            color: "#fff",
+          }}
+        >
           Place Not Found
         </h2>
 
         <DialogBox
-          isOpen={dialog.isOpen}
-          title={dialog.title}
-          message={dialog.message}
-          type={dialog.type}
+          isOpen={
+            dialog.isOpen
+          }
+          title={
+            dialog.title
+          }
+          message={
+            dialog.message
+          }
+          type={
+            dialog.type
+          }
           confirmText={
             dialog.confirmText
           }
@@ -399,7 +468,9 @@ function PlaceDetails() {
   return (
     <MainLayout>
 
-      {/* BACK BUTTON */}
+      {/* ==========================================
+          BACK BUTTON
+      ========================================== */}
 
       <button
         className="back-btn"
@@ -411,11 +482,15 @@ function PlaceDetails() {
         <FaArrowLeft />
       </button>
 
-      {/* MAIN PLACE SECTION */}
+      {/* ==========================================
+          MAIN PLACE SECTION
+      ========================================== */}
 
       <div className="place-details">
 
-        {/* IMAGE SECTION */}
+        {/* ==========================================
+            IMAGE SECTION
+        ========================================== */}
 
         <div className="image-section">
 
@@ -428,8 +503,8 @@ function PlaceDetails() {
               place.name ||
               "Place"
             }
-            onError={(e) => {
-              e.currentTarget.src =
+            onError={(event) => {
+              event.currentTarget.src =
                 "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
             }}
           />
@@ -459,7 +534,9 @@ function PlaceDetails() {
 
         </div>
 
-        {/* DETAILS CARD */}
+        {/* ==========================================
+            DETAILS CARD
+        ========================================== */}
 
         <div className="details-card">
 
@@ -563,7 +640,9 @@ function PlaceDetails() {
 
           </div>
 
-          {/* ACTION BUTTONS */}
+          {/* ==========================================
+              ACTION BUTTONS
+          ========================================== */}
 
           <div className="place-actions">
 
@@ -580,6 +659,7 @@ function PlaceDetails() {
               <span>
                 View on Map
               </span>
+
             </button>
 
             {/* REVIEW */}
@@ -595,6 +675,7 @@ function PlaceDetails() {
               <span>
                 Write a Review
               </span>
+
             </button>
 
           </div>
@@ -603,7 +684,9 @@ function PlaceDetails() {
 
       </div>
 
-      {/* ABOUT */}
+      {/* ==========================================
+          ABOUT
+      ========================================== */}
 
       <div className="info-card">
 
@@ -622,13 +705,23 @@ function PlaceDetails() {
 
       </div>
 
-      {/* STANDARD DIALOG */}
+      {/* ==========================================
+          STANDARD DIALOG
+      ========================================== */}
 
       <DialogBox
-        isOpen={dialog.isOpen}
-        title={dialog.title}
-        message={dialog.message}
-        type={dialog.type}
+        isOpen={
+          dialog.isOpen
+        }
+        title={
+          dialog.title
+        }
+        message={
+          dialog.message
+        }
+        type={
+          dialog.type
+        }
         confirmText={
           dialog.confirmText
         }

@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import AuthLayout from "../layouts/AuthLayout";
@@ -19,6 +20,25 @@ function Login() {
   });
 
   const [loading, setLoading] = useState(false);
+
+  // =====================================================
+  // CLEAR OLD LOGIN SESSION
+  // =====================================================
+
+  useEffect(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("jwtToken");
+    localStorage.removeItem("accessToken");
+
+    localStorage.removeItem("user");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("UserId");
+
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("isGuest");
+    localStorage.removeItem("userRole");
+  }, []);
 
   // =====================================================
   // DIALOG
@@ -123,8 +143,6 @@ function Login() {
 
     try {
       setLoading(true);
-
-   
 
       // =================================================
       // BACKEND LOGIN
@@ -257,6 +275,19 @@ function Login() {
   // =====================================================
 
   const handleGuestLogin = () => {
+    // Clear any old logged-in user data
+    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("jwtToken");
+    localStorage.removeItem("accessToken");
+
+    localStorage.removeItem("user");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("UserId");
+
+    localStorage.removeItem("isLoggedIn");
+
+    // Set guest status
     localStorage.setItem(
       "userRole",
       "guest"
@@ -265,10 +296,6 @@ function Login() {
     localStorage.setItem(
       "isGuest",
       "true"
-    );
-
-    localStorage.removeItem(
-      "isLoggedIn"
     );
 
     navigate("/home");
@@ -283,19 +310,6 @@ function Login() {
       title: "Forgot Password",
       message:
         "Forgot Password functionality will be added soon.",
-      type: "info",
-    });
-  };
-
-  // =====================================================
-  // GOOGLE LOGIN
-  // =====================================================
-
-  const handleGoogleLogin = () => {
-    showDialog({
-      title: "Google Login",
-      message:
-        "Google Login will be added soon.",
       type: "info",
     });
   };
@@ -323,7 +337,10 @@ function Login() {
           LOGIN FORM
       ================================================= */}
 
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={handleSubmit}
+        autoComplete="off"
+      >
 
         <Input
           label="Email or Mobile"
@@ -331,6 +348,7 @@ function Login() {
           value={formData.emailOrMobile}
           onChange={handleChange}
           name="emailOrMobile"
+          autoComplete="off"
         />
 
         <PasswordInput
@@ -339,6 +357,7 @@ function Login() {
           value={formData.password}
           onChange={handleChange}
           name="password"
+          autoComplete="new-password"
         />
 
         {/* =================================================
@@ -412,60 +431,6 @@ function Login() {
       </form>
 
       {/* =================================================
-          OR DIVIDER
-      ================================================= */}
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          margin: "24px 0",
-        }}
-      >
-
-        <div
-          style={{
-            flex: 1,
-            height: "1px",
-            background: "#444",
-          }}
-        />
-
-        <span
-          style={{
-            color: "#aaa",
-            fontSize: "14px",
-          }}
-        >
-          OR
-        </span>
-
-        <div
-          style={{
-            flex: 1,
-            height: "1px",
-            background: "#444",
-          }}
-        />
-
-      </div>
-
-      {/* =================================================
-          GOOGLE LOGIN
-      ================================================= */}
-
-      <button
-        type="button"
-        className="google-btn"
-        onClick={
-          handleGoogleLogin
-        }
-      >
-        Continue with Google
-      </button>
-
-      {/* =================================================
           GUEST LOGIN
       ================================================= */}
 
@@ -523,3 +488,4 @@ function Login() {
 }
 
 export default Login;
+

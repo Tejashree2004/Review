@@ -108,16 +108,8 @@ function BusinessDetails() {
   // CUSTOMER REVIEW MEDIA GALLERY
   // =====================================================
 
-  /*
-  Stores ALL valid media of the selected review.
-  */
-
   const [selectedReviewMedia, setSelectedReviewMedia] =
     useState(null);
-
-  /*
-  Stores the currently displayed media index.
-  */
 
   const [selectedReviewMediaIndex, setSelectedReviewMediaIndex] =
     useState(0);
@@ -141,7 +133,6 @@ function BusinessDetails() {
     setExpandedReviews(
       (previous) => ({
         ...previous,
-
         [reviewId]:
           !previous[reviewId],
       })
@@ -352,29 +343,6 @@ function BusinessDetails() {
   // REVIEW MEDIA GALLERY HANDLERS
   // =====================================================
 
-  /*
-  =====================================================
-  OPEN REVIEW MEDIA GALLERY
-
-  mediaList:
-      ALL valid media belonging to the review.
-
-  startIndex:
-      Which media should open first.
-
-  Example:
-
-  User clicks first photo:
-      startIndex = 0
-
-  User clicks second photo:
-      startIndex = 1
-
-  User clicks "+3 More":
-      startIndex = 1
-  =====================================================
-  */
-
   const openReviewMediaGallery = (
     mediaList,
     startIndex = 0
@@ -404,11 +372,9 @@ function BusinessDetails() {
     );
   };
 
-  /*
-  =====================================================
-  CLOSE REVIEW MEDIA GALLERY
-  =====================================================
-  */
+  // =====================================================
+  // CLOSE REVIEW MEDIA GALLERY
+  // =====================================================
 
   const closeReviewMediaGallery = () => {
     setSelectedReviewMedia(
@@ -420,11 +386,9 @@ function BusinessDetails() {
     );
   };
 
-  /*
-  =====================================================
-  NEXT REVIEW MEDIA
-  =====================================================
-  */
+  // =====================================================
+  // NEXT REVIEW MEDIA
+  // =====================================================
 
   const showNextReviewMedia = () => {
     if (
@@ -440,11 +404,9 @@ function BusinessDetails() {
     );
   };
 
-  /*
-  =====================================================
-  PREVIOUS REVIEW MEDIA
-  =====================================================
-  */
+  // =====================================================
+  // PREVIOUS REVIEW MEDIA
+  // =====================================================
 
   const showPreviousReviewMedia = () => {
     if (
@@ -473,10 +435,6 @@ function BusinessDetails() {
     const handleKeyDown = (
       event
     ) => {
-      /*
-      ESCAPE
-      */
-
       if (
         event.key ===
         "Escape"
@@ -485,10 +443,6 @@ function BusinessDetails() {
         return;
       }
 
-      /*
-      NEXT
-      */
-
       if (
         event.key ===
         "ArrowRight"
@@ -496,10 +450,6 @@ function BusinessDetails() {
         showNextReviewMedia();
         return;
       }
-
-      /*
-      PREVIOUS
-      */
 
       if (
         event.key ===
@@ -513,11 +463,6 @@ function BusinessDetails() {
       "keydown",
       handleKeyDown
     );
-
-    /*
-    Prevent background page scrolling
-    while review media modal is open.
-    */
 
     const previousOverflow =
       document.body.style.overflow;
@@ -641,6 +586,18 @@ function BusinessDetails() {
   };
 
   // =====================================================
+  // CHECK GUEST USER
+  // =====================================================
+
+  const isGuestUser = () => {
+    return (
+      localStorage.getItem(
+        "isGuest"
+      ) === "true"
+    );
+  };
+
+  // =====================================================
   // LOAD BUSINESS
   // =====================================================
 
@@ -676,11 +633,9 @@ function BusinessDetails() {
         businessData
       );
 
-      /*
-      =================================================
-      DEBUG BUSINESS PHOTOS
-      =================================================
-      */
+      // =================================================
+      // DEBUG BUSINESS PHOTOS
+      // =================================================
 
       console.log(
         "CUSTOMER BUSINESS PHOTOS:",
@@ -775,15 +730,15 @@ function BusinessDetails() {
           total =
             Number(
               responseData.totalReviews ??
-              responseData.TotalReviews ??
-              0
+                responseData.TotalReviews ??
+                0
             );
 
           hasMore =
             Boolean(
               responseData.hasMore ??
-              responseData.HasMore ??
-              false
+                responseData.HasMore ??
+                false
             );
 
           // =================================================
@@ -793,7 +748,7 @@ function BusinessDetails() {
           const apiAverageRating =
             Number(
               responseData.averageRating ??
-              responseData.AverageRating
+                responseData.AverageRating
             );
 
           if (
@@ -927,7 +882,23 @@ function BusinessDetails() {
         const userId =
           getUserId();
 
+        const isGuest =
+          isGuestUser();
+
+        /*
+        =================================================
+        GUEST USERS
+
+        Guests can view the business and reviews,
+        but favorite status must not be checked.
+
+        This also prevents a stale userId from allowing
+        a guest session to access favorite functionality.
+        =================================================
+        */
+
         if (
+          isGuest ||
           !userId ||
           !businessId
         ) {
@@ -963,9 +934,9 @@ function BusinessDetails() {
             ) =>
               Number(
                 favorite.businessId ??
-                favorite.BusinessId ??
-                favorite.business?.businessId ??
-                favorite.Business?.BusinessId
+                  favorite.BusinessId ??
+                  favorite.business?.businessId ??
+                  favorite.Business?.BusinessId
               ) ===
               currentBusinessId
           );
@@ -995,7 +966,21 @@ function BusinessDetails() {
         const userId =
           getUserId();
 
-        if (!userId) {
+        const isGuest =
+          isGuestUser();
+
+        /*
+        =================================================
+        GUEST USERS CANNOT FAVORITE
+
+        Show login dialog and redirect to login.
+        =================================================
+        */
+
+        if (
+          isGuest ||
+          !userId
+        ) {
           showDialog({
             title:
               "Login Required",
@@ -1138,7 +1123,21 @@ function BusinessDetails() {
     const userId =
       getUserId();
 
-    if (!userId) {
+    const isGuest =
+      isGuestUser();
+
+    /*
+    =================================================
+    GUEST USERS CANNOT WRITE REVIEWS
+
+    Show login dialog and redirect to login.
+    =================================================
+    */
+
+    if (
+      isGuest ||
+      !userId
+    ) {
       showDialog({
         title:
           "Login Required",
@@ -1419,8 +1418,8 @@ function BusinessDetails() {
     ) => {
       return Number(
         review.Rating ??
-        review.rating ??
-        0
+          review.rating ??
+          0
       );
     };
 
@@ -1487,12 +1486,6 @@ function BusinessDetails() {
 
   // =====================================================
   // MEDIA URL
-  //
-  // Supports:
-  // 1. Base64 image
-  // 2. Base64 video
-  // 3. Absolute URL
-  // 4. Relative backend URL
   // =====================================================
 
   const getMediaUrl = (
@@ -1514,8 +1507,6 @@ function BusinessDetails() {
     /*
     =================================================
     BASE64 DATA URL
-
-    Do NOT prefix localhost.
     =================================================
     */
 
@@ -1675,7 +1666,7 @@ function BusinessDetails() {
       const businessRating =
         Number(
           business?.rating ??
-          business?.Rating
+            business?.Rating
         );
 
       if (
@@ -1813,7 +1804,6 @@ function BusinessDetails() {
               photo,
               index
             ) => {
-
               const rawPhotoUrl =
                 photo?.photoUrl ??
                 photo?.PhotoUrl ??
@@ -1848,8 +1838,8 @@ function BusinessDetails() {
                 isPrimary:
                   Boolean(
                     photo?.isPrimary ??
-                    photo?.IsPrimary ??
-                    false
+                      photo?.IsPrimary ??
+                      false
                   ),
 
                 caption:
@@ -1891,8 +1881,8 @@ function BusinessDetails() {
   const fallbackPhoto =
     getMediaUrl(
       business.imageUrl ||
-      business.ImageUrl ||
-      ""
+        business.ImageUrl ||
+        ""
     ) ||
     "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600";
 
@@ -2009,7 +1999,6 @@ function BusinessDetails() {
         <FaArrowLeft />
       </button>
 
-
       {/* =================================================
           BUSINESS DETAILS
       ================================================= */}
@@ -2102,7 +2091,6 @@ function BusinessDetails() {
 
           </div>
 
-
           {/* FAVORITE */}
 
           <button
@@ -2128,7 +2116,6 @@ function BusinessDetails() {
 
         </div>
 
-
         {/* =================================================
             DETAILS CARD
         ================================================= */}
@@ -2138,7 +2125,6 @@ function BusinessDetails() {
           <h1>
             {businessName}
           </h1>
-
 
           {/* RATING */}
 
@@ -2156,7 +2142,6 @@ function BusinessDetails() {
 
           </div>
 
-
           {/* LOCATION */}
 
           <div className="info-row">
@@ -2173,7 +2158,6 @@ function BusinessDetails() {
             </span>
 
           </div>
-
 
           {/* CATEGORY */}
 
@@ -2194,7 +2178,6 @@ function BusinessDetails() {
 
           </div>
 
-
           {/* REVIEWS */}
 
           <div className="info-row">
@@ -2210,7 +2193,6 @@ function BusinessDetails() {
             </strong>
 
           </div>
-
 
           {/* STATUS */}
 
@@ -2234,7 +2216,6 @@ function BusinessDetails() {
 
           </div>
 
-
           {/* ACTIONS */}
 
           <div className="place-actions">
@@ -2251,7 +2232,6 @@ function BusinessDetails() {
                 View on Map
               </span>
             </button>
-
 
             <button
               className="place-action-btn review-btn"
@@ -2272,7 +2252,6 @@ function BusinessDetails() {
 
       </div>
 
-
       {/* =================================================
           ABOUT
       ================================================= */}
@@ -2288,7 +2267,6 @@ function BusinessDetails() {
         </p>
 
       </div>
-
 
       {/* =================================================
           CUSTOMER REVIEWS
@@ -2312,7 +2290,6 @@ function BusinessDetails() {
 
         </div>
 
-
         {/* REVIEWS LOADING */}
 
         {reviewsLoading &&
@@ -2322,7 +2299,6 @@ function BusinessDetails() {
               Loading reviews...
             </div>
           )}
-
 
         {/* NO REVIEWS */}
 
@@ -2341,7 +2317,6 @@ function BusinessDetails() {
 
             </div>
           )}
-
 
         {/* REVIEW LIST */}
 
@@ -2389,18 +2364,6 @@ function BusinessDetails() {
                         review
                       );
 
-                    /*
-                    =================================================
-                    NORMALIZE ALL REVIEW MEDIA
-
-                    Invalid/empty URLs are removed.
-
-                    This list is used by BOTH:
-                    1. Preview
-                    2. Full-screen modal
-                    =================================================
-                    */
-
                     const validReviewMedia =
                       Array.isArray(
                         reviewMedia
@@ -2420,7 +2383,7 @@ function BusinessDetails() {
                                 const mediaUrl =
                                   getMediaUrl(
                                     media?.MediaUrl ??
-                                    media?.mediaUrl
+                                      media?.mediaUrl
                                   );
 
                                 if (
@@ -2445,23 +2408,11 @@ function BusinessDetails() {
                             )
                         : [];
 
-                    /*
-                    =================================================
-                    ONLY FIRST TWO MEDIA VISIBLE
-                    =================================================
-                    */
-
                     const visibleReviewMedia =
                       validReviewMedia.slice(
                         0,
                         REVIEW_MEDIA_PREVIEW_COUNT
                       );
-
-                    /*
-                    =================================================
-                    REMAINING MEDIA COUNT
-                    =================================================
-                    */
 
                     const remainingReviewMediaCount =
                       Math.max(
@@ -2540,7 +2491,6 @@ function BusinessDetails() {
 
                         </div>
 
-
                         {/* REVIEW COMMENT */}
 
                         <div
@@ -2565,7 +2515,6 @@ function BusinessDetails() {
 
                         </div>
 
-
                         {/* VIEW MORE */}
 
                         {hasOverflow && (
@@ -2584,26 +2533,7 @@ function BusinessDetails() {
                           </button>
                         )}
 
-
-                        {/* =================================================
-                            CUSTOMER REVIEW MEDIA
-
-                            MAXIMUM TWO MEDIA ARE SHOWN.
-
-                            IMPORTANT:
-                            EACH VISIBLE MEDIA IS CLICKABLE.
-
-                            First photo:
-                                opens modal at index 0
-
-                            Second photo:
-                                opens modal at index 1
-
-                            +N More:
-                                opens modal at index 1
-
-                            Modal contains ALL media.
-                        ================================================= */}
+                        {/* CUSTOMER REVIEW MEDIA */}
 
                         {validReviewMedia.length >
                           0 && (
@@ -2616,17 +2546,6 @@ function BusinessDetails() {
                                 visibleIndex
                               ) => {
 
-                                /*
-                                =================================================
-                                OVERLAY ONLY ON SECOND VISIBLE MEDIA
-
-                                Example:
-                                5 media
-                                visible = 2
-                                second = +3 More
-                                =================================================
-                                */
-
                                 const isLastVisible =
                                   visibleIndex ===
                                     REVIEW_MEDIA_PREVIEW_COUNT -
@@ -2638,23 +2557,6 @@ function BusinessDetails() {
                                   isVideoMedia(
                                     media
                                   );
-
-                                /*
-                                =================================================
-                                CLICK HANDLER
-
-                                IMPORTANT:
-
-                                We use visibleIndex here.
-
-                                Therefore:
-                                first media  -> 0
-                                second media -> 1
-
-                                This is exactly what we want
-                                when opening the modal.
-                                =================================================
-                                */
 
                                 const handleMediaClick =
                                   () => {
@@ -2704,7 +2606,9 @@ function BusinessDetails() {
                                     aria-label={
                                       isLastVisible
                                         ? `Open review media gallery. ${remainingReviewMediaCount} more media`
-                                        : `Open review media ${visibleIndex + 1}`
+                                        : `Open review media ${
+                                            visibleIndex + 1
+                                          }`
                                     }
                                   >
 
@@ -2735,30 +2639,14 @@ function BusinessDetails() {
 
                                     )}
 
-
-                                    {/* =================================================
-                                        +N MORE OVERLAY
-
-                                        Example:
-                                        5 photos -> +3 More
-                                    ================================================= */}
-
                                     {isLastVisible && (
                                       <div
                                         className="review-media-more-overlay"
                                         onClick={(
                                           event
                                         ) => {
-                                          /*
-                                          Prevent parent click
-                                          from firing twice.
-                                          */
 
                                           event.stopPropagation();
-
-                                          /*
-                                          Open from SECOND media.
-                                          */
 
                                           openReviewMediaGallery(
                                             validReviewMedia,
@@ -2782,7 +2670,6 @@ function BusinessDetails() {
                           </div>
 
                         )}
-
 
                         {/* OWNER REPLY */}
 
@@ -2812,7 +2699,6 @@ function BusinessDetails() {
             </div>
           )}
 
-
         {/* VIEW ALL REVIEWS */}
 
         {!reviewsLoading &&
@@ -2836,12 +2722,8 @@ function BusinessDetails() {
 
       </div>
 
-
       {/* =================================================
           BUSINESS PHOTO FULL SCREEN GALLERY
-
-          EXISTING BUSINESS GALLERY
-          -- NOT CHANGED
       ================================================= */}
 
       {selectedBusinessPhotos &&
@@ -2866,7 +2748,6 @@ function BusinessDetails() {
             >
               <FaTimes />
             </button>
-
 
             <div
               className="business-photo-gallery-content"
@@ -2894,7 +2775,6 @@ function BusinessDetails() {
                 </button>
 
               )}
-
 
               {/* CURRENT PHOTO */}
 
@@ -2927,7 +2807,6 @@ function BusinessDetails() {
 
               </div>
 
-
               {/* NEXT */}
 
               {selectedBusinessPhotos.length >
@@ -2945,7 +2824,6 @@ function BusinessDetails() {
                 </button>
 
               )}
-
 
               {/* COUNTER */}
 
@@ -2968,7 +2846,6 @@ function BusinessDetails() {
 
         )}
 
-
       {/* =================================================
           CUSTOMER REVIEW MEDIA FULL SCREEN GALLERY
       ================================================= */}
@@ -2983,9 +2860,7 @@ function BusinessDetails() {
             }
           >
 
-            {/* =================================================
-                CLOSE BUTTON
-            ================================================= */}
+            {/* CLOSE BUTTON */}
 
             <button
               type="button"
@@ -2998,10 +2873,7 @@ function BusinessDetails() {
               <FaTimes />
             </button>
 
-
-            {/* =================================================
-                MODAL CONTENT
-            ================================================= */}
+            {/* MODAL CONTENT */}
 
             <div
               className="review-media-modal-content"
@@ -3012,9 +2884,7 @@ function BusinessDetails() {
               }
             >
 
-              {/* =================================================
-                  PREVIOUS
-              ================================================= */}
+              {/* PREVIOUS */}
 
               {selectedReviewMedia.length >
                 1 && (
@@ -3032,10 +2902,7 @@ function BusinessDetails() {
 
               )}
 
-
-              {/* =================================================
-                  CURRENT MEDIA
-              ================================================= */}
+              {/* CURRENT MEDIA */}
 
               <div className="review-media-modal-media-wrapper">
 
@@ -3070,10 +2937,7 @@ function BusinessDetails() {
 
               </div>
 
-
-              {/* =================================================
-                  NEXT
-              ================================================= */}
+              {/* NEXT */}
 
               {selectedReviewMedia.length >
                 1 && (
@@ -3091,10 +2955,7 @@ function BusinessDetails() {
 
               )}
 
-
-              {/* =================================================
-                  COUNTER
-              ================================================= */}
+              {/* COUNTER */}
 
               <div className="review-media-modal-counter">
 
@@ -3114,7 +2975,6 @@ function BusinessDetails() {
           </div>
 
         )}
-
 
       {/* =================================================
           DIALOG
