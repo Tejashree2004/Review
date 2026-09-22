@@ -11,6 +11,10 @@ import {
   FaReply,
   FaStar,
   FaUserCircle,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+  FaPlay,
 } from "react-icons/fa";
 
 import {
@@ -27,7 +31,11 @@ import "../styles/OwnerReviews.css";
 
 const API_BASE = "http://localhost:5213/api";
 
+const API_ROOT = "http://localhost:5213";
+
 const PAGE_SIZE = 10;
+
+const REVIEW_MEDIA_PREVIEW_COUNT = 2;
 
 function OwnerReviews() {
   const navigate = useNavigate();
@@ -75,8 +83,6 @@ function OwnerReviews() {
 
   // =====================================================
   // REVIEW OVERFLOW STATE
-  // Stores only reviews whose comments actually exceed
-  // two lines.
   // =====================================================
 
   const [longReviews, setLongReviews] =
@@ -84,10 +90,19 @@ function OwnerReviews() {
 
   // =====================================================
   // COMMENT REFS
-  // Used to detect whether comment exceeds 2 lines.
   // =====================================================
 
   const commentRefs = useRef({});
+
+  // =====================================================
+  // REVIEW MEDIA MODAL
+  // =====================================================
+
+  const [selectedReviewMedia, setSelectedReviewMedia] =
+    useState(null);
+
+  const [selectedReviewMediaIndex, setSelectedReviewMediaIndex] =
+    useState(0);
 
   // =====================================================
   // CHECK COMMENT OVERFLOW
@@ -167,6 +182,7 @@ function OwnerReviews() {
 
     return () => {
       clearTimeout(timer);
+
       window.removeEventListener(
         "resize",
         handleResize
@@ -182,14 +198,21 @@ function OwnerReviews() {
     reviewId
   ) => {
     setExpandedReviews((previous) => {
-      const updated = new Set(previous);
+      const updated =
+        new Set(previous);
 
       if (
-        updated.has(String(reviewId))
+        updated.has(
+          String(reviewId)
+        )
       ) {
-        updated.delete(String(reviewId));
+        updated.delete(
+          String(reviewId)
+        );
       } else {
-        updated.add(String(reviewId));
+        updated.add(
+          String(reviewId)
+        );
       }
 
       return updated;
@@ -254,7 +277,8 @@ function OwnerReviews() {
   // =====================================================
 
   const handleDialogConfirm = () => {
-    const action = dialog.action;
+    const action =
+      dialog.action;
 
     closeDialog();
 
@@ -328,7 +352,8 @@ function OwnerReviews() {
     }
 
     if (typeof value === "string") {
-      const cleaned = value.trim();
+      const cleaned =
+        value.trim();
 
       if (!cleaned) {
         return null;
@@ -343,9 +368,8 @@ function OwnerReviews() {
         return null;
       }
 
-      const parsed = Number(
-        match[1]
-      );
+      const parsed =
+        Number(match[1]);
 
       return Number.isFinite(parsed)
         ? parsed
@@ -551,6 +575,330 @@ function OwnerReviews() {
   };
 
   // =====================================================
+  // GET REVIEW MEDIA
+  // =====================================================
+
+  const getReviewMedia = (
+    review
+  ) => {
+    const media =
+      review?.reviewMedia ??
+      review?.ReviewMedia ??
+      review?.reviewMedias ??
+      review?.ReviewMedias ??
+      review?.media ??
+      review?.Media ??
+      review?.mediaFiles ??
+      review?.MediaFiles ??
+      review?.files ??
+      review?.Files ??
+      [];
+
+    if (Array.isArray(media)) {
+      return media;
+    }
+
+    if (
+      media &&
+      typeof media === "object"
+    ) {
+      return [media];
+    }
+
+    return [];
+  };
+
+  // =====================================================
+  // GET MEDIA URL
+  // =====================================================
+
+  const getMediaUrl = (
+    media
+  ) => {
+    if (!media) {
+      return "";
+    }
+
+    if (typeof media === "string") {
+      const value =
+        media.trim();
+
+      if (!value) {
+        return "";
+      }
+
+      if (
+        value.startsWith("data:") ||
+        value.startsWith("http://") ||
+        value.startsWith("https://")
+      ) {
+        return value;
+      }
+
+      if (
+        value.startsWith("/")
+      ) {
+        return `${API_ROOT}${value}`;
+      }
+
+      return `${API_ROOT}/${value}`;
+    }
+
+    const rawUrl =
+      media?.mediaUrl ??
+      media?.MediaUrl ??
+      media?.url ??
+      media?.Url ??
+      media?.fileUrl ??
+      media?.FileUrl ??
+      media?.path ??
+      media?.Path ??
+      media?.filePath ??
+      media?.FilePath ??
+      media?.mediaPath ??
+      media?.MediaPath ??
+      media?.imageUrl ??
+      media?.ImageUrl ??
+      media?.videoUrl ??
+      media?.VideoUrl ??
+      "";
+
+    if (!rawUrl) {
+      return "";
+    }
+
+    const value =
+      String(rawUrl).trim();
+
+    if (!value) {
+      return "";
+    }
+
+    if (
+      value.startsWith("data:") ||
+      value.startsWith("http://") ||
+      value.startsWith("https://")
+    ) {
+      return value;
+    }
+
+    if (
+      value.startsWith("/")
+    ) {
+      return `${API_ROOT}${value}`;
+    }
+
+    return `${API_ROOT}/${value}`;
+  };
+
+  // =====================================================
+  // CHECK VIDEO MEDIA
+  // =====================================================
+
+  const isVideoMedia = (
+    media
+  ) => {
+    const mediaType =
+      String(
+        media?.mediaType ??
+        media?.MediaType ??
+        media?.type ??
+        media?.Type ??
+        ""
+      ).toLowerCase();
+
+    if (
+      mediaType.includes("video")
+    ) {
+      return true;
+    }
+
+    const url =
+      getMediaUrl(media)
+        .split("?")[0]
+        .split("#")[0]
+        .toLowerCase();
+
+    return (
+      url.endsWith(".mp4") ||
+      url.endsWith(".webm") ||
+      url.endsWith(".mov") ||
+      url.endsWith(".avi") ||
+      url.endsWith(".m4v")
+    );
+  };
+
+  // =====================================================
+  // NORMALIZE REVIEW MEDIA
+  // =====================================================
+
+  const getValidReviewMedia = (
+    review,
+    reviewId
+  ) => {
+    const mediaList =
+      getReviewMedia(review);
+
+    return mediaList
+      .map(
+        (
+          media,
+          index
+        ) => {
+          const mediaUrl =
+            getMediaUrl(media);
+
+          if (!mediaUrl) {
+            return null;
+          }
+
+          const mediaId =
+            media?.mediaId ??
+            media?.MediaId ??
+            media?.id ??
+            media?.Id ??
+            `${reviewId}-media-${index}`;
+
+          return {
+            ...(
+              typeof media ===
+              "object"
+                ? media
+                : {}
+            ),
+            mediaId,
+            mediaUrl,
+            mediaIndex: index,
+          };
+        }
+      )
+      .filter(Boolean);
+  };
+
+  // =====================================================
+  // OPEN MEDIA MODAL
+  // =====================================================
+
+  const openReviewMedia = (
+    mediaList,
+    index
+  ) => {
+    if (
+      !mediaList?.length
+    ) {
+      return;
+    }
+
+    setSelectedReviewMedia(
+      mediaList
+    );
+
+    setSelectedReviewMediaIndex(
+      index
+    );
+  };
+
+  // =====================================================
+  // CLOSE MEDIA MODAL
+  // =====================================================
+
+  const closeReviewMedia = () => {
+    setSelectedReviewMedia(
+      null
+    );
+
+    setSelectedReviewMediaIndex(
+      0
+    );
+  };
+
+  // =====================================================
+  // NEXT MEDIA
+  // =====================================================
+
+  const handleNextMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedReviewMediaIndex(
+      (previous) =>
+        (previous + 1) %
+        selectedReviewMedia.length
+    );
+  };
+
+  // =====================================================
+  // PREVIOUS MEDIA
+  // =====================================================
+
+  const handlePreviousMedia = () => {
+    if (
+      !selectedReviewMedia?.length
+    ) {
+      return;
+    }
+
+    setSelectedReviewMediaIndex(
+      (previous) =>
+        (previous -
+          1 +
+          selectedReviewMedia.length) %
+        selectedReviewMedia.length
+    );
+  };
+
+  // =====================================================
+  // KEYBOARD MEDIA CONTROLS
+  // =====================================================
+
+  useEffect(() => {
+    if (!selectedReviewMedia) {
+      return;
+    }
+
+    const handleKeyDown = (
+      event
+    ) => {
+      if (
+        event.key === "Escape"
+      ) {
+        closeReviewMedia();
+      }
+
+      if (
+        event.key ===
+        "ArrowRight"
+      ) {
+        handleNextMedia();
+      }
+
+      if (
+        event.key ===
+        "ArrowLeft"
+      ) {
+        handlePreviousMedia();
+      }
+    };
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+    };
+  }, [
+    selectedReviewMedia,
+  ]);
+
+  // =====================================================
   // FORMAT DATE
   // =====================================================
 
@@ -561,7 +909,8 @@ function OwnerReviews() {
       return "";
     }
 
-    const parsed = new Date(date);
+    const parsed =
+      new Date(date);
 
     if (
       Number.isNaN(
@@ -704,8 +1053,10 @@ function OwnerReviews() {
       responseData?.RatingCounts;
 
     if (
-      backendAverage !== undefined ||
-      backendTotal !== undefined ||
+      backendAverage !==
+        undefined ||
+      backendTotal !==
+        undefined ||
       backendCounts
     ) {
       setReviewSummary(
@@ -734,25 +1085,21 @@ function OwnerReviews() {
                     backendCounts["1"] ??
                     0
                   ),
-
                   2: Number(
                     backendCounts[2] ??
                     backendCounts["2"] ??
                     0
                   ),
-
                   3: Number(
                     backendCounts[3] ??
                     backendCounts["3"] ??
                     0
                   ),
-
                   4: Number(
                     backendCounts[4] ??
                     backendCounts["4"] ??
                     0
                   ),
-
                   5: Number(
                     backendCounts[5] ??
                     backendCounts["5"] ??
@@ -783,12 +1130,14 @@ function OwnerReviews() {
           setError("");
         }
 
-        const token = getToken();
+        const token =
+          getToken();
 
         if (!token) {
           setError(
             "Please login again to view your reviews."
           );
+
           return;
         }
 
@@ -806,9 +1155,11 @@ function OwnerReviews() {
 
         if (!resolvedBusinessId) {
           setReviews([]);
+
           setError(
             "Business information is missing."
           );
+
           return;
         }
 
@@ -823,7 +1174,8 @@ function OwnerReviews() {
 
         const params = {
           page: targetPage,
-          pageSize: PAGE_SIZE,
+          pageSize:
+            PAGE_SIZE,
           ...(rating
             ? { rating }
             : {}),
@@ -844,7 +1196,9 @@ function OwnerReviews() {
         );
 
         const responseData =
-          getResponseData(response);
+          getResponseData(
+            response
+          );
 
         // =================================================
         // EXTRACT REVIEWS
@@ -1007,8 +1361,12 @@ function OwnerReviews() {
     setPage(1);
     setHasMore(true);
     setReviews([]);
-    setExpandedReviews(new Set());
-    setLongReviews(new Set());
+    setExpandedReviews(
+      new Set()
+    );
+    setLongReviews(
+      new Set()
+    );
 
     loadBusinessReviews({
       targetPage: 1,
@@ -1037,9 +1395,11 @@ function OwnerReviews() {
       }
 
       await loadBusinessReviews({
-        targetPage: page + 1,
+        targetPage:
+          page + 1,
         append: true,
-        filter: selectedFilter,
+        filter:
+          selectedFilter,
       });
     };
 
@@ -1221,9 +1581,12 @@ function OwnerReviews() {
         );
       },
       {
-        confirmText: "Report",
-        cancelText: "Cancel",
-        showCancel: true,
+        confirmText:
+          "Report",
+        cancelText:
+          "Cancel",
+        showCancel:
+          true,
       }
     );
   };
@@ -1624,6 +1987,29 @@ function OwnerReviews() {
                     ? "customer-comment expanded"
                     : "customer-comment";
 
+                // =================================================
+                // REVIEW MEDIA
+                // =================================================
+
+                const validReviewMedia =
+                  getValidReviewMedia(
+                    review,
+                    reviewId
+                  );
+
+                const visibleReviewMedia =
+                  validReviewMedia.slice(
+                    0,
+                    REVIEW_MEDIA_PREVIEW_COUNT
+                  );
+
+                const remainingMediaCount =
+                  Math.max(
+                    validReviewMedia.length -
+                      REVIEW_MEDIA_PREVIEW_COUNT,
+                    0
+                  );
+
                 return (
                   <article
                     className="owner-review-card"
@@ -1631,13 +2017,13 @@ function OwnerReviews() {
                       reviewId
                     }
                   >
+
                     {/* =================================================
                         CUSTOMER HEADER
                     ================================================= */}
 
                     <div className="review-customer-header">
                       <div className="customer-info">
-
                         <FaUserCircle
                           className="customer-avatar"
                           onClick={() =>
@@ -1718,7 +2104,6 @@ function OwnerReviews() {
 
                     {/* =================================================
                         CUSTOMER COMMENT
-                        View More ONLY when comment exceeds 2 lines.
                     ================================================= */}
 
                     {comment && (
@@ -1729,7 +2114,8 @@ function OwnerReviews() {
                               String(
                                 reviewId
                               )
-                            ] = element;
+                            ] =
+                              element;
                           }}
                           className={
                             commentClassName
@@ -1752,6 +2138,94 @@ function OwnerReviews() {
                               ? "View Less"
                               : "View More"}
                           </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* =================================================
+                        REVIEW MEDIA
+                    ================================================= */}
+
+                    {validReviewMedia.length >
+                      0 && (
+                      <div className="owner-review-media-gallery">
+
+                        {visibleReviewMedia.map(
+                          (
+                            media,
+                            mediaIndex
+                          ) => {
+                            const isVideo =
+                              isVideoMedia(
+                                media
+                              );
+
+                            const isLastVisible =
+                              mediaIndex ===
+                                visibleReviewMedia.length -
+                                  1 &&
+                              remainingMediaCount >
+                                0;
+
+                            return (
+                              <button
+                                type="button"
+                                key={`${reviewId}-${media.mediaId}-${mediaIndex}`}
+                                className="owner-review-media-item"
+                                onClick={() =>
+                                  openReviewMedia(
+                                    validReviewMedia,
+                                    mediaIndex
+                                  )
+                                }
+                                aria-label={
+                                  isVideo
+                                    ? `Open review video ${mediaIndex + 1}`
+                                    : `Open review image ${mediaIndex + 1}`
+                                }
+                              >
+                                {isVideo ? (
+                                  <video
+                                    className="owner-review-media-video"
+                                    src={
+                                      media.mediaUrl
+                                    }
+                                    muted
+                                    playsInline
+                                    preload="metadata"
+                                  />
+                                ) : (
+                                  <img
+                                    className="owner-review-media-image"
+                                    src={
+                                      media.mediaUrl
+                                    }
+                                    alt={`Review media ${
+                                      mediaIndex +
+                                      1
+                                    }`}
+                                    loading="lazy"
+                                  />
+                                )}
+
+                                {isVideo && (
+                                  <span className="owner-review-video-play">
+                                    <FaPlay />
+                                  </span>
+                                )}
+
+                                {isLastVisible && (
+                                  <span className="owner-review-media-more">
+                                    +
+                                    {
+                                      remainingMediaCount
+                                    }{" "}
+                                    More
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          }
                         )}
                       </div>
                     )}
@@ -1791,7 +2265,8 @@ function OwnerReviews() {
                             event
                           ) =>
                             setReplyText(
-                              event.target
+                              event
+                                .target
                                 .value
                             )
                           }
@@ -1891,6 +2366,117 @@ function OwnerReviews() {
             </div>
           )}
       </div>
+
+      {/* =================================================
+          REVIEW MEDIA MODAL
+      ================================================= */}
+
+      {selectedReviewMedia && (
+        <div
+          className="owner-review-media-modal"
+          onClick={
+            closeReviewMedia
+          }
+        >
+          <div
+            className="owner-review-media-modal-content"
+            onClick={(
+              event
+            ) =>
+              event.stopPropagation()
+            }
+          >
+            <button
+              type="button"
+              className="owner-review-media-close"
+              onClick={
+                closeReviewMedia
+              }
+              aria-label="Close"
+            >
+              <FaTimes />
+            </button>
+
+            {selectedReviewMedia.length >
+              1 && (
+              <>
+                <button
+                  type="button"
+                  className="owner-review-media-prev"
+                  onClick={
+                    handlePreviousMedia
+                  }
+                  aria-label="Previous media"
+                >
+                  <FaChevronLeft />
+                </button>
+
+                <button
+                  type="button"
+                  className="owner-review-media-next"
+                  onClick={
+                    handleNextMedia
+                  }
+                  aria-label="Next media"
+                >
+                  <FaChevronRight />
+                </button>
+              </>
+            )}
+
+            {(() => {
+              const currentMedia =
+                selectedReviewMedia[
+                  selectedReviewMediaIndex
+                ];
+
+              if (!currentMedia) {
+                return null;
+              }
+
+              if (
+                isVideoMedia(
+                  currentMedia
+                )
+              ) {
+                return (
+                  <video
+                    className="owner-review-modal-video"
+                    src={
+                      currentMedia.mediaUrl
+                    }
+                    controls
+                    autoPlay
+                    playsInline
+                  />
+                );
+              }
+
+              return (
+                <img
+                  className="owner-review-modal-image"
+                  src={
+                    currentMedia.mediaUrl
+                  }
+                  alt="Review media"
+                />
+              );
+            })()}
+
+            {selectedReviewMedia.length >
+              1 && (
+              <div className="owner-review-media-counter">
+                {selectedReviewMediaIndex +
+                  1}{" "}
+                /{" "}
+                {
+                  selectedReviewMedia.length
+                }
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* =================================================
           DIALOG
