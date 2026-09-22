@@ -102,13 +102,34 @@ public class BusinessService
     public async Task<Business?> GetBusinessByIdAsync(
         int businessId)
     {
-        return await _context.Businesses
+        var business = await _context.Businesses
+            .AsNoTracking()
             .Include(x => x.Category)
             .Include(x => x.Photos)
             .FirstOrDefaultAsync(x =>
                 x.BusinessId == businessId &&
                 x.IsActive &&
                 x.IsApproved);
+
+        if (business == null)
+            return null;
+
+        // =================================================
+        // KEEP BUSINESS PHOTOS IN A CONSISTENT ORDER
+        //
+        // 1. Primary / Cover photo first
+        // 2. Latest photo first
+        //
+        // This keeps the Business Details cover image
+        // consistent with the Home page cover image.
+        // =================================================
+
+        business.Photos = business.Photos
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenByDescending(x => x.CreatedAt)
+            .ToList();
+
+        return business;
     }
 
     // =====================================================

@@ -1,4 +1,3 @@
-
 import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
 
 function PlaceCard({ place, onClick }) {
@@ -9,6 +8,13 @@ function PlaceCard({ place, onClick }) {
   if (!place) {
     return null;
   }
+
+  // =====================================
+  // Backend Base URL
+  // =====================================
+
+  const BACKEND_URL =
+    "http://localhost:5213";
 
   // =====================================
   // Fallback Image
@@ -36,32 +42,82 @@ function PlaceCard({ place, onClick }) {
     (isBusiness ? "Business" : "Place");
 
   // =====================================
-  // Display Image
+  // RAW IMAGE
   // =====================================
 
-  let displayImage = place.imageUrl;
+  let rawImage =
+    place.imageUrl ||
+    place.ImageUrl ||
+    "";
 
-  // Business photos support
+  // =====================================
+  // BUSINESS PHOTOS
+  // =====================================
+
   if (
+    !rawImage &&
     isBusiness &&
     Array.isArray(place.photos) &&
     place.photos.length > 0
   ) {
-    const primaryPhoto = place.photos.find(
-      (photo) => photo.isPrimary === true
-    );
+    const primaryPhoto =
+      place.photos.find(
+        (photo) =>
+          photo?.isPrimary === true ||
+          photo?.IsPrimary === true
+      );
 
-    displayImage =
+    rawImage =
       primaryPhoto?.photoUrl ||
+      primaryPhoto?.PhotoUrl ||
       place.photos[0]?.photoUrl ||
-      displayImage;
+      place.photos[0]?.PhotoUrl ||
+      "";
   }
 
-  displayImage = displayImage || fallbackImage;
+  // =====================================
+  // NORMALIZE IMAGE URL
+  // =====================================
+
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) {
+      return "";
+    }
+
+    const cleanUrl =
+      String(imageUrl).trim();
+
+    if (!cleanUrl) {
+      return "";
+    }
+
+    // Already absolute URL
+    if (
+      cleanUrl.startsWith("http://") ||
+      cleanUrl.startsWith("https://") ||
+      cleanUrl.startsWith("data:image/")
+    ) {
+      return cleanUrl;
+    }
+
+    // Relative backend URL
+    return `${BACKEND_URL}${
+      cleanUrl.startsWith("/")
+        ? cleanUrl
+        : `/${cleanUrl}`
+    }`;
+  };
+
+  // =====================================
+  // FINAL DISPLAY IMAGE
+  // =====================================
+
+  const displayImage =
+    getImageUrl(rawImage) ||
+    fallbackImage;
 
   // =====================================
   // DISPLAY RATING
-  // Supports both Place and Business API
   // =====================================
 
   const rating =
@@ -92,45 +148,57 @@ function PlaceCard({ place, onClick }) {
       style={{ cursor: "pointer" }}
     >
       {/* =================================
-          Image
+          IMAGE
       ================================= */}
 
       <img
         src={displayImage}
         alt={displayName}
-        onError={(e) => {
-          e.currentTarget.src = fallbackImage;
+        onError={(event) => {
+          if (
+            event.currentTarget.src !==
+            fallbackImage
+          ) {
+            event.currentTarget.src =
+              fallbackImage;
+          }
         }}
       />
 
       {/* =================================
-          Content
+          CONTENT
       ================================= */}
 
       <div className="place-content">
 
-        {/* Name */}
+        {/* NAME */}
 
         <h3>
           {displayName}
         </h3>
 
-        {/* Location */}
+        {/* LOCATION */}
 
         <p>
           <FaMapMarkerAlt
-            style={{ marginRight: "6px" }}
+            style={{
+              marginRight: "6px",
+            }}
           />
 
-          {place.city || "Location not available"}
+          {place.city ||
+            place.City ||
+            "Location not available"}
         </p>
 
-        {/* Rating */}
+        {/* RATING */}
 
         <span>
           <FaStar
             color="#FFD700"
-            style={{ marginRight: "5px" }}
+            style={{
+              marginRight: "5px",
+            }}
           />
 
           {Number(rating).toFixed(1)}
@@ -142,4 +210,3 @@ function PlaceCard({ place, onClick }) {
 }
 
 export default PlaceCard;
-
