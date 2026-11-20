@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -21,8 +22,7 @@ function Signup() {
     terms: false,
   });
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   // ==========================================
   // DIALOG STATE
@@ -87,10 +87,7 @@ function Signup() {
 
     setFormData((previous) => ({
       ...previous,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -141,10 +138,7 @@ function Signup() {
       return;
     }
 
-    if (
-      formData.password !==
-      formData.confirmPassword
-    ) {
+    if (formData.password !== formData.confirmPassword) {
       showDialog(
         "Password Mismatch",
         "Passwords do not match.",
@@ -166,53 +160,44 @@ function Signup() {
       setLoading(true);
 
       const response = await signupUser({
-        fullName:
-          formData.fullName.trim(),
-        email:
-          formData.email.trim(),
-        mobileNumber:
-          formData.mobileNumber.trim(),
-        password:
-          formData.password,
-        confirmPassword:
-          formData.confirmPassword,
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        mobileNumber: formData.mobileNumber.trim(),
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
       });
 
-      console.log(
-        "Signup Response:",
-        response.data
-      );
+      console.log("Signup Response:", response.data);
+
+      const responseData = response.data;
 
       const userId =
-        response.data?.Data?.UserId ??
-        response.data?.data?.UserId ??
-        response.data?.data?.userId ??
-        response.data?.Data?.userId;
+        responseData?.Data?.UserId ??
+        responseData?.data?.UserId ??
+        responseData?.data?.userId ??
+        responseData?.Data?.userId;
 
       const email =
-        response.data?.Data?.Email ??
-        response.data?.data?.Email ??
-        response.data?.data?.email ??
-        formData.email;
+        responseData?.Data?.Email ??
+        responseData?.data?.Email ??
+        responseData?.data?.email ??
+        responseData?.Data?.email ??
+        formData.email.trim();
 
       if (!userId) {
         showDialog(
           "Signup Completed",
-          "Account created, but user information was not returned.",
+          "Account created, but user information was not returned. Please contact support.",
           "warning"
         );
-
         return;
       }
 
-      localStorage.setItem(
-        "registered",
-        "true"
-      );
+      localStorage.setItem("registered", "true");
 
       showDialog(
         "Account Created",
-        "Account created successfully! An OTP has been sent to your email.",
+        "Account created successfully! Please verify your email using the OTP.",
         "success",
         () => {
           navigate("/verify-otp", {
@@ -223,11 +208,9 @@ function Signup() {
           });
         }
       );
+
     } catch (error) {
-      console.error(
-        "Signup Error:",
-        error
-      );
+      console.error("Signup Error:", error);
 
       if (error.response) {
         console.log(
@@ -235,22 +218,60 @@ function Signup() {
           error.response.data
         );
 
+        const responseData = error.response.data;
+
+        // Account may already be created even if OTP email failed.
+        const userId =
+          responseData?.Data?.UserId ??
+          responseData?.data?.UserId ??
+          responseData?.data?.userId ??
+          responseData?.Data?.userId;
+
+        const email =
+          responseData?.Data?.Email ??
+          responseData?.data?.Email ??
+          responseData?.data?.email ??
+          responseData?.Data?.email ??
+          formData.email.trim();
+
+        if (userId) {
+          localStorage.setItem("registered", "true");
+
+          showDialog(
+            "Account Created",
+            "Your account was created, but the OTP email could not be sent. Continue to verification and try Resend OTP.",
+            "warning",
+            () => {
+              navigate("/verify-otp", {
+                state: {
+                  userId,
+                  email,
+                },
+              });
+            }
+          );
+
+          return;
+        }
+
         const message =
-          error.response.data?.message ||
-          error.response.data?.Message ||
-          "Signup failed.";
+          responseData?.message ||
+          responseData?.Message ||
+          "Signup failed. Please try again.";
 
         showDialog(
           "Signup Failed",
           message,
           "error"
         );
+
       } else if (error.request) {
         showDialog(
           "Server Error",
-          "Backend server is not responding. Please make sure the backend is running.",
+          "Backend server is not responding. Please try again.",
           "error"
         );
+
       } else {
         showDialog(
           "Signup Failed",
@@ -258,18 +279,21 @@ function Signup() {
           "error"
         );
       }
+
     } finally {
       setLoading(false);
     }
   };
 
+  // ==========================================
+  // UI
+  // ==========================================
+
   return (
     <AuthLayout>
-
       <div className="signup-container">
 
         <div className="signup-heading">
-
           <h1 className="auth-title">
             Create Account
           </h1>
@@ -278,14 +302,12 @@ function Signup() {
             Join REVIO and start sharing
             trusted reviews.
           </p>
-
         </div>
 
         <form
           onSubmit={handleSubmit}
           className="signup-form"
         >
-
           <Input
             label="Full Name"
             placeholder="Enter your full name"
@@ -323,26 +345,17 @@ function Signup() {
           <PasswordInput
             label="Confirm Password"
             placeholder="Confirm your password"
-            value={
-              formData.confirmPassword
-            }
+            value={formData.confirmPassword}
             onChange={handleChange}
             name="confirmPassword"
           />
 
-          <label
-            className="terms-checkbox"
-          >
-
+          <label className="terms-checkbox">
             <input
               type="checkbox"
               name="terms"
-              checked={
-                formData.terms
-              }
-              onChange={
-                handleChange
-              }
+              checked={formData.terms}
+              onChange={handleChange}
             />
 
             <span>
@@ -351,11 +364,9 @@ function Signup() {
                 Terms & Conditions
               </strong>
             </span>
-
           </label>
 
           <div className="signup-button-wrapper">
-
             <Button
               text={
                 loading
@@ -365,9 +376,7 @@ function Signup() {
               type="submit"
               disabled={loading}
             />
-
           </div>
-
         </form>
 
         <div className="signup-divider">
