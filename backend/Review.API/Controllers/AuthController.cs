@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Review.API.Data;
@@ -49,13 +50,8 @@ public class AuthController : ControllerBase
             });
         }
 
-        // =================================================
-        // FIND USER
-        // =================================================
-
         var user = await _context.Users
-            .FirstOrDefaultAsync(
-                x => x.Id == dto.UserId);
+            .FirstOrDefaultAsync(x => x.Id == dto.UserId);
 
         if (user == null)
         {
@@ -66,61 +62,38 @@ public class AuthController : ControllerBase
             });
         }
 
-        // =================================================
-        // CHECK REGISTERED EMAIL
-        // =================================================
-
-        var requestedEmail =
-            dto.Email.Trim();
+        var requestedEmail = dto.Email.Trim();
 
         if (!user.Email.Equals(
-                requestedEmail,
-                StringComparison.OrdinalIgnoreCase))
+            requestedEmail,
+            StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Email does not match the registered account."
+                Message = "Email does not match the registered account."
             });
         }
-
-        // =================================================
-        // ALREADY VERIFIED
-        // =================================================
 
         if (user.IsEmailVerified)
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Email is already verified."
+                Message = "Email is already verified."
             });
         }
 
-        // =================================================
-        // INVALIDATE PREVIOUS OTPs
-        // =================================================
-
-        var oldOtps =
-            await _context.EmailOtps
-                .Where(x =>
-                    x.UserId == user.Id &&
-                    !x.IsUsed)
-                .ToListAsync();
+        var oldOtps = await _context.EmailOtps
+            .Where(x => x.UserId == user.Id && !x.IsUsed)
+            .ToListAsync();
 
         foreach (var oldOtp in oldOtps)
         {
             oldOtp.IsUsed = true;
         }
 
-        // =================================================
-        // GENERATE NEW OTP
-        // =================================================
-
         var otp = GenerateOtp();
-
         var now = DateTime.UtcNow;
 
         var emailOtp = new EmailOtp
@@ -133,12 +106,7 @@ public class AuthController : ControllerBase
         };
 
         _context.EmailOtps.Add(emailOtp);
-
         await _context.SaveChangesAsync();
-
-        // =================================================
-        // SEND OTP EMAIL
-        // =================================================
 
         try
         {
@@ -153,9 +121,7 @@ public class AuthController : ControllerBase
             Console.WriteLine(
                 $"OTP email sending failed: {ex.Message}");
 
-            // Remove newly created OTP if email fails
             _context.EmailOtps.Remove(emailOtp);
-
             await _context.SaveChangesAsync();
 
             return StatusCode(
@@ -163,14 +129,9 @@ public class AuthController : ControllerBase
                 new ApiResponse
                 {
                     Success = false,
-                    Message =
-                        "Unable to send OTP email. Please try again."
+                    Message = "Unable to send OTP email. Please try again."
                 });
         }
-
-        // =================================================
-        // RESPONSE
-        // =================================================
 
         return Ok(new ApiResponse
         {
@@ -183,7 +144,6 @@ public class AuthController : ControllerBase
             }
         });
     }
-
 
     // =====================================================
     // VERIFY EMAIL OTP
@@ -205,12 +165,7 @@ public class AuthController : ControllerBase
             });
         }
 
-        // =================================================
-        // NORMALIZE OTP
-        // =================================================
-
-        var enteredOtp =
-            dto.Otp.Trim();
+        var enteredOtp = dto.Otp.Trim();
 
         if (enteredOtp.Length != 6 ||
             !enteredOtp.All(char.IsDigit))
@@ -218,18 +173,12 @@ public class AuthController : ControllerBase
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "OTP must be a 6-digit number."
+                Message = "OTP must be a 6-digit number."
             });
         }
 
-        // =================================================
-        // FIND USER
-        // =================================================
-
         var user = await _context.Users
-            .FirstOrDefaultAsync(
-                x => x.Id == dto.UserId);
+            .FirstOrDefaultAsync(x => x.Id == dto.UserId);
 
         if (user == null)
         {
@@ -240,66 +189,44 @@ public class AuthController : ControllerBase
             });
         }
 
-        // =================================================
-        // ALREADY VERIFIED
-        // =================================================
-
         if (user.IsEmailVerified)
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Email is already verified."
+                Message = "Email is already verified."
             });
         }
 
-        // =================================================
-        // GET LATEST VALID OTP
-        // =================================================
-
-        var otpEntry =
-            await _context.EmailOtps
-                .Where(x =>
-                    x.UserId == dto.UserId &&
-                    !x.IsUsed &&
-                    x.ExpiryTime > DateTime.UtcNow)
-                .OrderByDescending(
-                    x => x.CreatedAt)
-                .FirstOrDefaultAsync();
+        var otpEntry = await _context.EmailOtps
+            .Where(x =>
+                x.UserId == dto.UserId &&
+                !x.IsUsed &&
+                x.ExpiryTime > DateTime.UtcNow)
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync();
 
         if (otpEntry == null)
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "OTP has expired. Please request a new OTP."
+                Message = "OTP has expired. Please request a new OTP."
             });
         }
 
-        // =================================================
-        // VERIFY OTP
-        // =================================================
-
         if (!otpEntry.Otp.Equals(
-                enteredOtp,
-                StringComparison.Ordinal))
+            enteredOtp,
+            StringComparison.Ordinal))
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Invalid OTP. Please try again."
+                Message = "Invalid OTP. Please try again."
             });
         }
 
-        // =================================================
-        // MARK VERIFIED
-        // =================================================
-
         otpEntry.IsUsed = true;
-
         user.IsEmailVerified = true;
 
         await _context.SaveChangesAsync();
@@ -307,11 +234,9 @@ public class AuthController : ControllerBase
         return Ok(new ApiResponse
         {
             Success = true,
-            Message =
-                "Email verified successfully."
+            Message = "Email verified successfully."
         });
     }
-
 
     // =====================================================
     // REGISTER
@@ -327,14 +252,9 @@ public class AuthController : ControllerBase
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Please provide valid registration details."
+                Message = "Please provide valid registration details."
             });
         }
-
-        // =================================================
-        // REQUIRED FIELD VALIDATION
-        // =================================================
 
         if (string.IsNullOrWhiteSpace(dto.FullName) ||
             string.IsNullOrWhiteSpace(dto.Email) ||
@@ -344,142 +264,82 @@ public class AuthController : ControllerBase
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "All required fields must be filled."
+                Message = "All required fields must be filled."
             });
         }
 
-        // =================================================
-        // NORMALIZE
-        // =================================================
-
-        var email =
-            dto.Email.Trim().ToLower();
-
-        var mobileNumber =
-            dto.MobileNumber.Trim();
-
-        // =================================================
-        // CHECK EMAIL
-        // =================================================
+        var email = dto.Email.Trim().ToLower();
+        var mobileNumber = dto.MobileNumber.Trim();
 
         if (await _context.Users.AnyAsync(
-                x => x.Email.ToLower() == email))
+            x => x.Email.ToLower() == email))
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Email already exists."
+                Message = "Email already exists."
             });
         }
 
-        // =================================================
-        // CHECK MOBILE
-        // =================================================
-
         if (await _context.Users.AnyAsync(
-                x => x.MobileNumber == mobileNumber))
+            x => x.MobileNumber == mobileNumber))
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Mobile number already exists."
+                Message = "Mobile number already exists."
             });
         }
 
-        // =================================================
-        // ROLE
-        // =================================================
+        var role = string.IsNullOrWhiteSpace(dto.Role)
+            ? "Reviewer"
+            : dto.Role.Trim();
 
-        var role =
-            string.IsNullOrWhiteSpace(dto.Role)
-                ? "Reviewer"
-                : dto.Role.Trim();
-
-        // Admin cannot register publicly
         if (role.Equals(
-                "Admin",
-                StringComparison.OrdinalIgnoreCase))
+            "Admin",
+            StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Admin registration is not allowed."
+                Message = "Admin registration is not allowed."
             });
         }
 
-        // Only Owner or Reviewer allowed
         if (!role.Equals(
-                "Owner",
-                StringComparison.OrdinalIgnoreCase))
+            "Owner",
+            StringComparison.OrdinalIgnoreCase))
         {
             role = "Reviewer";
         }
 
-        // =================================================
-        // CREATE USER
-        // =================================================
-
         var user = new User
         {
-            FullName =
-                dto.FullName.Trim(),
-
-            Email =
-                email,
-
-            MobileNumber =
-                mobileNumber,
-
-            PasswordHash =
-                PasswordHasher.HashPassword(
-                    dto.Password),
-
-            Role =
-                role,
-
-            IsEmailVerified =
-                false,
-
-            CreatedAt =
-                DateTime.UtcNow
+            FullName = dto.FullName.Trim(),
+            Email = email,
+            MobileNumber = mobileNumber,
+            PasswordHash = PasswordHasher.HashPassword(dto.Password),
+            Role = role,
+            IsEmailVerified = false,
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.Users.Add(user);
-
         await _context.SaveChangesAsync();
-
-        // =================================================
-        // GENERATE OTP
-        // =================================================
 
         var otp = GenerateOtp();
 
         var emailOtp = new EmailOtp
         {
             UserId = user.Id,
-
             Otp = otp,
-
-            ExpiryTime =
-                DateTime.UtcNow.AddMinutes(10),
-
+            ExpiryTime = DateTime.UtcNow.AddMinutes(10),
             IsUsed = false,
-
-            CreatedAt =
-                DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow
         };
 
         _context.EmailOtps.Add(emailOtp);
-
         await _context.SaveChangesAsync();
-
-        // =================================================
-        // SEND OTP EMAIL
-        // =================================================
 
         try
         {
@@ -499,42 +359,35 @@ public class AuthController : ControllerBase
                 new ApiResponse
                 {
                     Success = false,
-                    Message =
-                        "Account was created, but OTP email could not be sent. Please use Resend OTP."
+                    Message = "Account was created, but OTP email could not be sent. Please use Resend OTP.",
+                    Data = new
+                    {
+                        UserId = user.Id,
+                        user.FullName,
+                        user.Email,
+                        user.Role,
+                        RequiresEmailVerification = true
+                    }
                 });
         }
-
-        // =================================================
-        // RESPONSE
-        // =================================================
 
         return Ok(new ApiResponse
         {
             Success = true,
-
-            Message =
-                role == "Owner"
-                    ? "Owner registration successful. OTP sent to your email."
-                    : "Registration successful. OTP sent to your email.",
-
+            Message = role == "Owner"
+                ? "Owner registration successful. OTP sent to your email."
+                : "Registration successful. OTP sent to your email.",
             Data = new
             {
                 UserId = user.Id,
-
                 user.FullName,
-
                 user.Email,
-
                 user.MobileNumber,
-
                 user.Role,
-
-                IsEmailVerified =
-                    user.IsEmailVerified
+                IsEmailVerified = user.IsEmailVerified
             }
         });
     }
-
 
     // =====================================================
     // LOGIN
@@ -550,121 +403,67 @@ public class AuthController : ControllerBase
             return BadRequest(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Please provide email/mobile and password."
+                Message = "Please provide email/mobile and password."
             });
         }
 
-        // =================================================
-        // FIND USER
-        // =================================================
-
-        var loginValue =
-            dto.EmailOrMobile.Trim();
+        var loginValue = dto.EmailOrMobile.Trim();
 
         var user = await _context.Users
             .FirstOrDefaultAsync(x =>
-                x.Email.ToLower() ==
-                    loginValue.ToLower()
-                ||
-                x.MobileNumber ==
-                    loginValue);
-
-        // =================================================
-        // USER NOT FOUND
-        // =================================================
+                x.Email.ToLower() == loginValue.ToLower() ||
+                x.MobileNumber == loginValue);
 
         if (user == null)
         {
             return Unauthorized(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Invalid email/mobile or password."
+                Message = "Invalid email/mobile or password."
             });
         }
 
-        // =================================================
-        // VERIFY PASSWORD
-        // =================================================
-
-        var passwordValid =
-            PasswordHasher.VerifyPassword(
-                dto.Password,
-                user.PasswordHash);
+        var passwordValid = PasswordHasher.VerifyPassword(
+            dto.Password,
+            user.PasswordHash);
 
         if (!passwordValid)
         {
             return Unauthorized(new ApiResponse
             {
                 Success = false,
-                Message =
-                    "Invalid email/mobile or password."
+                Message = "Invalid email/mobile or password."
             });
         }
-
-        // =================================================
-        // EMAIL VERIFICATION
-        // =================================================
 
         if (!user.IsEmailVerified)
         {
             return Unauthorized(new ApiResponse
             {
                 Success = false,
-
-                Message =
-                    "Please verify your email before logging in.",
-
+                Message = "Please verify your email before logging in.",
                 Data = new
                 {
-                    RequiresEmailVerification =
-                        true,
-
-                    UserId =
-                        user.Id,
-
-                    Email =
-                        user.Email
+                    RequiresEmailVerification = true,
+                    UserId = user.Id,
+                    Email = user.Email
                 }
             });
         }
 
-        // =================================================
-        // GENERATE JWT
-        // =================================================
-
-        var token =
-            _jwtService.GenerateToken(user);
-
-        // =================================================
-        // LOGIN RESPONSE
-        // =================================================
+        var token = _jwtService.GenerateToken(user);
 
         return Ok(new AuthResponseDto
         {
             Success = true,
-
-            Message =
-                "Login successful.",
-
-            Token =
-                token,
-
-            UserId =
-                user.Id,
-
-            FullName =
-                user.FullName,
-
-            Email =
-                user.Email,
-
-            Role =
-                user.Role
+            Message = "Login successful.",
+            Token = token,
+            UserId = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Role = user.Role
         });
     }
-
 
     // =====================================================
     // GENERATE SECURE 6 DIGIT OTP
@@ -672,14 +471,12 @@ public class AuthController : ControllerBase
 
     private static string GenerateOtp()
     {
-        var randomNumber =
-            RandomNumberGenerator.GetInt32(
-                100000,
-                1000000);
+        var randomNumber = RandomNumberGenerator.GetInt32(
+            100000,
+            1000000);
 
         return randomNumber.ToString();
     }
-
 
     // =====================================================
     // SEND OTP EMAIL
@@ -690,96 +487,46 @@ public class AuthController : ControllerBase
         string recipientName,
         string otp)
     {
-        // =================================================
-        // READ EMAIL SETTINGS
-        //
-        // These are loaded from:
-        //
-        // User Secrets:
-        // EmailSettings:Email
-        // EmailSettings:AppPassword
-        // EmailSettings:SmtpServer
-        // EmailSettings:Port
-        //
-        // =================================================
-
         var senderEmail =
-            _configuration[
-                "EmailSettings:Email"];
+            _configuration["EmailSettings:Email"];
 
         var appPassword =
-            _configuration[
-                "EmailSettings:AppPassword"];
+            _configuration["EmailSettings:AppPassword"];
 
         var smtpServer =
-            _configuration[
-                "EmailSettings:SmtpServer"];
+            _configuration["EmailSettings:SmtpServer"];
 
         var smtpPortValue =
-            _configuration[
-                "EmailSettings:Port"];
+            _configuration["EmailSettings:Port"];
 
-        // =================================================
-        // VALIDATE CONFIGURATION
-        // =================================================
-
-        if (string.IsNullOrWhiteSpace(
-                senderEmail))
+        if (string.IsNullOrWhiteSpace(senderEmail))
         {
-            throw new Exception(
-                "EmailSettings:Email is missing.");
+            throw new Exception("EmailSettings:Email is missing.");
         }
 
-        if (string.IsNullOrWhiteSpace(
-                appPassword))
+        if (string.IsNullOrWhiteSpace(appPassword))
         {
-            throw new Exception(
-                "EmailSettings:AppPassword is missing.");
+            throw new Exception("EmailSettings:AppPassword is missing.");
         }
 
-        if (string.IsNullOrWhiteSpace(
-                smtpServer))
+        if (string.IsNullOrWhiteSpace(smtpServer))
         {
-            throw new Exception(
-                "EmailSettings:SmtpServer is missing.");
+            throw new Exception("EmailSettings:SmtpServer is missing.");
         }
 
-        if (!int.TryParse(
-                smtpPortValue,
-                out var smtpPort))
+        if (!int.TryParse(smtpPortValue, out var smtpPort))
         {
-            throw new Exception(
-                "EmailSettings:Port is invalid.");
+            throw new Exception("EmailSettings:Port is invalid.");
         }
 
-        // =================================================
-        // CREATE EMAIL
-        // =================================================
+        using var message = new MailMessage();
 
-        using var message =
-            new MailMessage();
-
-        message.From =
-            new MailAddress(
-                senderEmail,
-                "REVIO");
-
-        message.To.Add(
-            new MailAddress(
-                recipientEmail));
-
-        message.Subject =
-            "REVIO - Verify Your Email";
-
+        message.From = new MailAddress(senderEmail, "REVIO");
+        message.To.Add(new MailAddress(recipientEmail));
+        message.Subject = "REVIO - Verify Your Email";
         message.IsBodyHtml = true;
 
-        // =================================================
-        // EMAIL BODY
-        // =================================================
-
-        var safeName =
-            WebUtility.HtmlEncode(
-                recipientName);
+        var safeName = WebUtility.HtmlEncode(recipientName);
 
         message.Body = $@"
 <!DOCTYPE html>
@@ -798,7 +545,6 @@ public class AuthController : ControllerBase
         font-family:Arial,Helvetica,sans-serif;
     '
 >
-
     <div
         style='
             max-width:600px;
@@ -809,7 +555,6 @@ public class AuthController : ControllerBase
             box-shadow:0 8px 30px rgba(0,0,0,0.08);
         '
     >
-
         <div
             style='
                 text-align:center;
@@ -865,7 +610,6 @@ public class AuthController : ControllerBase
                 margin:35px 0;
             '
         >
-
             <div
                 style='
                     display:inline-block;
@@ -880,7 +624,6 @@ public class AuthController : ControllerBase
             >
                 {otp}
             </div>
-
         </div>
 
         <p
@@ -924,78 +667,52 @@ public class AuthController : ControllerBase
         >
             © {DateTime.UtcNow.Year} REVIO
         </p>
-
     </div>
-
 </body>
 </html>";
 
-        // =================================================
-        // SMTP CLIENT
-        // =================================================
+        using var smtpClient = new SmtpClient();
 
-        using var smtpClient =
-            new SmtpClient();
+        smtpClient.Host = smtpServer;
+        smtpClient.Port = smtpPort;
+        smtpClient.EnableSsl = true;
+        smtpClient.UseDefaultCredentials = false;
 
-        smtpClient.Host =
-            smtpServer;
+        smtpClient.Credentials = new NetworkCredential(
+            senderEmail,
+            appPassword);
 
-        smtpClient.Port =
-            smtpPort;
+        smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
 
-        smtpClient.EnableSsl =
-            true;
-
-        smtpClient.UseDefaultCredentials =
-            false;
-
-        smtpClient.Credentials =
-            new NetworkCredential(
-                senderEmail,
-                appPassword);
-
-        smtpClient.DeliveryMethod =
-            SmtpDeliveryMethod.Network;
-
-        await smtpClient.SendMailAsync(
-            message);
+        await smtpClient.SendMailAsync(message);
     }
-
 
     // =====================================================
     // MASK EMAIL
     // =====================================================
 
-    private static string MaskEmail(
-        string email)
+    private static string MaskEmail(string email)
     {
-        if (string.IsNullOrWhiteSpace(
-                email))
+        if (string.IsNullOrWhiteSpace(email))
         {
             return email;
         }
 
-        var parts =
-            email.Split('@');
+        var parts = email.Split('@');
 
         if (parts.Length != 2)
         {
             return email;
         }
 
-        var username =
-            parts[0];
-
-        var domain =
-            parts[1];
+        var username = parts[0];
+        var domain = parts[1];
 
         if (username.Length <= 2)
         {
-            return
-                $"{username[0]}***@{domain}";
+            return $"{username[0]}***@{domain}";
         }
 
-        return
-            $"{username[0]}***{username[^1]}@{domain}";
+        return $"{username[0]}***{username[^1]}@{domain}";
     }
 }
