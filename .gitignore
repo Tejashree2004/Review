@@ -1,0 +1,6 @@
+**/bin/
+**/obj/
+backend/Review.API/appsettings.Development.json
+backend/Review.API/wwwroot/uploads/
+**/node_modules/
+frontend/dist/
