@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   useLocation,
@@ -19,28 +20,48 @@ function VerifyOtp() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const {
-    userId,
-    email,
-  } = location.state || {};
+  // ==========================================
+  // GET SAVED VERIFICATION INFORMATION
+  // ==========================================
+
+  const getSavedVerification = () => {
+    try {
+      return JSON.parse(
+        localStorage.getItem("pendingVerification") || "null"
+      );
+    } catch (error) {
+      console.error(
+        "Unable to read saved verification information:",
+        error
+      );
+
+      return null;
+    }
+  };
+
+  const savedVerification = getSavedVerification();
+
+  const userId =
+    location.state?.userId ??
+    savedVerification?.userId;
+
+  const email =
+    location.state?.email ??
+    savedVerification?.email;
+
+  // ==========================================
+  // STATES
+  // ==========================================
 
   const [otp, setOtp] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [verified, setVerified] =
-    useState(false);
+  const [verified, setVerified] = useState(false);
 
-  const [sendingOtp, setSendingOtp] =
-    useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
 
-  const [resendTimer, setResendTimer] =
-    useState(0);
-
-  // ==========================================
-  // DIALOG STATE
-  // ==========================================
+  const [resendTimer, setResendTimer] = useState(0);
 
   const [dialog, setDialog] = useState({
     isOpen: false,
@@ -100,19 +121,19 @@ function VerifyOtp() {
       return;
     }
 
-    console.log(
-      "Verify OTP page opened."
+    const verificationData = {
+      userId: Number(userId),
+      email: email.trim(),
+    };
+
+    localStorage.setItem(
+      "pendingVerification",
+      JSON.stringify(verificationData)
     );
 
-    console.log(
-      "User ID:",
-      userId
-    );
-
-    console.log(
-      "Email:",
-      email
-    );
+    console.log("Verify OTP page opened.");
+    console.log("User ID:", userId);
+    console.log("Email:", email);
   }, [userId, email]);
 
   // ==========================================
@@ -124,18 +145,13 @@ function VerifyOtp() {
       return;
     }
 
-    const timer = setInterval(() => {
-      setResendTimer(
-        (previous) =>
-          previous > 0
-            ? previous - 1
-            : 0
+    const timer = setTimeout(() => {
+      setResendTimer((previous) =>
+        previous > 0 ? previous - 1 : 0
       );
     }, 1000);
 
-    return () => {
-      clearInterval(timer);
-    };
+    return () => clearTimeout(timer);
   }, [resendTimer]);
 
   // ==========================================
@@ -143,11 +159,7 @@ function VerifyOtp() {
   // ==========================================
 
   const handleOtpChange = (e) => {
-    const value =
-      e.target.value.replace(
-        /\D/g,
-        ""
-      );
+    const value = e.target.value.replace(/\D/g, "");
 
     if (value.length <= 6) {
       setOtp(value);
@@ -164,9 +176,8 @@ function VerifyOtp() {
     if (!userId || !email) {
       showDialog(
         "Verification Information Missing",
-        "Verification information is missing. Please signup again.",
-        "warning",
-        () => navigate("/signup")
+        "Signup information is missing. Please signup again.",
+        "warning"
       );
 
       return;
@@ -185,33 +196,13 @@ function VerifyOtp() {
     try {
       setLoading(true);
 
-      console.log(
-        "======================================"
-      );
+      console.log("VERIFY OTP REQUEST");
+      console.log("User ID:", userId);
 
-      console.log(
-        "VERIFY OTP REQUEST"
-      );
-
-      console.log(
-        "UserId:",
-        userId
-      );
-
-      console.log(
-        "OTP length:",
-        otp.length
-      );
-
-      console.log(
-        "======================================"
-      );
-
-      const response =
-        await verifyEmailOtp({
-          userId: Number(userId),
-          otp: otp.trim(),
-        });
+      const response = await verifyEmailOtp({
+        userId: Number(userId),
+        otp: otp.trim(),
+      });
 
       console.log(
         "Verify OTP Response:",
@@ -239,29 +230,20 @@ function VerifyOtp() {
       }
 
       setVerified(true);
-
       setOtp("");
-
       setResendTimer(0);
+
+      localStorage.removeItem("pendingVerification");
+      localStorage.removeItem("registered");
 
       showDialog(
         "Email Verified",
         "Email verified successfully!",
         "success"
       );
+
     } catch (error) {
-      console.error(
-        "======================================"
-      );
-
-      console.error(
-        "VERIFY OTP ERROR"
-      );
-
-      console.error(
-        "Axios Error:",
-        error
-      );
+      console.error("VERIFY OTP ERROR:", error);
 
       console.error(
         "Status:",
@@ -271,10 +253,6 @@ function VerifyOtp() {
       console.error(
         "Backend Response:",
         error.response?.data
-      );
-
-      console.error(
-        "======================================"
       );
 
       const message =
@@ -287,6 +265,7 @@ function VerifyOtp() {
         message,
         "error"
       );
+
     } finally {
       setLoading(false);
     }
@@ -307,22 +286,19 @@ function VerifyOtp() {
       return;
     }
 
-    if (resendTimer > 0) {
+    if (resendTimer > 0 || sendingOtp) {
       return;
     }
 
     try {
       setSendingOtp(true);
 
-      console.log(
-        "Sending new OTP..."
-      );
+      console.log("Sending new OTP...");
 
-      const response =
-        await sendEmailOtp({
-          userId: Number(userId),
-          email,
-        });
+      const response = await sendEmailOtp({
+        userId: Number(userId),
+        email: email.trim(),
+      });
 
       console.log(
         "Resend OTP Response:",
@@ -350,7 +326,6 @@ function VerifyOtp() {
       }
 
       setOtp("");
-
       setResendTimer(60);
 
       showDialog(
@@ -358,11 +333,9 @@ function VerifyOtp() {
         "A new OTP has been sent to your email.",
         "success"
       );
+
     } catch (error) {
-      console.error(
-        "Resend OTP Error:",
-        error
-      );
+      console.error("Resend OTP Error:", error);
 
       console.error(
         "Backend Response:",
@@ -379,6 +352,7 @@ function VerifyOtp() {
         message,
         "error"
       );
+
     } finally {
       setSendingOtp(false);
     }
@@ -399,9 +373,7 @@ function VerifyOtp() {
   if (!userId || !email) {
     return (
       <AuthLayout>
-
         <div className="otp-page">
-
           <div className="otp-card">
 
             <div className="otp-icon error">
@@ -421,15 +393,12 @@ function VerifyOtp() {
             <button
               className="otp-primary-button"
               type="button"
-              onClick={() =>
-                navigate("/signup")
-              }
+              onClick={() => navigate("/signup")}
             >
               Back to Signup
             </button>
 
           </div>
-
         </div>
 
         <DialogBox
@@ -439,7 +408,6 @@ function VerifyOtp() {
           type={dialog.type}
           onClose={closeDialog}
         />
-
       </AuthLayout>
     );
   }
@@ -451,9 +419,7 @@ function VerifyOtp() {
   if (verified) {
     return (
       <AuthLayout>
-
         <div className="otp-page">
-
           <div className="otp-card">
 
             <div className="otp-icon verified">
@@ -481,15 +447,12 @@ function VerifyOtp() {
             <button
               className="otp-primary-button"
               type="button"
-              onClick={
-                handleContinue
-              }
+              onClick={handleContinue}
             >
               Continue to Login
             </button>
 
           </div>
-
         </div>
 
         <DialogBox
@@ -499,7 +462,6 @@ function VerifyOtp() {
           type={dialog.type}
           onClose={closeDialog}
         />
-
       </AuthLayout>
     );
   }
@@ -510,24 +472,17 @@ function VerifyOtp() {
 
   return (
     <AuthLayout>
-
       <div className="otp-page">
 
         <div className="otp-card">
-
-          {/* ICON */}
 
           <div className="otp-icon">
             ✉
           </div>
 
-          {/* TITLE */}
-
           <h1>
             Verify Your Email
           </h1>
-
-          {/* DESCRIPTION */}
 
           <p className="otp-description">
             We've sent a 6-digit
@@ -565,40 +520,29 @@ function VerifyOtp() {
               maxLength={6}
               placeholder="000000"
               value={otp}
-              onChange={
-                handleOtpChange
-              }
+              onChange={handleOtpChange}
               disabled={loading}
               autoFocus
             />
 
-            {/* OTP DOTS */}
-
             <div className="otp-dots">
-
-              {[0, 1, 2, 3, 4, 5].map(
-                (index) => (
-                  <span
-                    key={index}
-                    className={
-                      index < otp.length
-                        ? "active"
-                        : ""
-                    }
-                  />
-                )
-              )}
-
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <span
+                  key={index}
+                  className={
+                    index < otp.length
+                      ? "active"
+                      : ""
+                  }
+                />
+              ))}
             </div>
-
-            {/* VERIFY BUTTON */}
 
             <button
               className="otp-primary-button"
               type="submit"
               disabled={
-                loading ||
-                otp.length !== 6
+                loading || otp.length !== 6
               }
             >
               {loading
@@ -617,29 +561,19 @@ function VerifyOtp() {
             </span>
 
             {resendTimer > 0 ? (
-
               <span className="otp-timer">
-                Resend in{" "}
-                {resendTimer}s
+                Resend in {resendTimer}s
               </span>
-
             ) : (
-
               <button
                 type="button"
-                onClick={
-                  handleResendOtp
-                }
-                disabled={
-                  sendingOtp ||
-                  loading
-                }
+                onClick={handleResendOtp}
+                disabled={sendingOtp || loading}
               >
                 {sendingOtp
                   ? "Sending..."
                   : "Resend OTP"}
               </button>
-
             )}
 
           </div>
@@ -647,23 +581,17 @@ function VerifyOtp() {
           {/* SECURITY MESSAGE */}
 
           <div className="otp-help">
-
             <span>
               🔒
             </span>
 
             <p>
-              Never share your OTP
-              with anyone.
+              Never share your OTP with anyone.
             </p>
-
           </div>
 
         </div>
-
       </div>
-
-      {/* DIALOG */}
 
       <DialogBox
         isOpen={dialog.isOpen}

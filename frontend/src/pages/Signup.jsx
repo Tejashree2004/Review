@@ -24,10 +24,6 @@ function Signup() {
 
   const [loading, setLoading] = useState(false);
 
-  // ==========================================
-  // DIALOG STATE
-  // ==========================================
-
   const [dialog, setDialog] = useState({
     isOpen: false,
     title: "",
@@ -36,10 +32,7 @@ function Signup() {
     action: null,
   });
 
-  // ==========================================
   // SHOW DIALOG
-  // ==========================================
-
   const showDialog = (
     title,
     message,
@@ -55,10 +48,7 @@ function Signup() {
     });
   };
 
-  // ==========================================
   // CLOSE DIALOG
-  // ==========================================
-
   const closeDialog = () => {
     const action = dialog.action;
 
@@ -73,10 +63,7 @@ function Signup() {
     }
   };
 
-  // ==========================================
-  // HANDLE CHANGE
-  // ==========================================
-
+  // HANDLE INPUT CHANGE
   const handleChange = (e) => {
     const {
       name,
@@ -91,16 +78,58 @@ function Signup() {
     }));
   };
 
-  // ==========================================
-  // HANDLE SUBMIT
-  // ==========================================
+  // SAVE VERIFICATION DETAILS AND NAVIGATE
+  const goToVerification = (userId, email) => {
+    const verificationData = {
+      userId: Number(userId),
+      email: email.trim(),
+    };
 
+    localStorage.setItem(
+      "pendingVerification",
+      JSON.stringify(verificationData)
+    );
+
+    localStorage.setItem("registered", "true");
+
+    navigate("/verify-otp", {
+      state: verificationData,
+    });
+  };
+
+  // GET USER DETAILS FROM API RESPONSE
+  const getVerificationDetails = (responseData) => {
+    const data =
+      responseData?.Data ??
+      responseData?.data ??
+      responseData;
+
+    const userId =
+      data?.UserId ??
+      data?.userId ??
+      data?.Id ??
+      data?.id;
+
+    const email =
+      data?.Email ??
+      data?.email ??
+      formData.email.trim();
+
+    if (!userId || !email) {
+      return null;
+    }
+
+    return {
+      userId: Number(userId),
+      email: email.trim(),
+    };
+  };
+
+  // HANDLE SIGNUP
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
     if (!formData.fullName.trim()) {
       showDialog(
@@ -167,31 +196,27 @@ function Signup() {
         confirmPassword: formData.confirmPassword,
       });
 
-      console.log("Signup Response:", response.data);
+      console.log(
+        "Signup Response:",
+        response.data
+      );
 
-      const responseData = response.data;
+      const verification =
+        getVerificationDetails(response.data);
 
-      const userId =
-        responseData?.Data?.UserId ??
-        responseData?.data?.UserId ??
-        responseData?.data?.userId ??
-        responseData?.Data?.userId;
-
-      const email =
-        responseData?.Data?.Email ??
-        responseData?.data?.Email ??
-        responseData?.data?.email ??
-        responseData?.Data?.email ??
-        formData.email.trim();
-
-      if (!userId) {
+      if (!verification) {
         showDialog(
           "Signup Completed",
-          "Account created, but user information was not returned. Please contact support.",
+          "Account information was not returned. Please contact support.",
           "warning"
         );
         return;
       }
+
+      localStorage.setItem(
+        "pendingVerification",
+        JSON.stringify(verification)
+      );
 
       localStorage.setItem("registered", "true");
 
@@ -200,12 +225,10 @@ function Signup() {
         "Account created successfully! Please verify your email using the OTP.",
         "success",
         () => {
-          navigate("/verify-otp", {
-            state: {
-              userId,
-              email,
-            },
-          });
+          goToVerification(
+            verification.userId,
+            verification.email
+          );
         }
       );
 
@@ -218,23 +241,16 @@ function Signup() {
           error.response.data
         );
 
-        const responseData = error.response.data;
+        const verification =
+          getVerificationDetails(error.response.data);
 
-        // Account may already be created even if OTP email failed.
-        const userId =
-          responseData?.Data?.UserId ??
-          responseData?.data?.UserId ??
-          responseData?.data?.userId ??
-          responseData?.Data?.userId;
+        // Account created, but OTP email may have failed.
+        if (verification) {
+          localStorage.setItem(
+            "pendingVerification",
+            JSON.stringify(verification)
+          );
 
-        const email =
-          responseData?.Data?.Email ??
-          responseData?.data?.Email ??
-          responseData?.data?.email ??
-          responseData?.Data?.email ??
-          formData.email.trim();
-
-        if (userId) {
           localStorage.setItem("registered", "true");
 
           showDialog(
@@ -242,12 +258,10 @@ function Signup() {
             "Your account was created, but the OTP email could not be sent. Continue to verification and try Resend OTP.",
             "warning",
             () => {
-              navigate("/verify-otp", {
-                state: {
-                  userId,
-                  email,
-                },
-              });
+              goToVerification(
+                verification.userId,
+                verification.email
+              );
             }
           );
 
@@ -255,8 +269,8 @@ function Signup() {
         }
 
         const message =
-          responseData?.message ||
-          responseData?.Message ||
+          error.response.data?.message ||
+          error.response.data?.Message ||
           "Signup failed. Please try again.";
 
         showDialog(
@@ -285,10 +299,7 @@ function Signup() {
     }
   };
 
-  // ==========================================
   // UI
-  // ==========================================
-
   return (
     <AuthLayout>
       <div className="signup-container">
@@ -393,8 +404,6 @@ function Signup() {
         </p>
 
       </div>
-
-      {/* DIALOG */}
 
       <DialogBox
         isOpen={dialog.isOpen}
