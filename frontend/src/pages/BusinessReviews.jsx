@@ -33,7 +33,7 @@ import {
 import "../styles/BusinessReviews.css";
 
 const API_BASE_URL =
-  "http://localhost:5213";
+  (import.meta.env.VITE_API_URL || "http://localhost:5213");
 
 const REVIEW_MEDIA_PREVIEW_COUNT = 2;
 

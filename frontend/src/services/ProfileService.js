@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5213/api/Profile";
+const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5213") + "/api/Profile";
 
 // ==========================================
 // Get User Profile

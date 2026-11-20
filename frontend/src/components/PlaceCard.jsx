@@ -14,7 +14,7 @@ function PlaceCard({ place, onClick }) {
   // =====================================
 
   const BACKEND_URL =
-    "http://localhost:5213";
+    (import.meta.env.VITE_API_URL || "http://localhost:5213");
 
   // =====================================
   // Fallback Image

@@ -25,7 +25,7 @@ function OwnerDashboard() {
   const navigate = useNavigate();
 
   const API_BASE =
-    "http://localhost:5213/api";
+    (import.meta.env.VITE_API_URL || "http://localhost:5213") + "/api";
 
   const [menuOpen, setMenuOpen] =
     useState(false);

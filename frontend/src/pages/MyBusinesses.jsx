@@ -27,7 +27,7 @@ import DialogBox from "../components/DialogBox";
 import "../styles/MyBusinesses.css";
 
 const API_BASE =
-  "http://localhost:5213/api";
+  (import.meta.env.VITE_API_URL || "http://localhost:5213") + "/api";
 
 function MyBusinesses() {
   const navigate = useNavigate();

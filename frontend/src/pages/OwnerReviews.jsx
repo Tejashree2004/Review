@@ -29,9 +29,9 @@ import DialogBox from "../components/DialogBox";
 
 import "../styles/OwnerReviews.css";
 
-const API_BASE = "http://localhost:5213/api";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5213") + "/api";
 
-const API_ROOT = "http://localhost:5213";
+const API_ROOT = (import.meta.env.VITE_API_URL || "http://localhost:5213");
 
 const PAGE_SIZE = 10;
 

@@ -1544,7 +1544,7 @@ function BusinessDetails() {
     =================================================
     */
 
-    return `http://localhost:5213${
+    return `${import.meta.env.VITE_API_URL || "http://localhost:5213"}${
       cleanUrl.startsWith("/")
         ? cleanUrl
         : `/${cleanUrl}`

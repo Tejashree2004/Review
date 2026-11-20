@@ -6,6 +6,10 @@ using Review.API.Data;
 using Review.API.Services;
 using System.Text;
 
+// =====================================
+// Builder
+// =====================================
+
 var builder = WebApplication.CreateBuilder(args);
 
 // =====================================
@@ -25,7 +29,6 @@ builder.Services.AddControllers();
 
 // =====================================
 // HTTP Context Accessor
-// Required by ReviewService
 // =====================================
 
 builder.Services.AddHttpContextAccessor();
@@ -42,17 +45,9 @@ builder.Services.AddSwaggerGen();
 // =====================================
 
 builder.Services.AddScoped<JwtService>();
-
 builder.Services.AddScoped<HomeService>();
-
 builder.Services.AddScoped<ReviewService>();
-
-// =====================================
-// Business / Owner Services
-// =====================================
-
 builder.Services.AddScoped<BusinessService>();
-
 builder.Services.AddScoped<OwnerService>();
 
 // =====================================
@@ -95,19 +90,35 @@ builder.Services
 builder.Services.AddAuthorization();
 
 // =====================================
-// CORS
+// CORS - Local + Railway Frontend
 // =====================================
+
+var frontendUrl = builder.Configuration["FrontendUrl"];
+
+var allowedOrigins = new List<string>
+{
+    "http://localhost:5173"
+};
+
+if (!string.IsNullOrWhiteSpace(frontendUrl))
+{
+    allowedOrigins.Add(frontendUrl);
+}
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReact", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .WithOrigins(allowedOrigins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
+
+// =====================================
+// Build Application
+// =====================================
 
 var app = builder.Build();
 
@@ -154,7 +165,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // =====================================
-// STATIC FILES
+// Static Files
 // Required for review photos/videos
 // =====================================
 
@@ -185,4 +196,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-

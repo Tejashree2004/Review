@@ -127,7 +127,7 @@ function Search() {
         );
 
         const url =
-          `http://localhost:5213/api/Search/place/` +
+          `${import.meta.env.VITE_API_URL || "http://localhost:5213"}/api/Search/place/` +
           encodeURIComponent(searchKeyword);
 
         console.log("Search URL:", url);

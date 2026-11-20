@@ -34,7 +34,7 @@ import DialogBox from "../components/DialogBox";
 
 import "../styles/OwnerBusinessProfile.css";
 
-const API_BASE = "http://localhost:5213/api";
+const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:5213") + "/api";
 
 const MAX_PHOTOS = 12;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -254,7 +254,7 @@ function OwnerBusinessProfile() {
       return cleanUrl;
     }
 
-    return `http://localhost:5213${
+    return `${import.meta.env.VITE_API_URL || "http://localhost:5213"}${
       cleanUrl.startsWith("/")
         ? cleanUrl
         : `/${cleanUrl}`
