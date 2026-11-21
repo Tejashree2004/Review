@@ -7,7 +7,8 @@ using Review.API.Helpers;
 using Review.API.Models;
 using Review.API.Services;
 using System.Net;
-using System.Net.Mail;
+using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 
 namespace Review.API.Controllers;
@@ -248,7 +249,6 @@ public class AuthController : ControllerBase
 
         if (existingUser != null)
         {
-            // Already verified account
             if (existingUser.IsEmailVerified)
             {
                 return BadRequest(new ApiResponse
@@ -258,8 +258,6 @@ public class AuthController : ControllerBase
                 });
             }
 
-            // Existing but unverified account:
-            // Generate a fresh OTP for the same account.
             try
             {
                 await GenerateAndSendOtpAsync(existingUser);
@@ -284,8 +282,6 @@ public class AuthController : ControllerBase
                 Console.WriteLine(
                     $"Existing account OTP email failed: {ex.Message}");
 
-                // Account already exists.
-                // Send UserId and Email so frontend can open OTP page.
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
                     new ApiResponse
@@ -395,8 +391,6 @@ public class AuthController : ControllerBase
             Console.WriteLine(
                 $"Registration OTP email failed: {ex.Message}");
 
-            // Account is already saved in database.
-            // Return UserId and Email even if SMTP fails.
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
                 new ApiResponse
@@ -540,8 +534,9 @@ public class AuthController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Keep the OTP record if SMTP fails.
-        // A later resend will invalidate it and generate a fresh one.
+        // OTP remains saved if email sending fails.
+        // A resend will invalidate the old OTP.
+
         await SendOtpEmailAsync(
             recipientEmail: user.Email,
             recipientName: user.FullName,
@@ -550,7 +545,7 @@ public class AuthController : ControllerBase
     }
 
     // =====================================================
-    // SEND OTP EMAIL
+    // SEND OTP EMAIL USING RESEND API
     // =====================================================
 
     private async Task SendOtpEmailAsync(
@@ -558,48 +553,17 @@ public class AuthController : ControllerBase
         string recipientName,
         string otp)
     {
-        var senderEmail =
-            _configuration["EmailSettings:Email"];
+        var apiKey = _configuration["Resend:ApiKey"];
 
-        var appPassword =
-            _configuration["EmailSettings:AppPassword"];
-
-        var smtpServer =
-            _configuration["EmailSettings:SmtpServer"];
-
-        var smtpPortValue =
-            _configuration["EmailSettings:Port"];
-
-        if (string.IsNullOrWhiteSpace(senderEmail))
+        if (string.IsNullOrWhiteSpace(apiKey))
         {
-            throw new Exception("EmailSettings:Email is missing.");
+            throw new Exception(
+                "Resend:ApiKey configuration is missing.");
         }
-
-        if (string.IsNullOrWhiteSpace(appPassword))
-        {
-            throw new Exception("EmailSettings:AppPassword is missing.");
-        }
-
-        if (string.IsNullOrWhiteSpace(smtpServer))
-        {
-            throw new Exception("EmailSettings:SmtpServer is missing.");
-        }
-
-        if (!int.TryParse(smtpPortValue, out var smtpPort))
-        {
-            throw new Exception("EmailSettings:Port is invalid.");
-        }
-
-        using var message = new MailMessage();
-
-        message.From = new MailAddress(senderEmail, "REVIO");
-        message.To.Add(new MailAddress(recipientEmail));
-        message.Subject = "REVIO - Verify Your Email";
-        message.IsBodyHtml = true;
 
         var safeName = WebUtility.HtmlEncode(recipientName);
 
-        message.Body = $@"
+        var html = $@"
 <!DOCTYPE html>
 <html>
 <head>
@@ -716,27 +680,41 @@ public class AuthController : ControllerBase
 </body>
 </html>";
 
-        using var smtpClient = new SmtpClient
+        using var httpClient = new HttpClient();
+
+        httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                apiKey
+            );
+
+        var emailRequest = new
         {
-            Host = smtpServer,
-            Port = smtpPort,
-
-            // Port 587 uses STARTTLS.
-            EnableSsl = true,
-
-            UseDefaultCredentials = false,
-
-            Credentials = new NetworkCredential(
-                senderEmail,
-                appPassword),
-
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-
-            // SMTP timeout: 20 seconds.
-            Timeout = 20000
+            from = "REVIO <onboarding@resend.dev>",
+            to = new[] { recipientEmail },
+            subject = "REVIO - Verify Your Email",
+            html = html
         };
 
-        await smtpClient.SendMailAsync(message);
+        using var response = await httpClient.PostAsJsonAsync(
+            "https://api.resend.com/emails",
+            emailRequest
+        );
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorResponse =
+                await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine(
+                $"Resend API error: {(int)response.StatusCode}");
+
+            throw new Exception(
+                $"Resend email request failed with status code {(int)response.StatusCode}. Details: {errorResponse}");
+        }
+
+        Console.WriteLine(
+            $"OTP email accepted by Resend for {MaskEmail(recipientEmail)}.");
     }
 
     // =====================================================
