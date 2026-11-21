@@ -29,48 +29,26 @@ function Signup() {
     title: "",
     message: "",
     type: "info",
-    action: null,
   });
 
-  // SHOW DIALOG
-  const showDialog = (
-    title,
-    message,
-    type = "info",
-    action = null
-  ) => {
+  const showDialog = (title, message, type = "info") => {
     setDialog({
       isOpen: true,
       title,
       message,
       type,
-      action,
     });
   };
 
-  // CLOSE DIALOG
   const closeDialog = () => {
-    const action = dialog.action;
-
     setDialog((previous) => ({
       ...previous,
       isOpen: false,
-      action: null,
     }));
-
-    if (action) {
-      action();
-    }
   };
 
-  // HANDLE INPUT CHANGE
   const handleChange = (e) => {
-    const {
-      name,
-      value,
-      type,
-      checked,
-    } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setFormData((previous) => ({
       ...previous,
@@ -78,7 +56,7 @@ function Signup() {
     }));
   };
 
-  // SAVE VERIFICATION DETAILS AND NAVIGATE
+  // Save account details and open OTP page directly.
   const goToVerification = (userId, email) => {
     const verificationData = {
       userId: Number(userId),
@@ -94,10 +72,11 @@ function Signup() {
 
     navigate("/verify-otp", {
       state: verificationData,
+      replace: true,
     });
   };
 
-  // GET USER DETAILS FROM API RESPONSE
+  // Supports both successful and failed API response formats.
   const getVerificationDetails = (responseData) => {
     const data =
       responseData?.Data ??
@@ -125,36 +104,23 @@ function Signup() {
     };
   };
 
-  // HANDLE SIGNUP
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (loading) return;
 
     if (!formData.fullName.trim()) {
-      showDialog(
-        "Required Field",
-        "Please enter your full name.",
-        "warning"
-      );
+      showDialog("Required Field", "Please enter your full name.", "warning");
       return;
     }
 
     if (!formData.email.trim()) {
-      showDialog(
-        "Required Field",
-        "Please enter your email.",
-        "warning"
-      );
+      showDialog("Required Field", "Please enter your email.", "warning");
       return;
     }
 
     if (!formData.mobileNumber.trim()) {
-      showDialog(
-        "Required Field",
-        "Please enter your mobile number.",
-        "warning"
-      );
+      showDialog("Required Field", "Please enter your mobile number.", "warning");
       return;
     }
 
@@ -168,11 +134,7 @@ function Signup() {
     }
 
     if (formData.password !== formData.confirmPassword) {
-      showDialog(
-        "Password Mismatch",
-        "Passwords do not match.",
-        "warning"
-      );
+      showDialog("Password Mismatch", "Passwords do not match.", "warning");
       return;
     }
 
@@ -196,129 +158,73 @@ function Signup() {
         confirmPassword: formData.confirmPassword,
       });
 
-      console.log(
-        "Signup Response:",
-        response.data
-      );
+      console.log("Signup Response:", response.data);
 
-      const verification =
-        getVerificationDetails(response.data);
+      const verification = getVerificationDetails(response.data);
 
       if (!verification) {
         showDialog(
-          "Signup Completed",
-          "Account information was not returned. Please contact support.",
-          "warning"
+          "Signup Response Error",
+          "The account response did not contain verification details. Please contact support.",
+          "error"
         );
         return;
       }
 
-      localStorage.setItem(
-        "pendingVerification",
-        JSON.stringify(verification)
-      );
-
-      localStorage.setItem("registered", "true");
-
-      showDialog(
-        "Account Created",
-        "Account created successfully! Please verify your email using the OTP.",
-        "success",
-        () => {
-          goToVerification(
-            verification.userId,
-            verification.email
-          );
-        }
+      // Navigate immediately; do not wait for a popup button.
+      goToVerification(
+        verification.userId,
+        verification.email
       );
 
     } catch (error) {
       console.error("Signup Error:", error);
 
-      if (error.response) {
+      const responseData = error.response?.data;
+
+      console.log("Backend Error:", responseData);
+
+      // Backend may create the account but fail to send the OTP email.
+      const verification = getVerificationDetails(responseData);
+
+      if (verification) {
         console.log(
-          "Backend Error:",
-          error.response.data
+          "Account created, but email delivery failed. Opening OTP page.",
+          verification
         );
 
-        const verification =
-          getVerificationDetails(error.response.data);
-
-        // Account created, but OTP email may have failed.
-        if (verification) {
-          localStorage.setItem(
-            "pendingVerification",
-            JSON.stringify(verification)
-          );
-
-          localStorage.setItem("registered", "true");
-
-          showDialog(
-            "Account Created",
-            "Your account was created, but the OTP email could not be sent. Continue to verification and try Resend OTP.",
-            "warning",
-            () => {
-              goToVerification(
-                verification.userId,
-                verification.email
-              );
-            }
-          );
-
-          return;
-        }
-
-        const message =
-          error.response.data?.message ||
-          error.response.data?.Message ||
-          "Signup failed. Please try again.";
-
-        showDialog(
-          "Signup Failed",
-          message,
-          "error"
+        goToVerification(
+          verification.userId,
+          verification.email
         );
 
-      } else if (error.request) {
-        showDialog(
-          "Server Error",
-          "Backend server is not responding. Please try again.",
-          "error"
-        );
-
-      } else {
-        showDialog(
-          "Signup Failed",
-          "Signup failed. Please try again.",
-          "error"
-        );
+        return;
       }
+
+      const message =
+        responseData?.message ||
+        responseData?.Message ||
+        "Signup failed. Please try again.";
+
+      showDialog("Signup Failed", message, "error");
 
     } finally {
       setLoading(false);
     }
   };
 
-  // UI
   return (
     <AuthLayout>
       <div className="signup-container">
-
         <div className="signup-heading">
-          <h1 className="auth-title">
-            Create Account
-          </h1>
+          <h1 className="auth-title">Create Account</h1>
 
           <p className="auth-subtitle">
-            Join REVIO and start sharing
-            trusted reviews.
+            Join REVIO and start sharing trusted reviews.
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="signup-form"
-        >
+        <form onSubmit={handleSubmit} className="signup-form">
           <Input
             label="Full Name"
             placeholder="Enter your full name"
@@ -370,20 +276,13 @@ function Signup() {
             />
 
             <span>
-              I agree to{" "}
-              <strong>
-                Terms & Conditions
-              </strong>
+              I agree to <strong>Terms & Conditions</strong>
             </span>
           </label>
 
           <div className="signup-button-wrapper">
             <Button
-              text={
-                loading
-                  ? "Creating Account..."
-                  : "Create Account"
-              }
+              text={loading ? "Creating Account..." : "Create Account"}
               type="submit"
               disabled={loading}
             />
@@ -391,18 +290,13 @@ function Signup() {
         </form>
 
         <div className="signup-divider">
-          <span>
-            Already registered?
-          </span>
+          <span>Already registered?</span>
         </div>
 
         <p className="bottom-link">
           Already have an account?{" "}
-          <Link to="/login">
-            Login
-          </Link>
+          <Link to="/login">Login</Link>
         </p>
-
       </div>
 
       <DialogBox
@@ -412,7 +306,6 @@ function Signup() {
         type={dialog.type}
         onClose={closeDialog}
       />
-
     </AuthLayout>
   );
 }
