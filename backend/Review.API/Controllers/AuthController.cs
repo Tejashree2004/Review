@@ -62,10 +62,8 @@ public class AuthController : ControllerBase
             });
         }
 
-        var requestedEmail = dto.Email.Trim();
-
         if (!user.Email.Equals(
-            requestedEmail,
+            dto.Email.Trim(),
             StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest(new ApiResponse
@@ -84,45 +82,25 @@ public class AuthController : ControllerBase
             });
         }
 
-        var oldOtps = await _context.EmailOtps
-            .Where(x => x.UserId == user.Id && !x.IsUsed)
-            .ToListAsync();
-
-        foreach (var oldOtp in oldOtps)
-        {
-            oldOtp.IsUsed = true;
-        }
-
-        var otp = GenerateOtp();
-        var now = DateTime.UtcNow;
-
-        var emailOtp = new EmailOtp
-        {
-            UserId = user.Id,
-            Otp = otp,
-            ExpiryTime = now.AddMinutes(10),
-            IsUsed = false,
-            CreatedAt = now
-        };
-
-        _context.EmailOtps.Add(emailOtp);
-        await _context.SaveChangesAsync();
-
         try
         {
-            await SendOtpEmailAsync(
-                recipientEmail: user.Email,
-                recipientName: user.FullName,
-                otp: otp
-            );
+            await GenerateAndSendOtpAsync(user);
+
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "OTP sent successfully.",
+                Data = new
+                {
+                    Email = MaskEmail(user.Email),
+                    ExpiryMinutes = 10
+                }
+            });
         }
         catch (Exception ex)
         {
             Console.WriteLine(
                 $"OTP email sending failed: {ex.Message}");
-
-            _context.EmailOtps.Remove(emailOtp);
-            await _context.SaveChangesAsync();
 
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
@@ -132,17 +110,6 @@ public class AuthController : ControllerBase
                     Message = "Unable to send OTP email. Please try again."
                 });
         }
-
-        return Ok(new ApiResponse
-        {
-            Success = true,
-            Message = "OTP sent successfully.",
-            Data = new
-            {
-                Email = MaskEmail(user.Email),
-                ExpiryMinutes = 10
-            }
-        });
     }
 
     // =====================================================
@@ -247,7 +214,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register(
         [FromBody] RegisterDto dto)
     {
-        if (!ModelState.IsValid)
+        if (dto == null || !ModelState.IsValid)
         {
             return BadRequest(new ApiResponse
             {
@@ -268,21 +235,83 @@ public class AuthController : ControllerBase
             });
         }
 
-        var email = dto.Email.Trim().ToLower();
+        var email = dto.Email.Trim().ToLowerInvariant();
         var mobileNumber = dto.MobileNumber.Trim();
 
-        if (await _context.Users.AnyAsync(
-            x => x.Email.ToLower() == email))
+        // ---------------------------------------------
+        // CHECK EXISTING EMAIL
+        // ---------------------------------------------
+
+        var existingUser = await _context.Users
+            .FirstOrDefaultAsync(x =>
+                x.Email.ToLower() == email);
+
+        if (existingUser != null)
         {
-            return BadRequest(new ApiResponse
+            // Already verified account
+            if (existingUser.IsEmailVerified)
             {
-                Success = false,
-                Message = "Email already exists."
-            });
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Email already exists."
+                });
+            }
+
+            // Existing but unverified account:
+            // Generate a fresh OTP for the same account.
+            try
+            {
+                await GenerateAndSendOtpAsync(existingUser);
+
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Message = "Your account already exists but email verification is pending. A new OTP has been sent.",
+                    Data = new
+                    {
+                        UserId = existingUser.Id,
+                        FullName = existingUser.FullName,
+                        Email = existingUser.Email,
+                        Role = existingUser.Role,
+                        RequiresEmailVerification = true,
+                        IsEmailVerified = false
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"Existing account OTP email failed: {ex.Message}");
+
+                // Account already exists.
+                // Send UserId and Email so frontend can open OTP page.
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Your account exists, but OTP email could not be sent. Please try Resend OTP.",
+                        Data = new
+                        {
+                            UserId = existingUser.Id,
+                            FullName = existingUser.FullName,
+                            Email = existingUser.Email,
+                            Role = existingUser.Role,
+                            RequiresEmailVerification = true
+                        }
+                    });
+            }
         }
 
-        if (await _context.Users.AnyAsync(
-            x => x.MobileNumber == mobileNumber))
+        // ---------------------------------------------
+        // CHECK EXISTING MOBILE NUMBER
+        // ---------------------------------------------
+
+        var mobileExists = await _context.Users
+            .AnyAsync(x => x.MobileNumber == mobileNumber);
+
+        if (mobileExists)
         {
             return BadRequest(new ApiResponse
             {
@@ -290,6 +319,10 @@ public class AuthController : ControllerBase
                 Message = "Mobile number already exists."
             });
         }
+
+        // ---------------------------------------------
+        // VALIDATE ROLE
+        // ---------------------------------------------
 
         var role = string.IsNullOrWhiteSpace(dto.Role)
             ? "Reviewer"
@@ -313,6 +346,10 @@ public class AuthController : ControllerBase
             role = "Reviewer";
         }
 
+        // ---------------------------------------------
+        // CREATE NEW USER
+        // ---------------------------------------------
+
         var user = new User
         {
             FullName = dto.FullName.Trim(),
@@ -327,33 +364,39 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        var otp = GenerateOtp();
-
-        var emailOtp = new EmailOtp
-        {
-            UserId = user.Id,
-            Otp = otp,
-            ExpiryTime = DateTime.UtcNow.AddMinutes(10),
-            IsUsed = false,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.EmailOtps.Add(emailOtp);
-        await _context.SaveChangesAsync();
+        // ---------------------------------------------
+        // GENERATE AND SEND OTP
+        // ---------------------------------------------
 
         try
         {
-            await SendOtpEmailAsync(
-                recipientEmail: user.Email,
-                recipientName: user.FullName,
-                otp: otp
-            );
+            await GenerateAndSendOtpAsync(user);
+
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = role == "Owner"
+                    ? "Owner registration successful. OTP sent to your email."
+                    : "Registration successful. OTP sent to your email.",
+                Data = new
+                {
+                    UserId = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    MobileNumber = user.MobileNumber,
+                    Role = user.Role,
+                    IsEmailVerified = false,
+                    RequiresEmailVerification = true
+                }
+            });
         }
         catch (Exception ex)
         {
             Console.WriteLine(
                 $"Registration OTP email failed: {ex.Message}");
 
+            // Account is already saved in database.
+            // Return UserId and Email even if SMTP fails.
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
                 new ApiResponse
@@ -363,30 +406,13 @@ public class AuthController : ControllerBase
                     Data = new
                     {
                         UserId = user.Id,
-                        user.FullName,
-                        user.Email,
-                        user.Role,
+                        FullName = user.FullName,
+                        Email = user.Email,
+                        Role = user.Role,
                         RequiresEmailVerification = true
                     }
                 });
         }
-
-        return Ok(new ApiResponse
-        {
-            Success = true,
-            Message = role == "Owner"
-                ? "Owner registration successful. OTP sent to your email."
-                : "Registration successful. OTP sent to your email.",
-            Data = new
-            {
-                UserId = user.Id,
-                user.FullName,
-                user.Email,
-                user.MobileNumber,
-                user.Role,
-                IsEmailVerified = user.IsEmailVerified
-            }
-        });
     }
 
     // =====================================================
@@ -398,7 +424,9 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login(
         [FromBody] LoginDto dto)
     {
-        if (!ModelState.IsValid)
+        if (dto == null || !ModelState.IsValid ||
+            string.IsNullOrWhiteSpace(dto.EmailOrMobile) ||
+            string.IsNullOrWhiteSpace(dto.Password))
         {
             return BadRequest(new ApiResponse
             {
@@ -466,7 +494,7 @@ public class AuthController : ControllerBase
     }
 
     // =====================================================
-    // GENERATE SECURE 6 DIGIT OTP
+    // GENERATE SECURE 6-DIGIT OTP
     // =====================================================
 
     private static string GenerateOtp()
@@ -476,6 +504,49 @@ public class AuthController : ControllerBase
             1000000);
 
         return randomNumber.ToString();
+    }
+
+    // =====================================================
+    // GENERATE OTP, SAVE AND SEND EMAIL
+    // =====================================================
+
+    private async Task GenerateAndSendOtpAsync(User user)
+    {
+        // Mark previous unused OTPs as used.
+        var oldOtps = await _context.EmailOtps
+            .Where(x =>
+                x.UserId == user.Id &&
+                !x.IsUsed)
+            .ToListAsync();
+
+        foreach (var oldOtp in oldOtps)
+        {
+            oldOtp.IsUsed = true;
+        }
+
+        var now = DateTime.UtcNow;
+        var otp = GenerateOtp();
+
+        var emailOtp = new EmailOtp
+        {
+            UserId = user.Id,
+            Otp = otp,
+            ExpiryTime = now.AddMinutes(10),
+            IsUsed = false,
+            CreatedAt = now
+        };
+
+        _context.EmailOtps.Add(emailOtp);
+
+        await _context.SaveChangesAsync();
+
+        // Keep the OTP record if SMTP fails.
+        // A later resend will invalidate it and generate a fresh one.
+        await SendOtpEmailAsync(
+            recipientEmail: user.Email,
+            recipientName: user.FullName,
+            otp: otp
+        );
     }
 
     // =====================================================
@@ -537,152 +608,133 @@ public class AuthController : ControllerBase
           content='width=device-width, initial-scale=1.0' />
 </head>
 
-<body
-    style='
-        margin:0;
-        padding:0;
-        background:#f4f4f4;
-        font-family:Arial,Helvetica,sans-serif;
-    '
->
-    <div
-        style='
-            max-width:600px;
-            margin:40px auto;
-            background:#ffffff;
-            border-radius:16px;
-            padding:40px;
-            box-shadow:0 8px 30px rgba(0,0,0,0.08);
-        '
-    >
-        <div
-            style='
-                text-align:center;
-                margin-bottom:30px;
-            '
-        >
-            <h1
-                style='
-                    margin:0;
-                    color:#111111;
-                    font-size:32px;
-                '
-            >
+<body style='
+    margin:0;
+    padding:0;
+    background:#f4f4f4;
+    font-family:Arial,Helvetica,sans-serif;
+'>
+    <div style='
+        max-width:600px;
+        margin:40px auto;
+        background:#ffffff;
+        border-radius:16px;
+        padding:40px;
+        box-shadow:0 8px 30px rgba(0,0,0,0.08);
+    '>
+        <div style='
+            text-align:center;
+            margin-bottom:30px;
+        '>
+            <h1 style='
+                margin:0;
+                color:#111111;
+                font-size:32px;
+            '>
                 REVIO
             </h1>
 
-            <p
-                style='
-                    margin:8px 0 0;
-                    color:#888888;
-                    font-size:14px;
-                '
-            >
+            <p style='
+                margin:8px 0 0;
+                color:#888888;
+                font-size:14px;
+            '>
                 Trusted Reviews Platform
             </p>
         </div>
 
-        <p
-            style='
-                color:#333333;
-                font-size:16px;
-                line-height:1.6;
-            '
-        >
+        <p style='
+            color:#333333;
+            font-size:16px;
+            line-height:1.6;
+        '>
             Hello <strong>{safeName}</strong>,
         </p>
 
-        <p
-            style='
-                color:#555555;
-                font-size:15px;
-                line-height:1.7;
-            '
-        >
+        <p style='
+            color:#555555;
+            font-size:15px;
+            line-height:1.7;
+        '>
             Thank you for creating your REVIO account.
             Use the verification code below to verify
             your email address.
         </p>
 
-        <div
-            style='
-                text-align:center;
-                margin:35px 0;
-            '
-        >
-            <div
-                style='
-                    display:inline-block;
-                    background:#111111;
-                    color:#ffffff;
-                    padding:18px 32px;
-                    border-radius:12px;
-                    font-size:32px;
-                    font-weight:bold;
-                    letter-spacing:8px;
-                '
-            >
+        <div style='
+            text-align:center;
+            margin:35px 0;
+        '>
+            <div style='
+                display:inline-block;
+                background:#111111;
+                color:#ffffff;
+                padding:18px 32px;
+                border-radius:12px;
+                font-size:32px;
+                font-weight:bold;
+                letter-spacing:8px;
+            '>
                 {otp}
             </div>
         </div>
 
-        <p
-            style='
-                color:#666666;
-                font-size:14px;
-                text-align:center;
-            '
-        >
+        <p style='
+            color:#666666;
+            font-size:14px;
+            text-align:center;
+        '>
             This OTP is valid for
             <strong>10 minutes</strong>.
         </p>
 
-        <p
-            style='
-                color:#888888;
-                font-size:13px;
-                line-height:1.6;
-                margin-top:25px;
-            '
-        >
+        <p style='
+            color:#888888;
+            font-size:13px;
+            line-height:1.6;
+            margin-top:25px;
+        '>
             If you did not create this account,
             you can safely ignore this email.
         </p>
 
-        <hr
-            style='
-                border:0;
-                border-top:1px solid #eeeeee;
-                margin:30px 0;
-            '
-        />
+        <hr style='
+            border:0;
+            border-top:1px solid #eeeeee;
+            margin:30px 0;
+        '/>
 
-        <p
-            style='
-                color:#aaaaaa;
-                font-size:12px;
-                text-align:center;
-                margin:0;
-            '
-        >
+        <p style='
+            color:#aaaaaa;
+            font-size:12px;
+            text-align:center;
+            margin:0;
+        '>
             © {DateTime.UtcNow.Year} REVIO
         </p>
     </div>
 </body>
 </html>";
 
-        using var smtpClient = new SmtpClient();
+        using var smtpClient = new SmtpClient
+        {
+            Host = smtpServer,
+            Port = smtpPort,
 
-        smtpClient.Host = smtpServer;
-        smtpClient.Port = smtpPort;
-        smtpClient.EnableSsl = true;
-        smtpClient.UseDefaultCredentials = false;
+            // Port 587 uses STARTTLS.
+            EnableSsl = true,
 
-        smtpClient.Credentials = new NetworkCredential(
-            senderEmail,
-            appPassword);
+            UseDefaultCredentials = false,
 
-        smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+            Credentials = new NetworkCredential(
+                senderEmail,
+                appPassword),
+
+            DeliveryMethod = SmtpDeliveryMethod.Network,
+
+            // SMTP timeout: 20 seconds.
+            Timeout = 20000
+        };
 
         await smtpClient.SendMailAsync(message);
     }
